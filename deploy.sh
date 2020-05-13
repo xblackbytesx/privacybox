@@ -44,12 +44,10 @@ s	udo systemctl enable --now docker
 	docker network create nextcloud_network
 
 	echo "Fetching compose file"
-	curl -L "TODO:Once uploaded to GitHub"
+	curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/docker-compose.yml"
 
-	echo 'Updating packages'
-	sudo apt-get update
-	sudo apt-get upgrade -y
-	sudo apt-get dist-upgrade -y
+	echo "Composing now"
+	docker-compose
 
 	echo 'Cleaning up'
 	sudo apt-get clean
