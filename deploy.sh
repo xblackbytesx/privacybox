@@ -11,6 +11,17 @@ read confirmation
 
 if [ "$confirmation" = "y" ]; then
 
+	echo -n "Would you like to install all available apps? [y/n]: "
+	read installAll
+
+	if [ "$installAll" = "y" ]; then
+		installNextcloud="y"
+
+	elif [ "$installAll" = "n" ]; then
+		echo -n "Would you like to install Nextcloud? [y/n]: "
+		read installNextcloud
+	fi
+
 	echo "Make sure apt-get is using ssl"
 	echo "------------------------------"
 	sudo apt-get install apt-transport-https -y
@@ -40,14 +51,17 @@ s	udo systemctl enable --now docker
 	sudo chmod +x /usr/local/bin/docker-compose
 	echo "Succesfully installed $(docker-compose --version)"
 
-	echo "Creating Nextcloud Network"
-	docker network create nextcloud_network
+	if [ "$installNextcloud" = "y" ]; then
+		echo "Creating Nextcloud Network"
+		docker network create nextcloud_network
 
-	echo "Fetching compose file"
-	curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/docker-compose.yml"
+		echo "Fetching compose file"
+		mkdir ./nextcloud
+		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/nextcloud/docker-compose.yml" -o ./nextcloud/docker-compose.yml
 
-	echo "Composing now"
-	docker-compose
+		echo "Composing now"
+		docker-compose up -d
+	fi
 
 	echo 'Cleaning up'
 	sudo apt-get clean
@@ -58,7 +72,7 @@ s	udo systemctl enable --now docker
 	exit
 
 elif [ "$confirmation" = "n" ]; then
-	echo "Build aborted by user"
+	echo "Setup aborted by user"
 	echo "Suit yourself man :-)"
 	exit
 fi
