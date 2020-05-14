@@ -17,6 +17,7 @@ if [ "$confirmation" = "y" ]; then
 	if [ "$installAll" = "y" ]; then
 		installNextcloud="y"
 		installInvidious="y"
+		installWordpress="y"
 
 	elif [ "$installAll" = "n" ]; then
 		echo -n "Would you like to install Nextcloud? [y/n]: "
@@ -24,6 +25,9 @@ if [ "$confirmation" = "y" ]; then
 
 		echo -n "Would you like to install Invidious? [y/n]: "
 		read installInvidious
+
+		echo -n "Would you like to install Wordpress? [y/n]: "
+		read installWordpress
 	fi
 
 	echo "Make sure apt-get is using ssl"
@@ -47,7 +51,7 @@ if [ "$confirmation" = "y" ]; then
 
 	echo "Installing docker-ce"
 	sudo apt-get update
-	sudo apt install docker-ce
+	sudo apt-get install docker-ce
 	sudo systemctl enable --now docker
 
 	echo "Installing docker-compose"
@@ -71,7 +75,9 @@ if [ "$confirmation" = "y" ]; then
 		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/nextcloud/docker-compose.yml" -o ./nextcloud/docker-compose.yml
 
 		echo "Composing now"
-		./nextcloud/docker-compose up -d
+		cd ./nextcloud
+		docker-compose up -d
+		cd ../
 	fi
 
 	if [ "$installInvidious" = "y"]; then
@@ -80,7 +86,23 @@ if [ "$confirmation" = "y" ]; then
 
 		echo "Fetching compose file"
 		git clone git@github.com:omarroth/invidious.git
-		./invidious/docker-compose up -d
+		cd ./invidious
+		docker-compose up -d
+		cd ../
+	fi
+
+	if [ "$installWordpress" = "y"]; then
+		echo "Creating Wordpress Network"
+		docker network create wordpress_network
+
+		echo "Fetching compose file"
+		mkdir ./wordpress
+		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/wordpress/docker-compose.yml" -o ./wordpress/docker-compose.yml
+
+		echo "Composing now"
+		cd ./invidious
+		docker-compose up -d
+		cd ../
 	fi
 
 	echo 'Cleaning up'
