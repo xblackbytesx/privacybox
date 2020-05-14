@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+
+  invidious-postgres:
+    image: postgres:10
+    restart: unless-stopped
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+
+  invidious-app:
+    image: flourgaz/invidious
+    container_name: invidious-app
+    expose:
+      - "80"
+    restart: unless-stopped
+    volumes:
+      - ./config.yml:/invidious/config/config.yml
+    environment:
+      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - invidious-postgres
+
+volumes: 
+  postgresdata: 
+    external: 
+      name: invidious_postgresdata
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
+      

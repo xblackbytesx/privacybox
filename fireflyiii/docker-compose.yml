@@ -1,0 +1,34 @@
+version: '3.3'
+
+services:
+
+  fireflyiii-db:
+    image: postgres:10-alpine
+    environment:
+      - POSTGRES_USER=firefly
+      - POSTGRES_PASSWORD=secret_firefly_password
+    volumes:
+      - firefly_iii_db:/var/lib/postgresql/data
+
+  fireflyiii-app:
+    image: jc5x/firefly-iii:latest
+    volumes:
+      - firefly_iii_export:/var/www/firefly-iii/storage/export
+      - firefly_iii_upload:/var/www/firefly-iii/storage/upload
+    expose:
+      - "80"
+    env_file: .env
+    ports:
+      - 80:80
+    depends_on:
+      - fireflyiii-db
+
+volumes:
+   firefly_iii_export:
+   firefly_iii_upload:
+   firefly_iii_db:
+
+networks:
+  default:
+    external:
+      name: nginx-proxy

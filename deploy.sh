@@ -16,10 +16,14 @@ if [ "$confirmation" = "y" ]; then
 
 	if [ "$installAll" = "y" ]; then
 		installNextcloud="y"
+		installInvidious="y"
 
 	elif [ "$installAll" = "n" ]; then
 		echo -n "Would you like to install Nextcloud? [y/n]: "
 		read installNextcloud
+
+		echo -n "Would you like to install Invidious? [y/n]: "
+		read installInvidious
 	fi
 
 	echo "Make sure apt-get is using ssl"
@@ -44,12 +48,19 @@ if [ "$confirmation" = "y" ]; then
 	echo "Installing docker-ce"
 	sudo apt-get update
 	sudo apt install docker-ce
-s	udo systemctl enable --now docker
+	sudo systemctl enable --now docker
 
 	echo "Installing docker-compose"
 	sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 	sudo chmod +x /usr/local/bin/docker-compose
 	echo "Succesfully installed $(docker-compose --version)"
+
+	echo "Setting up the Nginx-proxy container"
+	docker network create nginx-proxy
+	mkdir nginx-proxy
+	curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/nginx-proxy/docker-compose.yml" -o ./nginx-proxy/docker-compose.yml
+	curl -L "https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl" -o ./nginx-proxy/nginx.tmpl
+	./nginx-proxy/docker-compose up -d
 
 	if [ "$installNextcloud" = "y" ]; then
 		echo "Creating Nextcloud Network"
@@ -60,7 +71,16 @@ s	udo systemctl enable --now docker
 		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/nextcloud/docker-compose.yml" -o ./nextcloud/docker-compose.yml
 
 		echo "Composing now"
-		docker-compose up -d
+		./nextcloud/docker-compose up -d
+	fi
+
+	if [ "$installInvidious" = "y"]; then
+		echo "Creating Invidious Network"
+		docker network create invidious_network
+
+		echo "Fetching compose file"
+		git clone git@github.com:omarroth/invidious.git
+		./invidious/docker-compose up -d
 	fi
 
 	echo 'Cleaning up'

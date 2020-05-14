@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  wp-site1-db:
+    image: mariadb
+    container_name: wp-site1-db
+    volumes:
+      - wp-site1-db:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=wordpress
+
+  wp-site1-app:
+    depends_on:
+      - wp-site1-db
+    image: wordpress:latest
+    container_name: wp-site1-app
+    expose:
+      - 80
+    restart: always
+    environment:
+      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - WORDPRESS_DB_HOST=wp-site1-db:3306
+      - WORDPRESS_DB_USER=wordpress
+      - WORDPRESS_DB_PASSWORD=wordpress
+
+volumes:
+  wp-site1-db:
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
