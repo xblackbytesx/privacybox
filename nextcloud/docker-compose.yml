@@ -33,6 +33,10 @@ services:
       - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
       - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - MYSQL_HOST=nextcloud-db:3306
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=mysql
     restart: unless-stopped
 
 volumes:
