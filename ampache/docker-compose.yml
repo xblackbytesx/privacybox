@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  ampache-app:
+    image: ampache/ampache:latest
+    volumes:
+      - ./path/to/media/files:/media:ro
+      - ./db_persist:/var/lib/mysql
+    expose:
+      - 80
+    environment:
+      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+
+networks:
+  default:
+    external:
+      name: nginx-proxy

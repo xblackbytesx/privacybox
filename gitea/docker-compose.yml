@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+
+  gitea-db:
+    image: mariadb
+    container_name: gitea-db
+    volumes:
+      - gitea-db:/var/lib/mysql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_PASSWORD=mysql
+      - MYSQL_DATABASE=gitea
+      - MYSQL_USER=gitea
+    restart: unless-stopped
+
+  gitea-app:
+    image: gitea/gitea:latest
+    container_name: gitea-app
+    depends_on:
+      - gitea-db
+    restart: unless-stopped
+    environment:
+      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - VIRTUAL_PORT=3000
+      - ROOT_URL=https://${SUBDOMAIN}.${DOMAIN}
+      - DOMAIN=${SUBDOMAIN}.${DOMAIN}
+      - PROTOCOL=http
+      - USER_UID=1000
+      - USER_GID=1000
+      - DB_TYPE=mysql
+      - DB_HOST=gitea-db:3306
+      - DB_NAME=gitea
+      - DB_USER=gitea
+      - DB_PASSWD=mysql
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"
+
+volumes:
+  gitea:
+  gitea-db:
+
+networks:
+  default:
+    external:
+      name: nginx-proxy

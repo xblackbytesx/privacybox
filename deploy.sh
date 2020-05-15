@@ -16,12 +16,16 @@ if [ "$confirmation" = "y" ]; then
 
 	if [ "$installAll" = "y" ]; then
 		installNextcloud="y"
+		installGitea="y"
 		installInvidious="y"
 		installWordpress="y"
 
 	elif [ "$installAll" = "n" ]; then
 		echo -n "Would you like to install Nextcloud? [y/n]: "
 		read installNextcloud
+
+		echo -n "Would you like to install Gitea? [y/n]: "
+		read installGitea
 
 		echo -n "Would you like to install Invidious? [y/n]: "
 		read installInvidious
@@ -76,6 +80,20 @@ if [ "$confirmation" = "y" ]; then
 
 		echo "Composing now"
 		cd ./nextcloud
+		docker-compose up -d
+		cd ../
+	fi
+
+	if [ "$installGitea" = "y" ]; then
+		echo "Creating Gitea Network"
+		docker network create gitea
+
+		echo "Fetching compose file"
+		mkdir ./gitea
+		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/gitea/docker-compose.yml" -o ./gitea/docker-compose.yml
+
+		echo "Composing now"
+		cd ./gitea
 		docker-compose up -d
 		cd ../
 	fi
