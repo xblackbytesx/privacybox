@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+
+  hugo-site-1:
+    image: jojomi/nginx-static
+    container_name: hugo-site-1
+    volumes:
+      - ./output:/var/www
+    environment:
+      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    expose:
+      - "80"
+    restart: always
+
+networks:
+  default:
+    external:
+      name: nginx-proxy

@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 services:
   wp-site1-db:
@@ -20,7 +20,7 @@ services:
     image: wordpress:latest
     container_name: wp-site1-app
     expose:
-      - 80
+      - "80"
     restart: always
     environment:
       - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
