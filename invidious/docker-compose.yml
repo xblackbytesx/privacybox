@@ -2,7 +2,7 @@ version: '3'
 
 services:
 
-  invidious-postgres:
+  invidious-db:
     image: postgres:10
     restart: unless-stopped
     volumes:
@@ -15,15 +15,16 @@ services:
       - "80"
     restart: unless-stopped
     volumes:
-      - ./config.yml:/invidious/config/config.yml
+      - ./config.yml:/invidious-app/config/config.yml
     environment:
       - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
       - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - VIRTUAL_PORT=3000
     ports:
       - "3000:3000"
     depends_on:
-      - invidious-postgres
+      - invidious-db
 
 volumes: 
   postgresdata: 

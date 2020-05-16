@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+
+  wallabag-db:
+    image: mariadb
+    container_name: wallabag-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_PASSWORD=mysql
+      - MYSQL_DATABASE=wallabag
+      - MYSQL_USER=wallabag
+    volumes:
+      - /opt/wallabag/data:/var/lib/mysql
+
+  wallabag-redis:
+    image: redis:alpine
+    container_name: wallabag-redis
+
+  wallabag-app:
+    image: wallabag/wallabag:latest
+    container_name: wallabag-app
+    depends_on:
+      - wallabag-db
+      - wallabag-redis
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - SYMFONY__ENV__DATABASE_DRIVER=pdo_mysql
+      - SYMFONY__ENV__DATABASE_HOST=wallabag-db
+      - SYMFONY__ENV__DATABASE_PORT=3306
+      - SYMFONY__ENV__DATABASE_NAME=wallabag
+      - SYMFONY__ENV__DATABASE_USER=wallabag
+      - SYMFONY__ENV__DATABASE_PASSWORD=mysql
+      - SYMFONY__ENV__DATABASE_CHARSET=utf8mb4
+      - SYMFONY__ENV__MAILER_HOST=127.0.0.1
+      - SYMFONY__ENV__MAILER_USER=~
+      - SYMFONY__ENV__MAILER_PASSWORD=~
+      - SYMFONY__ENV__FROM_EMAIL=${LETSENCRYPT_EMAIL}
+      - SYMFONY__ENV__DOMAIN_NAME=https://${SUBDOMAIN}.${DOMAIN}
+      - SYMFONY__ENV__REDIS_HOST=wallabag-redis
+      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - VIRTUAL_PORT=6000
+    ports:
+      - "6000:80"
+    expose:
+      - "80"
+    volumes:
+      - /opt/wallabag/images:/var/www/wallabag/web/assets/images
+
+networks:
+  default:
+    external:
+      name: nginx-proxy

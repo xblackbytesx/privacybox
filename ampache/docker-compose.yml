@@ -1,19 +1,100 @@
-version: '3.7'
+version: '3'
 
 services:
-  ampache-app:
+
+  ampache:
     image: ampache/ampache:latest
-    volumes:
-      - ./path/to/media/files:/media:ro
-      - ./db_persist:/var/lib/mysql
-    expose:
-      - 80
+    container_name: ampache
+    restart: unless-stopped
     environment:
       - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
       - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - VIRTUAL_PORT=4000
+    expose:
+      - "80"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./conf/ampache:/var/www/config
+      - ./conf/apache:/etc/apache2/sites-enabled
+      - /media:/media
+    ports:
+      - "4000:80"
 
 networks:
   default:
     external:
       name: nginx-proxy
+
+# version: '3.7'
+
+# services:
+#   ampache-app:
+#     image: ampache/ampache:develop
+#     container_name: ampache-app
+#     volumes:
+#       - ./path/to/media/files:/media:ro
+#       - ./db_persist:/var/lib/mysql
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     environment:
+#       - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+#       - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
+#       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+#       - VIRTUAL_PORT=4000
+#     expose:
+#       - "80"
+#     ports:
+#       - "4000:80"
+
+# networks:
+#   default:
+#     external:
+#       name: nginx-proxy
+
+# version: '3.7'
+
+# services:
+
+#   # ampache-db:
+#   #   image: mariadb
+#   #   container_name: ampache-db
+#   #   volumes:
+#   #     - ampache-db:/var/lib/mysql
+#   #     - /etc/timezone:/etc/timezone:ro
+#   #     - /etc/localtime:/etc/localtime:ro
+#   #   environment:
+#   #     - MYSQL_ROOT_PASSWORD=secret
+#   #     - MYSQL_PASSWORD=mysql
+#   #     - MYSQL_DATABASE=ampache
+#   #     - MYSQL_USER=ampache
+#   #   restart: unless-stopped
+
+#   ampache-app:
+#     image: ampache/ampache:latest
+#     container_name: ampache-app
+#     # depends_on:
+#     #   - ampache-db
+#     volumes:
+#       # - ./path/to/media/files:/media:ro
+#       - ./data/mysql:/var/lib/mysql
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     expose:
+#       - 80
+#     environment:
+#       - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+#       - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
+#       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+#       - VIRTUAL_PORT=4000
+#     ports:
+#       - "4000:80"
+
+# # volumes:
+# #   ampache:
+# #   ampache-db:
+
+# networks:
+#   default:
+#     external:
+#       name: nginx-proxy
