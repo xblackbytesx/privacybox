@@ -1,0 +1,56 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+services:
+
+  synapse:
+    build:
+        context: ../..
+        dockerfile: docker/Dockerfile
+    image: docker.io/matrixdotorg/synapse:latest
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+    volumes:
+      # You may either store all the files in a local folder
+      - ./files:/data
+      # .. or you may split this between different storage points
+      # - ./files:/data
+      # - /path/to/ssd:/data/uploads
+      # - /path/to/large_hdd:/data/media
+    depends_on:
+      - db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.http-synapse.entryPoints=http
+      - traefik.http.routers.http-synapse.rule=Host(`my.matrix.host`)
+      - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true
+      - traefik.http.routers.http-synapse.middlewares=https_redirect
+      - traefik.http.routers.https-synapse.entryPoints=https
+      - traefik.http.routers.https-synapse.rule=Host(`my.matrix.host`)
+      - traefik.http.routers.https-synapse.service=synapse
+      - traefik.http.routers.https-synapse.tls=true
+      - traefik.http.services.synapse.loadbalancer.server.port=8008
+      - traefik.http.routers.https-synapse.tls.certResolver=le-ssl
+    networks:
+      - proxy
+      - internal
+
+  db:
+    image: docker.io/postgres:10-alpine
+    environment:
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      # You may store the database tables in a local folder..
+      - ./schemas:/var/lib/postgresql/data
+    networks:
+      - internal

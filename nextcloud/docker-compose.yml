@@ -1,4 +1,11 @@
-version: '3'  
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
 
 services:
 
@@ -14,6 +21,10 @@ services:
       - MYSQL_PASSWORD=mysql
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
     restart: unless-stopped
 
   nextcloud-redis:
@@ -22,12 +33,16 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
 
   nextcloud-app:
     image: nextcloud:latest
     container_name: nextcloud-app
     expose:
-      - 80
+      - "80"
     depends_on:
       - nextcloud-db
       - nextcloud-redis
@@ -40,21 +55,21 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - MYSQL_HOST=nextcloud-db:3306
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
       - MYSQL_PASSWORD=mysql
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.nextcloud-app.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud-app.tls.certresolver=myresolver"
+    networks:
+      - proxy
+      - internal
     restart: unless-stopped
 
 volumes:
   nextcloud:
   nextcloud-db:
   nextcloud-redis:
-
-networks:
-  default:
-    external:
-      name: nginx-proxy

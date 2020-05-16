@@ -1,4 +1,11 @@
-version: '3'
+version: '3.3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
 
 services:
 
@@ -7,32 +14,34 @@ services:
     restart: unless-stopped
     volumes:
       - postgresdata:/var/lib/postgresql/data
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - proxy
+      - internal
 
   invidious-app:
     image: flourgaz/invidious
     container_name: invidious-app
     expose:
       - "80"
-    restart: unless-stopped
     volumes:
       - ./config.yml:/invidious-app/config/config.yml
-    environment:
-      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-      - VIRTUAL_PORT=3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.invidious-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.invidious-app.entrypoints=websecure"
+      - "traefik.http.routers.invidious-app.tls.certresolver=myresolver"
+    networks:
+      - proxy
+      - internal
     ports:
       - "3000:3000"
     depends_on:
       - invidious-db
+    restart: unless-stopped
 
 volumes: 
   postgresdata: 
     external: 
       name: invidious_postgresdata
-
-networks:
-  default:
-    external:
-      name: nginx-proxy
-      

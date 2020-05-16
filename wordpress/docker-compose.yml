@@ -1,4 +1,11 @@
-version: '3'
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
 
 services:
   wp-site1-db:
@@ -6,13 +13,18 @@ services:
     container_name: wp-site1-db
     volumes:
       - wp-site1-db:/var/lib/mysql
+      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-    restart: always
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
     environment:
       - MYSQL_ROOT_PASSWORD=secret
       - MYSQL_DATABASE=wordpress
       - MYSQL_USER=wordpress
       - MYSQL_PASSWORD=wordpress
+    restart: always
 
   wp-site1-app:
     depends_on:
@@ -21,19 +33,22 @@ services:
     container_name: wp-site1-app
     expose:
       - "80"
-    restart: always
     environment:
-      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - WORDPRESS_DB_HOST=wp-site1-db:3306
       - WORDPRESS_DB_USER=wordpress
       - WORDPRESS_DB_PASSWORD=wordpress
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wp-site1-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.wp-site1-app.entrypoints=websecure"
+      - "traefik.http.routers.wp-site1-app.tls.certresolver=myresolver"
+    networks:
+      - proxy
+      - internal
+    restart: always
 
 volumes:
   wp-site1-db:
-
-networks:
-  default:
-    external:
-      name: nginx-proxy

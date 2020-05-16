@@ -63,12 +63,13 @@ if [ "$confirmation" = "y" ]; then
 	sudo chmod +x /usr/local/bin/docker-compose
 	echo "Succesfully installed $(docker-compose --version)"
 
-	echo "Setting up the Nginx-proxy container"
-	docker network create nginx-proxy
+	echo "Setting up the Traefik container"
+	docker network create proxy
 	mkdir nginx-proxy
-	curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/nginx-proxy/docker-compose.yml" -o ./nginx-proxy/docker-compose.yml
-	curl -L "https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl" -o ./nginx-proxy/nginx.tmpl
-	./nginx-proxy/docker-compose up -d
+	curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/traefik/docker-compose.yml" -o ./nginx-proxy/docker-compose.yml
+	cd ./traefik
+	docker-compose up -d
+	cd ../
 
 	if [ "$installNextcloud" = "y" ]; then
 		echo "Creating Nextcloud Network"

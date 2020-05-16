@@ -1,4 +1,10 @@
-version: '2.1'
+version: '3.3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
 services:
   jackett:
     image: linuxserver/jackett
@@ -7,20 +13,18 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
-      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-      - VIRTUAL_PORT=9117
     volumes:
       - ./app/config:/config
       - ./app/downloads:/downloads
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jackett.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.jackett.entrypoints=websecure"
+      - "traefik.http.routers.jackett.tls.certresolver=myresolver"
+    networks:
+      - proxy
     ports:
       - "9117:9117"
     restart: unless-stopped
-
-networks:
-  default:
-    external:
-      name: nginx-proxy

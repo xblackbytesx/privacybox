@@ -1,4 +1,11 @@
-version: '3'
+version: '3.3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
 
 services:
 
@@ -14,6 +21,10 @@ services:
       - MYSQL_PASSWORD=mysql
       - MYSQL_DATABASE=gitea
       - MYSQL_USER=gitea
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
     restart: unless-stopped
 
   gitea-app:
@@ -21,12 +32,7 @@ services:
     container_name: gitea-app
     depends_on:
       - gitea-db
-    restart: unless-stopped
     environment:
-      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-      - VIRTUAL_PORT=3000
       - ROOT_URL=https://${SUBDOMAIN}.${DOMAIN}
       - DOMAIN=${SUBDOMAIN}.${DOMAIN}
       - PROTOCOL=http
@@ -41,15 +47,19 @@ services:
       - ./gitea:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gitea-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.gitea-app.entrypoints=websecure"
+      - "traefik.http.routers.gitea-app.tls.certresolver=myresolver"
+    networks:
+      - proxy
+      - internal
     ports:
       - "3000:3000"
       - "222:22"
+    restart: unless-stopped
 
 volumes:
   gitea:
   gitea-db:
-
-networks:
-  default:
-    external:
-      name: nginx-proxy
