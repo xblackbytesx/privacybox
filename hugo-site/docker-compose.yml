@@ -1,4 +1,9 @@
-version: '3'
+version: '3.3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
 
 services:
 
@@ -7,15 +12,13 @@ services:
     container_name: hugo-site-1
     volumes:
       - ./output:/var/www
-    environment:
-      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hugo-site-1.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.hugo-site-1.entrypoints=websecure"
+      - "traefik.http.routers.hugo-site-1.tls.certresolver=myresolver"
+    networks:
+      - proxy
     expose:
       - "80"
     restart: always
-
-networks:
-  default:
-    external:
-      name: nginx-proxy

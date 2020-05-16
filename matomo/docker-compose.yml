@@ -1,0 +1,52 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+services:
+  matomo-db:
+    image: mariadb
+    container_name: matomo-db
+    command: --max-allowed-packet=64MB
+    restart: always
+    volumes:
+      - matomo-db:/var/lib/mysql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+
+  matomo-app:
+    image: matomo:fpm-alpine
+    container_name: matomo-app
+    restart: always
+    links:
+      - matomo-db
+    volumes:
+#      - ./config:/var/www/html/config:rw
+#      - ./logs:/var/www/html/logs
+      - matomo-app:/var/www/html
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.matomo-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.matomo-app.entrypoints=websecure"
+      - "traefik.http.routers.matomo-app.tls.certresolver=myresolver"
+    networks:
+      - proxy
+      - internal
+    environment:
+      - MATOMO_DATABASE_HOST=matomo-db
+
+volumes:
+  matomo-db:
+  matomo-app:
