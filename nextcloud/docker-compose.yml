@@ -63,6 +63,7 @@ services:
       - "traefik.http.routers.nextcloud-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.nextcloud-app.entrypoints=websecure"
       - "traefik.http.routers.nextcloud-app.tls.certresolver=myresolver"
+      - "traefik.port=80"
       - "traefik.docker.network=proxy"
     networks:
       - proxy
