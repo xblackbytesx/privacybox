@@ -37,12 +37,11 @@ services:
       - "traefik.enable=false"
     networks:
       - internal
+    restart: unless-stopped
 
   nextcloud-app:
     image: nextcloud:latest
     container_name: nextcloud-app
-    expose:
-      - "80"
     depends_on:
       - nextcloud-db
       - nextcloud-redis
@@ -64,6 +63,7 @@ services:
       - "traefik.http.routers.nextcloud-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.nextcloud-app.entrypoints=websecure"
       - "traefik.http.routers.nextcloud-app.tls.certresolver=myresolver"
+      - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal

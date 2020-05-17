@@ -8,6 +8,7 @@ networks:
     internal: true
 
 services:
+
   matomo-db:
     image: mariadb
     container_name: matomo-db
@@ -28,7 +29,7 @@ services:
     image: matomo:fpm-alpine
     container_name: matomo-app
     restart: always
-    links:
+    depends_on:
       - matomo-db
     volumes:
 #      - ./config:/var/www/html/config:rw
@@ -41,6 +42,7 @@ services:
       - "traefik.http.routers.matomo-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.matomo-app.entrypoints=websecure"
       - "traefik.http.routers.matomo-app.tls.certresolver=myresolver"
+      - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal

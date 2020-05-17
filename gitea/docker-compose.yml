@@ -52,11 +52,12 @@ services:
       - "traefik.http.routers.gitea-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.gitea-app.entrypoints=websecure"
       - "traefik.http.routers.gitea-app.tls.certresolver=myresolver"
+      - "traefik.port=3000"
+      - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal
     ports:
-      - "3000:3000"
       - "222:22"
     restart: unless-stopped
 

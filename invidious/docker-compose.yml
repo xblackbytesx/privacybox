@@ -11,7 +11,6 @@ services:
 
   invidious-db:
     image: postgres:10
-    restart: unless-stopped
     volumes:
       - postgresdata:/var/lib/postgresql/data
     labels:
@@ -19,12 +18,11 @@ services:
     networks:
       - proxy
       - internal
+    restart: unless-stopped
 
   invidious-app:
     image: flourgaz/invidious
     container_name: invidious-app
-    expose:
-      - "80"
     volumes:
       - ./config.yml:/invidious-app/config/config.yml
     labels:
@@ -32,11 +30,11 @@ services:
       - "traefik.http.routers.invidious-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.invidious-app.entrypoints=websecure"
       - "traefik.http.routers.invidious-app.tls.certresolver=myresolver"
+      - "traefik.port=3000"
+      - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal
-    ports:
-      - "3000:3000"
     depends_on:
       - invidious-db
     restart: unless-stopped

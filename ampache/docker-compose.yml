@@ -1,100 +1,53 @@
-version: '3'
+version: '3.3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
 
 services:
 
-  ampache:
-    image: ampache/ampache:latest
-    container_name: ampache
-    restart: unless-stopped
-    environment:
-      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-      - VIRTUAL_PORT=4000
-    expose:
-      - "80"
+  ampache-db:
+    image: mariadb
+    container_name: ampache-db
     volumes:
+      - ampache-db:/var/lib/mysql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_PASSWORD=mysql
+      - MYSQL_DATABASE=ampache
+      - MYSQL_USER=ampache
+    restart: unless-stopped
+
+  ampache-app:
+    image: ampache/ampache:latest
+    container_name: ampache-app
+    depends_on:
+      - ampache-db
+    volumes:
+      # - ./path/to/media/files:/media:ro
       - ./data/mysql:/var/lib/mysql
-      - ./conf/ampache:/var/www/config
-      - ./conf/apache:/etc/apache2/sites-enabled
-      - /media:/media
-    ports:
-      - "4000:80"
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ampache-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.ampache-app.entrypoints=websecure"
+      - "traefik.http.routers.ampache-app.tls.certresolver=myresolver"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+      - internal
+    restart: unless-stopped
 
-networks:
-  default:
-    external:
-      name: nginx-proxy
-
-# version: '3.7'
-
-# services:
-#   ampache-app:
-#     image: ampache/ampache:develop
-#     container_name: ampache-app
-#     volumes:
-#       - ./path/to/media/files:/media:ro
-#       - ./db_persist:/var/lib/mysql
-#       - /etc/timezone:/etc/timezone:ro
-#       - /etc/localtime:/etc/localtime:ro
-#     environment:
-#       - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-#       - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-#       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-#       - VIRTUAL_PORT=4000
-#     expose:
-#       - "80"
-#     ports:
-#       - "4000:80"
-
-# networks:
-#   default:
-#     external:
-#       name: nginx-proxy
-
-# version: '3.7'
-
-# services:
-
-#   # ampache-db:
-#   #   image: mariadb
-#   #   container_name: ampache-db
-#   #   volumes:
-#   #     - ampache-db:/var/lib/mysql
-#   #     - /etc/timezone:/etc/timezone:ro
-#   #     - /etc/localtime:/etc/localtime:ro
-#   #   environment:
-#   #     - MYSQL_ROOT_PASSWORD=secret
-#   #     - MYSQL_PASSWORD=mysql
-#   #     - MYSQL_DATABASE=ampache
-#   #     - MYSQL_USER=ampache
-#   #   restart: unless-stopped
-
-#   ampache-app:
-#     image: ampache/ampache:latest
-#     container_name: ampache-app
-#     # depends_on:
-#     #   - ampache-db
-#     volumes:
-#       # - ./path/to/media/files:/media:ro
-#       - ./data/mysql:/var/lib/mysql
-#       - /etc/timezone:/etc/timezone:ro
-#       - /etc/localtime:/etc/localtime:ro
-#     expose:
-#       - 80
-#     environment:
-#       - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-#       - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-#       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-#       - VIRTUAL_PORT=4000
-#     ports:
-#       - "4000:80"
-
-# # volumes:
-# #   ampache:
-# #   ampache-db:
-
-# networks:
-#   default:
-#     external:
-#       name: nginx-proxy
+volumes:
+  ampache:
+  ampache-db:

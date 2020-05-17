@@ -1,4 +1,11 @@
-version: '3'
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
 
 services:
 
@@ -12,10 +19,25 @@ services:
       - MYSQL_USER=wallabag
     volumes:
       - /opt/wallabag/data:/var/lib/mysql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    restart: unless-stopped
 
   wallabag-redis:
     image: redis:alpine
     container_name: wallabag-redis
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    restart: unless-stopped
 
   wallabag-app:
     image: wallabag/wallabag:latest
@@ -38,18 +60,16 @@ services:
       - SYMFONY__ENV__FROM_EMAIL=${LETSENCRYPT_EMAIL}
       - SYMFONY__ENV__DOMAIN_NAME=https://${SUBDOMAIN}.${DOMAIN}
       - SYMFONY__ENV__REDIS_HOST=wallabag-redis
-      - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_HOST=${SUBDOMAIN}.${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-      - VIRTUAL_PORT=6000
-    ports:
-      - "6000:80"
-    expose:
-      - "80"
     volumes:
       - /opt/wallabag/images:/var/www/wallabag/web/assets/images
-
-networks:
-  default:
-    external:
-      name: nginx-proxy
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wallabag-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.wallabag-app.entrypoints=websecure"
+      - "traefik.http.routers.wallabag-app.tls.certresolver=myresolver"
+    networks:
+      - proxy
+      - internal
+    restart: unless-stopped
