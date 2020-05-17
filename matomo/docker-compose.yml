@@ -43,6 +43,7 @@ services:
       - "traefik.http.routers.matomo-app.entrypoints=websecure"
       - "traefik.http.routers.matomo-app.tls.certresolver=myresolver"
       - "traefik.docker.network=proxy"
+      - "traefik.port=80"
     networks:
       - proxy
       - internal
