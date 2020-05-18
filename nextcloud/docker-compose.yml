@@ -1,3 +1,81 @@
+# version: "3.3"
+
+# networks:
+#   proxy:
+#     external: 
+#       name: proxy
+#   internal:
+#     internal: true
+
+# services:
+
+#   nextcloud-db:
+#     image: mariadb
+#     container_name: nextcloud-db
+#     volumes:
+#       - nextcloud-db:/var/lib/mysql
+      # - /etc/timezone:/etc/timezone:ro
+      # - /etc/localtime:/etc/localtime:ro
+#     environment:
+#       - MYSQL_ROOT_PASSWORD=secret
+#       - MYSQL_PASSWORD=mysql
+#       - MYSQL_DATABASE=nextcloud
+#       - MYSQL_USER=nextcloud
+#     labels:
+#       - "traefik.enable=false"
+#     networks:
+#       - internal
+#     restart: unless-stopped
+
+#   nextcloud-redis:
+#     image: redis:alpine
+#     container_name: nextcloud-redis
+#     volumes:
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     labels:
+#       - "traefik.enable=false"
+#     networks:
+#       - internal
+#     restart: unless-stopped
+
+#   nextcloud-app:
+#     image: nextcloud:latest
+#     container_name: nextcloud-app
+#     depends_on:
+#       - nextcloud-db
+#       - nextcloud-redis
+#     volumes:
+#       - nextcloud:/var/www/html
+#       - ./app/config:${CONFIG_STORAGE_PATH}
+#       - ./app/custom_apps:${APPS_STORAGE_PATH}
+#       - ./app/data:${DATA_STORAGE_PATH}
+#       - ./app/themes:${THEME_STORAGE_PATH}
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     environment:
+#       - MYSQL_HOST=nextcloud-db:3306
+#       - MYSQL_DATABASE=nextcloud
+#       - MYSQL_USER=nextcloud
+#       - MYSQL_PASSWORD=mysql
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.nextcloud-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+#       - "traefik.http.routers.nextcloud-app.entrypoints=websecure"
+#       - "traefik.http.routers.nextcloud-app.tls.certresolver=myresolver"
+#       - "traefik.docker.network=proxy"
+#       - "traefik.port=80"
+#     networks:
+#       - proxy
+#       - internal
+#     restart: unless-stopped
+
+# volumes:
+#   nextcloud:
+#   nextcloud-db:
+#   nextcloud-redis:
+
+
 version: "3.3"
 
 networks:
@@ -6,68 +84,124 @@ networks:
       name: proxy
   internal:
     internal: true
-
+ 
 services:
-
-  nextcloud-db:
-    image: mariadb
-    container_name: nextcloud-db
+  nextcloud-mariadb:
+    container_name: nextcloud-mariadb
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=mysql
     volumes:
       - nextcloud-db:/var/lib/mysql
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
+  nextcloud-fpm:
+    container_name: nextcloud-fpm
+    image: nextcloud:fpm-alpine
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - nextcloud-mariadb
+    networks:
+      - internal
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_HOST=nextcloud-db:3306
       - MYSQL_PASSWORD=mysql
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
+    volumes:
+      - nextcloud:/var/www/html
+      - ./apps:/var/www/html/custom_apps
+      - ./config:/var/www/html/config
+      - ./data:/var/www/html/data
+      - ./logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
+    restart: unless-stopped
+
+  nextcloud-nginx:
+    container_name: nextcloud-nginx
+    image: nginx:latest
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - nextcloud-fpm
     networks:
       - internal
+      - proxy
+    volumes:
+      - nextcloud:/var/www/html:ro
+      - ./apps:/var/www/html/custom_apps:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
+      - ./logs/nginx:/var/log/nginx
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.nextcloud-ngnix.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud-nginx.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.nc-rep.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav"
+      - "traefik.http.middlewares.nc-rep.redirectregex.replacement=https://$$1/remote.php/dav/"
+      - "traefik.http.middlewares.nc-rep.redirectregex.permanent=true"
+      - "traefik.http.middlewares.nc-header.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.routers.nextcloud-nginx.middlewares=nc-rep,nc-header"
+      - "traefik.http.routers.nextcloud-nginx.service=nextcloud-nginx"
+      - "traefik.http.services.nextcloud-nginx.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
     restart: unless-stopped
 
   nextcloud-redis:
-    image: redis:alpine
     container_name: nextcloud-redis
+    image: redis:alpine
+    security_opt:
+      - no-new-privileges:true
+    networks: 
+      - internal
     volumes:
+      - ./nextcloud-redis:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    networks:
-      - internal
     restart: unless-stopped
 
-  nextcloud-app:
-    image: nextcloud:latest
-    container_name: nextcloud-app
+  nextcloud-cron:
+    container_name: nextcloud-cron
+    image: nextcloud:fpm-alpine
+    security_opt:
+      - no-new-privileges:true
     depends_on:
-      - nextcloud-db
+      - nextcloud-mariadb
+      - nextcloud-fpm
       - nextcloud-redis
+    entrypoint: /cron.sh
+    networks:
+      - internal
     volumes:
       - nextcloud:/var/www/html
-      - ./app/config:${CONFIG_STORAGE_PATH}
-      - ./app/custom_apps:${APPS_STORAGE_PATH}
-      - ./app/data:${DATA_STORAGE_PATH}
-      - ./app/themes:${THEME_STORAGE_PATH}
+      - ./apps:/var/www/html/custom_apps
+      - ./config:/var/www/html/config
+      - ./data:/var/www/html/data
+      - ./logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-    environment:
-      - MYSQL_HOST=nextcloud-db:3306
-      - MYSQL_DATABASE=nextcloud
-      - MYSQL_USER=nextcloud
-      - MYSQL_PASSWORD=mysql
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.nextcloud-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.nextcloud-app.entrypoints=websecure"
-      - "traefik.http.routers.nextcloud-app.tls.certresolver=myresolver"
-      - "traefik.docker.network=proxy"
-      - "traefik.port=80"
-    networks:
-      - proxy
-      - internal
+      - "traefik.enable=false"
     restart: unless-stopped
 
 volumes:
