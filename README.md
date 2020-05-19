@@ -33,6 +33,6 @@ portainer.YOUR_DOMAIN.TLD
 | Wallabag | WIP | Backend works, no front-end yet |
 | Matrix Synapse | WIP | Untested
 | Matomo | WIP | Not serving page |
-| Gitea | WIP |  Not serving page |
+| Gitea | Done |   |
 | Jitsi Meet | WIP | Untested |
 | Invidious | WIP | Not serving page |

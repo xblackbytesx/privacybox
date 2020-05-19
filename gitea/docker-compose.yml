@@ -10,57 +10,56 @@ networks:
 services:
 
   gitea-db:
-    image: mariadb
-    container_name: gitea-db
-    volumes:
-      - gitea-db:/var/lib/mysql
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+    image: mariadb:10
+    restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=secret
-      - MYSQL_PASSWORD=mysql
       - MYSQL_DATABASE=gitea
       - MYSQL_USER=gitea
+      - MYSQL_PASSWORD=secret
     labels:
       - "traefik.enable=false"
     networks:
       - internal
-    restart: unless-stopped
+    volumes:
+      - ./giteadb/:/var/lib/mysql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
 
   gitea-app:
-    image: gitea/gitea:latest
-    container_name: gitea-app
+    image: gitea/gitea:1.8.3
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       - gitea-db
     environment:
       - ROOT_URL=https://${SUBDOMAIN}.${DOMAIN}
       - DOMAIN=${SUBDOMAIN}.${DOMAIN}
-      - PROTOCOL=http
+      - PROTOCOL=https
       - USER_UID=1000
       - USER_GID=1000
       - DB_TYPE=mysql
       - DB_HOST=gitea-db:3306
       - DB_NAME=gitea
       - DB_USER=gitea
-      - DB_PASSWD=mysql
-    volumes:
-      - ./gitea:/data
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - DB_PASSWD=secret
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.gitea-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.gitea-app.entrypoints=websecure"
       - "traefik.http.routers.gitea-app.tls.certresolver=myresolver"
-      - "traefik.port=3000"
+      - "traefik.http.services.gitea-app.loadbalancer.server.port=3000"
+      # - "traefik.port=3000"
       - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal
     ports:
       - "222:22"
-    restart: unless-stopped
+    restart: always
 
 volumes:
   gitea:
-  gitea-db:
+  giteadb:
