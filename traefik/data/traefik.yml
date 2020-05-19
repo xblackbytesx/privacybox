@@ -22,7 +22,7 @@ providers:
 certificatesResolvers:
   http:
     acme:
-      email: ${LETSENCRYPT_EMAIL}
+      email: {{env "LETSENCRYPT_EMAIL"}}
       storage: acme.json
       httpChallenge:
         entryPoint: http

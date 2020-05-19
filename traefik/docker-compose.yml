@@ -29,8 +29,8 @@ services:
       - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
       - "traefik.http.routers.traefik-secure.tls=true"
       - "traefik.http.routers.traefik-secure.tls.certresolver=http"
-      # - "traefik.http.routers.traefik-secure.service=api@internal"
-      - "traefik.http.routers.traefik-secure.service=traefik"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+      # - "traefik.http.routers.traefik-secure.service=traefik"
       - "traefik.http.services.traefik.loadbalancer.server.port=8080"
       - "traefik.docker.network=proxy"
       
