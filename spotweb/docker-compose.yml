@@ -12,6 +12,8 @@ services:
   spotweb-mariadb:
     container_name: spotweb-mariadb
     image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
     environment:
@@ -30,6 +32,8 @@ services:
   spotweb-app:
     image: jgeusebroek/spotweb:latest
     container_name: spotweb-app
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       - spotweb-mariadb
     volumes:
@@ -42,10 +46,17 @@ services:
       - SPOTWEB_DB_PORT=3306
       - SPOTWEB_CRON_RETRIEVE=*/15 * * * *
     labels:
+    labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.spotweb.entrypoints=http"
       - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.spotweb.entrypoints=websecure"
-      - "traefik.http.routers.spotweb.tls.certresolver=myresolver"
+      - "traefik.http.routers.spotweb.middlewares=https-redirect@file"
+      - "traefik.http.routers.spotweb-secure.entrypoints=https"
+      - "traefik.http.routers.spotweb-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.spotweb-secure.tls=true"
+      - "traefik.http.routers.spotweb-secure.tls.certresolver=http"
+      - "traefik.http.routers.spotweb-secure.service=spotweb"
+      - "traefik.http.services.spotweb.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"
     networks:
       - proxy

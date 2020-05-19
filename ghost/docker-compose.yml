@@ -34,11 +34,16 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.ghost.entrypoints=http"
       - "traefik.http.routers.ghost.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.ghost.entrypoints=websecure"
-      - "traefik.http.routers.ghost.tls.certresolver=myresolver"
+      - "traefik.http.routers.ghost.middlewares=https-redirect@file"
+      - "traefik.http.routers.ghost-secure.entrypoints=https"
+      - "traefik.http.routers.ghost-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.ghost-secure.tls=true"
+      - "traefik.http.routers.ghost-secure.tls.certresolver=http"
+      - "traefik.http.routers.ghost-secure.service=ghost"
+      - "traefik.http.services.ghost.loadbalancer.server.port=2368"
       - "traefik.docker.network=proxy"
-      - "traefik.port=2368"
     environment:
       - url=https://${SUBDOMAIN}.${DOMAIN}
       - database__client=mysql

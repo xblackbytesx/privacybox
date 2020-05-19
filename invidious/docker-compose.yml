@@ -11,6 +11,8 @@ services:
 
   invidious-db:
     image: postgres:10
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - postgresdata:/var/lib/postgresql/data
     labels:
@@ -23,14 +25,21 @@ services:
   invidious-app:
     image: flourgaz/invidious
     container_name: invidious-app
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - ./config.yml:/invidious-app/config/config.yml
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.invidious-app.entrypoints=http"
       - "traefik.http.routers.invidious-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.invidious-app.entrypoints=websecure"
-      - "traefik.http.routers.invidious-app.tls.certresolver=myresolver"
-      - "traefik.port=3000"
+      - "traefik.http.routers.invidious-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.invidious-app-secure.entrypoints=https"
+      - "traefik.http.routers.invidious-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.invidious-app-secure.tls=true"
+      - "traefik.http.routers.invidious-app-secure.tls.certresolver=http"
+      - "traefik.http.routers.invidious-app-secure.service=invidious-app"
+      - "traefik.http.services.invidious-app.loadbalancer.server.port=3000"
       - "traefik.docker.network=proxy"
     networks:
       - proxy

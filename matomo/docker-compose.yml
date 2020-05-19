@@ -12,6 +12,8 @@ services:
   matomo-db:
     image: mariadb
     container_name: matomo-db
+    security_opt:
+      - no-new-privileges:true
     command: --max-allowed-packet=64MB
     restart: always
     volumes:
@@ -28,6 +30,8 @@ services:
   matomo-app:
     image: matomo:fpm-alpine
     container_name: matomo-app
+    security_opt:
+      - no-new-privileges:true
     restart: always
     depends_on:
       - matomo-db
@@ -39,11 +43,16 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.matomo-app.entrypoints=http"
       - "traefik.http.routers.matomo-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.matomo-app.entrypoints=websecure"
-      - "traefik.http.routers.matomo-app.tls.certresolver=myresolver"
+      - "traefik.http.routers.matomo-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.matomo-app-secure.entrypoints=https"
+      - "traefik.http.routers.matomo-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.matomo-app-secure.tls=true"
+      - "traefik.http.routers.matomo-app-secure.tls.certresolver=http"
+      - "traefik.http.routers.matomo-app-secure.service=matomo-app"
+      - "traefik.http.services.matomo-app.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"
-      - "traefik.port=80"
     networks:
       - proxy
       - internal

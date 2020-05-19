@@ -12,6 +12,8 @@ services:
   gitea-db:
     image: mariadb:10
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       - MYSQL_ROOT_PASSWORD=secret
       - MYSQL_DATABASE=gitea
@@ -28,6 +30,8 @@ services:
 
   gitea-app:
     image: gitea/gitea:1.8.3
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - ./gitea:/data
       - /etc/timezone:/etc/timezone:ro
@@ -47,11 +51,15 @@ services:
       - DB_PASSWD=secret
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.gitea-app.entrypoints=http"
       - "traefik.http.routers.gitea-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.gitea-app.entrypoints=websecure"
-      - "traefik.http.routers.gitea-app.tls.certresolver=myresolver"
+      - "traefik.http.routers.gitea-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.gitea-app-secure.entrypoints=https"
+      - "traefik.http.routers.gitea-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.gitea-app-secure.tls=true"
+      - "traefik.http.routers.gitea-app-secure.tls.certresolver=http"
+      - "traefik.http.routers.gitea-app-secure.service=gitea-app"
       - "traefik.http.services.gitea-app.loadbalancer.server.port=3000"
-      # - "traefik.port=3000"
       - "traefik.docker.network=proxy"
     networks:
       - proxy

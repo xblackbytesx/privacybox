@@ -1,9 +1,18 @@
-version: '3.3'
+version: "3.3"
+
+networks:
+  proxy:
+    external:
+      name: proxy
+  internal:
+    internal: true
 
 services:
 
   fireflyiii-db:
     image: postgres:10-alpine
+    security_opt:
+      - no-new-privileges:true
     environment:
       - POSTGRES_USER=firefly
       - POSTGRES_PASSWORD=secret_firefly_password
@@ -12,11 +21,23 @@ services:
 
   fireflyiii-app:
     image: jc5x/firefly-iii:latest
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - firefly_iii_export:/var/www/firefly-iii/storage/export
       - firefly_iii_upload:/var/www/firefly-iii/storage/upload
-    expose:
-      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fireflyiii-app.entrypoints=http"
+      - "traefik.http.routers.fireflyiii-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.fireflyiii-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.fireflyiii-app-secure.entrypoints=https"
+      - "traefik.http.routers.fireflyiii-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.fireflyiii-app-secure.tls=true"
+      - "traefik.http.routers.fireflyiii-app-secure.tls.certresolver=http"
+      - "traefik.http.routers.fireflyiii-app-secure.service=fireflyiii-app"
+      - "traefik.http.services.fireflyiii-app.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
     env_file: .env
     depends_on:
       - fireflyiii-db
@@ -25,8 +46,3 @@ volumes:
    firefly_iii_export:
    firefly_iii_upload:
    firefly_iii_db:
-
-networks:
-  default:
-    external:
-      name: nginx-proxy

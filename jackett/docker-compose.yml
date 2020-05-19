@@ -9,6 +9,8 @@ services:
   jackett:
     image: linuxserver/jackett
     container_name: jackett
+    security_opt:
+      - no-new-privileges:true
     environment:
       - PUID=1000
       - PGID=1000
@@ -20,10 +22,16 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.jackett.entrypoints=http"
       - "traefik.http.routers.jackett.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.jackett.entrypoints=websecure"
-      - "traefik.http.routers.jackett.tls.certresolver=myresolver"
-      - "traefik.port=9117"
+      - "traefik.http.routers.jackett.middlewares=https-redirect@file"
+      - "traefik.http.routers.jackett-secure.entrypoints=https"
+      - "traefik.http.routers.jackett-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.jackett-secure.tls=true"
+      - "traefik.http.routers.jackett-secure.tls.certresolver=http"
+      - "traefik.http.routers.jackett-secure.service=jackett"
+      - "traefik.http.services.jackett.loadbalancer.server.port=9117"
+      - "traefik.docker.network=proxy"
     networks:
       - proxy
     restart: unless-stopped

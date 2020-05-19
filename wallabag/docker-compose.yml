@@ -12,6 +12,8 @@ services:
   wallabag-db:
     image: mariadb
     container_name: wallabag-db
+    security_opt:
+      - no-new-privileges:true
     environment:
       - MYSQL_ROOT_PASSWORD=secret
       - MYSQL_PASSWORD=mysql
@@ -30,6 +32,8 @@ services:
   wallabag-redis:
     image: redis:alpine
     container_name: wallabag-redis
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -66,9 +70,16 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.wallabag-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.wallabag-app.entrypoints=websecure"
-      - "traefik.http.routers.wallabag-app.tls.certresolver=myresolver"
+      - "traefik.http.routers.wallabag.entrypoints=http"
+      - "traefik.http.routers.wallabag.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.wallabag.middlewares=https-redirect@file"
+      - "traefik.http.routers.wallabag-secure.entrypoints=https"
+      - "traefik.http.routers.wallabag-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.wallabag-secure.tls=true"
+      - "traefik.http.routers.wallabag-secure.tls.certresolver=http"
+      - "traefik.http.routers.wallabag-secure.service=wallabag"
+      - "traefik.http.services.wallabag.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal
