@@ -1,0 +1,85 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external:
+      name: proxy
+  internal:
+    internal: true
+
+services:
+
+  spotweb-mariadb:
+    container_name: spotweb-mariadb
+    image: mariadb:latest
+    networks:
+      - internal
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=spotweb
+      - MYSQL_USER=spotweb
+      - MYSQL_PASSWORD=secret
+    volumes:
+      - spotwebdb:/var/lib/mysql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
+  spotweb-app:
+    image: jgeusebroek/spotweb:latest
+    container_name: spotweb-app
+    depends_on:
+      - spotweb-mariadb
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Europe/Amsterdam
+      - SPOTWEB_DB_TYPE=pdo_mysql
+      - SPOTWEB_DB_HOST=spotweb-mariadb
+      - SPOTWEB_DB_PORT=3306
+      - SPOTWEB_CRON_RETRIEVE=*/15 * * * *
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.spotweb.entrypoints=websecure"
+      - "traefik.http.routers.spotweb.tls.certresolver=myresolver"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+      - internal
+    restart: always
+
+volumes:
+  spotwebdb:
+
+
+# version: "3.3"
+
+# networks:
+#   proxy:
+#     external:
+#       name: proxy
+
+# services:
+
+#   spotweb:
+#     image: erikdevries/spotweb:latest
+#     container_name: spotweb
+#     volumes:
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+#       - "traefik.http.routers.spotweb.entrypoints=websecure"
+#       - "traefik.http.routers.spotweb.tls.certresolver=myresolver"
+#       - "traefik.docker.network=proxy"
+#       - "traefik.port=80"
+#     networks:
+#       - proxy
+#     expose:
+#       - "80"
+#     restart: always
