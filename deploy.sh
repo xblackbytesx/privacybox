@@ -136,6 +136,7 @@ if [ "$confirmation" = "y" ]; then
 		cd ../
 
 		docker exec spotweb-app sed -i 's+= $nwsetting+= "https://spotweb.example.com"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
+		# docker exec spotweb-app su -l www-data -s /usr/bin/php /var/www/spotweb/retrieve.php >/dev/null 2>&1
 	fi
 
 	echo 'Cleaning up'
