@@ -36,3 +36,4 @@ portainer.YOUR_DOMAIN.TLD
 | Gitea | Done |   |
 | Jitsi Meet | WIP | Untested |
 | Invidious | WIP | Not serving page |
+| PiHole | Done |   |
