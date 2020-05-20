@@ -34,6 +34,7 @@ services:
     container_name: spotweb-app
     security_opt:
       - no-new-privileges:true
+    # command: sed -i 's+= $$nwsetting+= "https://beta-spotweb.dropdoos.nl"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
     depends_on:
       - spotweb-mariadb
     volumes:
@@ -45,7 +46,6 @@ services:
       - SPOTWEB_DB_HOST=spotweb-mariadb
       - SPOTWEB_DB_PORT=3306
       - SPOTWEB_CRON_RETRIEVE=*/15 * * * *
-    labels:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.spotweb.entrypoints=http"
@@ -65,32 +65,3 @@ services:
 
 volumes:
   spotwebdb:
-
-
-# version: "3.3"
-
-# networks:
-#   proxy:
-#     external:
-#       name: proxy
-
-# services:
-
-#   spotweb:
-#     image: erikdevries/spotweb:latest
-#     container_name: spotweb
-#     volumes:
-#       - /etc/timezone:/etc/timezone:ro
-#       - /etc/localtime:/etc/localtime:ro
-#     labels:
-#       - "traefik.enable=true"
-#       - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       - "traefik.http.routers.spotweb.entrypoints=websecure"
-#       - "traefik.http.routers.spotweb.tls.certresolver=myresolver"
-#       - "traefik.docker.network=proxy"
-#       - "traefik.port=80"
-#     networks:
-#       - proxy
-#     expose:
-#       - "80"
-#     restart: always

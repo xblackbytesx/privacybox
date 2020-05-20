@@ -24,7 +24,7 @@ portainer.YOUR_DOMAIN.TLD
 | App | Status | Notes |
 |---|---|---|
 | Nextcloud | WIP  |  No write access to data dir |
-| Spotweb | WIP | Static assets get served over HTTP |
+| Spotweb | Done | Ugly fix for crappy protocol detection on Spotweb part |
 | Jackett | Done |  |
 | Ghost | Done |   |
 | Wordpress | Done |   |

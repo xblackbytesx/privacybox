@@ -125,6 +125,19 @@ if [ "$confirmation" = "y" ]; then
 		cd ../
 	fi
 
+	if [ "$installSpotweb" = "y"]; then
+		echo "Fetching compose file"
+		mkdir ./spotweb
+		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/spotweb/docker-compose.yml" -o ./spotweb/docker-compose.yml
+
+		echo "Composing now"
+		cd ./spotweb
+		docker-compose up -d
+		cd ../
+
+		docker exec spotweb-app sed -i 's+= $nwsetting+= "https://spotweb.example.com"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
+	fi
+
 	echo 'Cleaning up'
 	sudo apt-get clean
 	sudo apt-get autoclean
