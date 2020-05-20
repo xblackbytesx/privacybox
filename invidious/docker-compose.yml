@@ -18,9 +18,46 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - proxy
       - internal
     restart: unless-stopped
+
+
+  # invidious-app:
+  #   image: omarroth/invidious
+  #   container_name: invidious-app
+  #   restart: unless-stopped
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   environment:
+  #     INVIDIOUS_CONFIG: |
+  #       channel_threads: 1
+  #       feed_threads: 1
+  #       db:
+  #         user: invidious
+  #         password: secret
+  #         host: invidious-db
+  #         port: 5432
+  #         dbname: invidious
+  #       full_refresh: false
+  #       https_only: true
+  #       domain: https://beta-videos.dropdoos.nl
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.invidious-app.entrypoints=http"
+  #     - "traefik.http.routers.invidious-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+  #     - "traefik.http.routers.invidious-app.middlewares=https-redirect@file"
+  #     - "traefik.http.routers.invidious-app-secure.entrypoints=https"
+  #     - "traefik.http.routers.invidious-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+  #     - "traefik.http.routers.invidious-app-secure.tls=true"
+  #     - "traefik.http.routers.invidious-app-secure.tls.certresolver=http"
+  #     - "traefik.http.routers.invidious-app-secure.service=invidious-app"
+  #     - "traefik.http.services.invidious-app.loadbalancer.server.port=3000"
+  #     - "traefik.docker.network=proxy"
+  #   networks:
+  #     - proxy
+  #     - internal
+  #   depends_on:
+  #     - invidious-db
 
   invidious-app:
     image: flourgaz/invidious

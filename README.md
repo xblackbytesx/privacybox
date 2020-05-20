@@ -32,7 +32,7 @@ portainer.YOUR_DOMAIN.TLD
 | Portainer | Done |   |
 | Wallabag | WIP | Backend works, no front-end yet |
 | Matrix Synapse | WIP | Untested
-| Matomo | WIP | Not serving page |
+| Matomo | Done |   |
 | Gitea | Done |   |
 | Jitsi Meet | WIP | Untested |
 | Invidious | WIP | Not serving page |

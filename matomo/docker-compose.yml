@@ -25,7 +25,9 @@ services:
     networks:
       - internal
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_PASSWORD=secret
+      - MYSQL_DATABASE=matomo
+      - MYSQL_USER=matomo
 
   matomo-app:
     image: matomo:fpm-alpine
@@ -36,28 +38,45 @@ services:
     depends_on:
       - matomo-db
     volumes:
-#      - ./config:/var/www/html/config:rw
-#      - ./logs:/var/www/html/logs
+      # - ./config:/var/www/html/config:rw
+      # - ./logs:/var/www/html/logs
       - matomo-app:/var/www/html
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    environment:
+      - MATOMO_DATABASE_HOST=matomo-db
+      - MATOMO_DATABASE_ADAPTER=mysql
+      - MATOMO_DATABASE_TABLES_PREFIX=matomo_
+      - MATOMO_DATABASE_USERNAME=matomo
+      - MATOMO_DATABASE_PASSWORD=secret
+      - MATOMO_DATABASE_DBNAME=matomo
+
+  matomo-nginx:
+    image: nginx:alpine
+    container_name: matomo-nginx
+    restart: always
+    volumes:
+      - matomo-app:/var/www/html:ro
+      - ./matomo.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.matomo-app.entrypoints=http"
-      - "traefik.http.routers.matomo-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.matomo-app.middlewares=https-redirect@file"
-      - "traefik.http.routers.matomo-app-secure.entrypoints=https"
-      - "traefik.http.routers.matomo-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.matomo-app-secure.tls=true"
-      - "traefik.http.routers.matomo-app-secure.tls.certresolver=http"
-      - "traefik.http.routers.matomo-app-secure.service=matomo-app"
-      - "traefik.http.services.matomo-app.loadbalancer.server.port=80"
+      - "traefik.http.routers.matomo-nginx.entrypoints=http"
+      - "traefik.http.routers.matomo-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.matomo-nginx.middlewares=https-redirect@file"
+      - "traefik.http.routers.matomo-nginx-secure.entrypoints=https"
+      - "traefik.http.routers.matomo-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.matomo-nginx-secure.tls=true"
+      - "traefik.http.routers.matomo-nginx-secure.tls.certresolver=http"
+      - "traefik.http.routers.matomo-nginx-secure.service=matomo-nginx"
+      - "traefik.http.services.matomo-nginx.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal
-    environment:
-      - MATOMO_DATABASE_HOST=matomo-db
 
 volumes:
   matomo-db:
