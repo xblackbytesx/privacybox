@@ -18,6 +18,7 @@ services:
       - POSTGRES_PASSWORD=secret_firefly_password
     volumes:
       - firefly_iii_db:/var/lib/postgresql/data
+    restart: unless-stopped
 
   fireflyiii-app:
     image: jc5x/firefly-iii:latest
@@ -41,6 +42,7 @@ services:
     env_file: .env
     depends_on:
       - fireflyiii-db
+    restart: unless-stopped
 
 volumes:
    firefly_iii_export:

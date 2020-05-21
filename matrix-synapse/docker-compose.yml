@@ -54,3 +54,4 @@ services:
       - ./schemas:/var/lib/postgresql/data
     networks:
       - internal
+    restart: unless-stopped
