@@ -8,7 +8,7 @@ networks:
 services:
 
   syncthing:
-    image: syncthing:latest
+    image: syncthing/syncthing:latest
     security_opt:
       - no-new-privileges:true
     volumes:
