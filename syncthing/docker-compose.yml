@@ -1,0 +1,37 @@
+version: '3.3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+services:
+
+  syncthing:
+    image: syncthing:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./syncthing:/var/syncthing
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.syncthing.entrypoints=http"
+      - "traefik.http.routers.syncthing.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.syncthing.middlewares=https-redirect@file"
+      - "traefik.http.routers.syncthing-secure.entrypoints=https"
+      - "traefik.http.routers.syncthing-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.syncthing-secure.tls=true"
+      - "traefik.http.routers.syncthing-secure.tls.certresolver=http"
+      - "traefik.http.routers.syncthing-secure.service=syncthing"
+      - "traefik.http.services.syncthing.loadbalancer.server.port=8384"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+    ports:
+      - "22000:22000"
+    restart: unless-stopped
+
+volumes:
+  syncthing:
