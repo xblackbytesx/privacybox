@@ -61,7 +61,7 @@ services:
     networks:
       - proxy
       - internal
-    restart: always
+    restart: unless-stopped
 
 volumes:
   spotwebdb:

@@ -28,4 +28,4 @@ services:
       - "traefik.docker.network=proxy"
     networks:
       - proxy
-    restart: always
+    restart: unless-stopped

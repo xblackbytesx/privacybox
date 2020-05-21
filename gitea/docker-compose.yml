@@ -11,7 +11,7 @@ services:
 
   gitea-db:
     image: mariadb:10
-    restart: always
+    restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     environment:
@@ -66,7 +66,7 @@ services:
       - internal
     ports:
       - "222:22"
-    restart: always
+    restart: unless-stopped
 
 volumes:
   gitea:
