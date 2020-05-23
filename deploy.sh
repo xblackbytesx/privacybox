@@ -11,6 +11,8 @@ read confirmation
 
 if [ "$confirmation" = "y" ]; then
 
+	export $(grep -v '^#' .env | xargs -d '\n')
+
 	echo -n "Would you like to install all available apps? [y/n]: "
 	read installAll
 

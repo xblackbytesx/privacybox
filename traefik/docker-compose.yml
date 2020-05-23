@@ -12,6 +12,10 @@ services:
     ports:
       - 80:80
       - 443:443
+    # Example for DNS challenge if so desired 
+    # environment:
+    #   - TRANSIP_ACCOUNT_NAME=${TRANSIP_ACCOUNT_NAME}
+    #   - TRANSIP_PRIVATE_KEY_PATH=transip.key
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro

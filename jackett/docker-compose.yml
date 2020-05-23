@@ -16,8 +16,8 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - ./app/config:/config
-      - ./app/downloads:/downloads
+      - ${STORAGE_ROOT}/docker/jackett/config:/config
+      - ${STORAGE_ROOT}/docker/jackett/downloads:/downloads
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
@@ -32,6 +32,8 @@ services:
       - "traefik.http.routers.jackett-secure.service=jackett"
       - "traefik.http.services.jackett.loadbalancer.server.port=9117"
       - "traefik.docker.network=proxy"
+    # ports:
+    #   - 9117
     networks:
       - proxy
     restart: unless-stopped

@@ -26,3 +26,11 @@ certificatesResolvers:
       storage: acme.json
       httpChallenge:
         entryPoint: http
+  # Example for DNS challenge if so desired 
+  # http:
+  #   acme:
+  #     email: {{env "LETSENCRYPT_EMAIL"}}
+  #     storage: acme.json
+  #     dnsChallenge:
+  #       provider: transip
+  #       delayBeforeCheck: 0
