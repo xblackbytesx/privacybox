@@ -14,7 +14,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
+      - TZ=Europe/Amsterdam
     volumes:
       - ${STORAGE_ROOT}/docker/jackett/config:/config
       - ${STORAGE_ROOT}/docker/jackett/downloads:/downloads
