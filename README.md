@@ -37,3 +37,22 @@ portainer.YOUR_DOMAIN.TLD
 | Jitsi Meet | WIP | Untested |
 | Invidious | WIP | Not serving page |
 | PiHole | Done |   |
+| Sonarr | Done |   |
+| Radarr | Done |   |
+| Transmission | Done |   |
+
+## LetsEncrypt ACME support out of the box!
+All of the above listed apps come equipped with the ability to request a valid LetsEncrypt Certificate on the fly. There are two ACME challenge types baked into this configuration: TLS and DNS challenge.
+
+The goal of this project is for the end-user to simply configure a few environment variables and be granted security out of the box. However at this point some minimal and manual user configuration is still required to take advantage of this feature. In the near future most of the requirements for the TLS challenge will be fully cofigurable through a centralized `.env` file.
+
+## TODO:
+- Centralized storage of configurations and databases.
+- Come up with proper backup strategy for container data.
+- Centralized `.env` configuration in one way or shape.
+- Lots more..
+
+## NOTE: This is a Work in Progress
+I started this project as a public project from it's first few lines of code. I do this mainly to force myself to think about secrets handling from the start rather than having it be an afterhought. Developing this way however does come with the caveat of having my sometimes embarrasing mistakes out there in public. Please feel free to point out the flaws in my configuration as I am also quite new to a setup like this.
+
+Also feel free to use this setup for your own purposes, just know that I'm constantly updating, refactoring and fixing things in this early stage of the project. Bear with me, this will be stable and awesome at some point in the near future \m/
