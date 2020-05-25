@@ -11,7 +11,7 @@ services:
 
   spotweb-mariadb:
     container_name: "spotweb-mariadb"
-    image: "mariadb:latest"
+    image: "mariadb"
     security_opt:
       - no-new-privileges:true
     networks:
@@ -23,7 +23,6 @@ services:
       - MYSQL_PASSWORD=secret
     volumes:
       - spotwebdb:/var/lib/mysql
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -38,7 +37,6 @@ services:
     depends_on:
       - spotweb-mariadb
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=Europe/Amsterdam

@@ -21,7 +21,6 @@ services:
       - MYSQL_USER=wallabag
     volumes:
       - /opt/wallabag/data:/var/lib/mysql
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -35,7 +34,6 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -66,7 +64,6 @@ services:
       - SYMFONY__ENV__REDIS_HOST=wallabag-redis
     volumes:
       - /opt/wallabag/images:/var/www/wallabag/web/assets/images
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

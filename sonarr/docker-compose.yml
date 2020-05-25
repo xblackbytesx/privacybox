@@ -21,7 +21,6 @@ services:
       - ${STORAGE_ROOT}/docker/sonarr/config:/config
       - ${STORAGE_ROOT}/video/Series:/tv
       - ${STORAGE_ROOT}/docker/transmission/downloads:/downloads
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

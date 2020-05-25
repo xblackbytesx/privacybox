@@ -18,7 +18,6 @@ services:
     volumes:
       - ${STORAGE_ROOT}/docker/nzbget/config:/config
       - ${STORAGE_ROOT}/docker/nzbget/downloads:/downloads
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

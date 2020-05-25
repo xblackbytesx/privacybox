@@ -18,7 +18,6 @@ services:
     volumes:
       - ${STORAGE_ROOT}/docker/jackett/config:/config
       - ${STORAGE_ROOT}/docker/jackett/downloads:/downloads
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

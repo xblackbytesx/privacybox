@@ -11,7 +11,7 @@ services:
 
   mastodon-db:
     container_name: "mastodon-db"
-    image: "postgres:9.6-alpine"
+    image: "postgres:10-alpine"
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -27,7 +27,7 @@ services:
 
   mastodon-redis:
     container_name: "mastodon-redis"
-    image: "redis:6.0-alpine"
+    image: "redis:alpine"
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped

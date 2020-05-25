@@ -11,7 +11,7 @@ services:
 
   invidious-db:
     container_name: "invidious-db"
-    image: "postgres:10"
+    image: "postgres:10-alpine"
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -67,6 +67,7 @@ services:
       - no-new-privileges:true
     volumes:
       - ./config.yml:/invidious-app/config/config.yml
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.invidious-app.entrypoints=http"

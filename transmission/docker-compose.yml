@@ -20,7 +20,6 @@ services:
       - ${STORAGE_ROOT}/docker/transmission/config:/config
       - ${STORAGE_ROOT}/docker/transmission/downloads:/downloads
       - ${STORAGE_ROOT}/docker/transmission/watch:/watch
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

@@ -10,7 +10,7 @@ networks:
 services:
   nextcloud-mariadb:
     container_name: "nextcloud-mariadb"
-    image: "mariadb:latest"
+    image: "mariadb"
     security_opt:
       - no-new-privileges:true
     networks:
@@ -23,7 +23,6 @@ services:
       - MYSQL_PASSWORD=mysql
     volumes:
       - nextcloud-db:/var/lib/mysql
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -49,7 +48,6 @@ services:
       - ./config:/var/www/html/config
       - ./data:/var/www/html/data
       - ./logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -70,7 +68,6 @@ services:
       - ./apps:/var/www/html/custom_apps:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
       - ./logs/nginx:/var/log/nginx
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
@@ -100,7 +97,6 @@ services:
       - internal
     volumes:
       - ./nextcloud-redis:/data
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -124,7 +120,6 @@ services:
       - ./config:/var/www/html/config
       - ./data:/var/www/html/data
       - ./logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"

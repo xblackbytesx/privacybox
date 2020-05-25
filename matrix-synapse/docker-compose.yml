@@ -52,6 +52,7 @@ services:
     volumes:
       # You may store the database tables in a local folder..
       - ./schemas:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
     restart: unless-stopped

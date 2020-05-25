@@ -10,8 +10,8 @@ networks:
 services:
 
   fireflyiii-db:
-    image: "postgres:10-alpine"
     container_name: "fireflyiii-db"
+    image: "postgres:10-alpine"
     security_opt:
       - no-new-privileges:true
     environment:
@@ -19,6 +19,7 @@ services:
       - POSTGRES_PASSWORD=secret_firefly_password
     volumes:
       - firefly_iii_db:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
   fireflyiii-app:
@@ -29,6 +30,7 @@ services:
     volumes:
       - firefly_iii_export:/var/www/firefly-iii/storage/export
       - firefly_iii_upload:/var/www/firefly-iii/storage/upload
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fireflyiii-app.entrypoints=http"

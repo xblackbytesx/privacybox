@@ -20,6 +20,7 @@ services:
     volumes:
       - './etc-pihole/:/etc/pihole/'
       - './etc-dnsmasq.d/:/etc/dnsmasq.d/'
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pihole.entrypoints=http"

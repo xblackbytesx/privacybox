@@ -11,7 +11,7 @@ services:
 
   gitea-db:
     container_name: "gitea-db"
-    image: "mariadb:10"
+    image: "mariadb"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -26,7 +26,6 @@ services:
       - internal
     volumes:
       - ./giteadb/:/var/lib/mysql
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
   gitea-app:
@@ -36,7 +35,6 @@ services:
       - no-new-privileges:true
     volumes:
       - ./gitea:/data
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - gitea-db

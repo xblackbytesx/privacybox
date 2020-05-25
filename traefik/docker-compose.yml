@@ -17,7 +17,6 @@ services:
       - TRANSIP_ACCOUNT_NAME=${TRANSIP_ACCOUNT_NAME}
       - TRANSIP_PRIVATE_KEY_PATH=transip.key
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./data/traefik.yml:/traefik.yml:ro
