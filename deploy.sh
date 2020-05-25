@@ -69,6 +69,7 @@ if [ "$confirmation" = "y" ]; then
 	docker network create proxy
 	mkdir -p traefik/data
 	touch traefik/data/acme.json
+	chmod 600 traefik/data/acme.json
 	curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/traefik/docker-compose.yml" -o ./nginx-proxy/docker-compose.yml
 	cd ./traefik
 	docker-compose up -d

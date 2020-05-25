@@ -1,8 +1,8 @@
 version: "2.1"
 services:
   transmission:
-    image: linuxserver/transmission
-    container_name: transmission
+    container_name: "transmission"
+    image: "linuxserver/transmission"
     environment:
       - PUID=1000
       - PGID=1000
@@ -24,7 +24,7 @@ services:
       - "traefik.http.routers.radarr-secure.entrypoints=https"
       - "traefik.http.routers.radarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.radarr-secure.tls=true"
-      - "traefik.http.routers.radarr-secure.tls.certresolver=http"
+      - "traefik.http.routers.radarr-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.radarr-secure.service=radarr"
       - "traefik.http.services.radarr.loadbalancer.server.port=9091"
       - "traefik.docker.network=proxy"

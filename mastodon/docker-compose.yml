@@ -10,10 +10,11 @@ networks:
 services:
 
   mastodon-db:
-    restart: unless-stopped
-    image: postgres:9.6-alpine
+    container_name: "mastodon-db"
+    image: "postgres:9.6-alpine"
     security_opt:
       - no-new-privileges:true
+    restart: unless-stopped
     shm_size: 256mb
     networks:
       - internal
@@ -25,10 +26,11 @@ services:
       - "traefik.enable=false"
 
   mastodon-redis:
-    restart: unless-stopped
-    image: redis:6.0-alpine
+    container_name: "mastodon-redis"
+    image: "redis:6.0-alpine"
     security_opt:
       - no-new-privileges:true
+    restart: unless-stopped
     networks:
       - internal
     healthcheck:
@@ -39,10 +41,11 @@ services:
       - "traefik.enable=false"
 
   # es:
-  #   restart: unless-stopped
-  #   image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.1.3
+  #   container_name: "mastodon-search"
+  #   image: "docker.elastic.co/elasticsearch/elasticsearch-oss:6.1.3"
   #   security_opt:
   #     - no-new-privileges:true
+  #   restart: unless-stopped
   #   environment:
   #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
   #   networks:
@@ -55,7 +58,8 @@ services:
   #     - "traefik.enable=false"  
 
   web:
-    image: tootsuite/mastodon
+    container_name: "mastodon-app"
+    image: "tootsuite/mastodon"
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -73,7 +77,7 @@ services:
       - "traefik.http.routers.mastodon-secure.entrypoints=https"
       - "traefik.http.routers.mastodon-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.mastodon-secure.tls=true"
-      - "traefik.http.routers.mastodon-secure.tls.certresolver=http"
+      - "traefik.http.routers.mastodon-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.mastodon-secure.service=mastodon"
       - "traefik.http.services.mastodon.loadbalancer.server.port=3000"
       - "traefik.docker.network=proxy"
@@ -87,7 +91,8 @@ services:
       - ./public/system:/mastodon/public/system
 
   streaming:
-    image: tootsuite/mastodon
+    container_name: "mastodon-streaming"
+    image: "tootsuite/mastodon"
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -106,7 +111,8 @@ services:
       - "traefik.enable=false"
 
   sidekiq:
-    image: tootsuite/mastodon
+    container_name: "mastodon-sidekiq"
+    image: "tootsuite/mastodon"
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped

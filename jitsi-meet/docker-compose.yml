@@ -10,7 +10,7 @@ networks:
 services:
     # Frontend
     web:
-        image: jitsi/web:latest
+        image: "jitsi/web:latest"
         restart: ${RESTART_POLICY}
         ports:
             - "${HTTP_PORT}:80"
@@ -58,7 +58,7 @@ services:
             - "traefik.http.routers.jitsi-web-secure.entrypoints=https"
             - "traefik.http.routers.jitsi-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
             - "traefik.http.routers.jitsi-web-secure.tls=true"
-            - "traefik.http.routers.jitsi-web-secure.tls.certresolver=http"
+            - "traefik.http.routers.jitsi-web-secure.tls.certresolver=le-dns"
             - "traefik.http.routers.jitsi-web-secure.service=jitsi-web"
             - "traefik.http.services.jitsi-web.loadbalancer.server.port=80"
             - "traefik.docker.network=proxy"

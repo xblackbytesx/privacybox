@@ -1,8 +1,10 @@
 version: "2.1"
+
 services:
+
   sonarr:
-    image: linuxserver/sonarr
-    container_name: sonarr
+    container_name: "sonarr"
+    image: "linuxserver/sonarr"
     security_opt:
       - no-new-privileges:true
     environment:
@@ -24,7 +26,7 @@ services:
       - "traefik.http.routers.sonarr-secure.entrypoints=https"
       - "traefik.http.routers.sonarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.sonarr-secure.tls=true"
-      - "traefik.http.routers.sonarr-secure.tls.certresolver=http"
+      - "traefik.http.routers.sonarr-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.sonarr-secure.service=sonarr"
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
       - "traefik.docker.network=proxy"

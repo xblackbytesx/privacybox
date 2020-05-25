@@ -8,7 +8,8 @@ networks:
 services:
 
   syncthing:
-    image: syncthing/syncthing:latest
+    container_name: "syncthing"
+    image: "syncthing/syncthing:latest"
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -23,7 +24,7 @@ services:
       - "traefik.http.routers.syncthing-secure.entrypoints=https"
       - "traefik.http.routers.syncthing-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.syncthing-secure.tls=true"
-      - "traefik.http.routers.syncthing-secure.tls.certresolver=http"
+      - "traefik.http.routers.syncthing-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.syncthing-secure.service=syncthing"
       - "traefik.http.services.syncthing.loadbalancer.server.port=8384"
       - "traefik.docker.network=proxy"

@@ -9,8 +9,8 @@ networks:
  
 services:
   nextcloud-mariadb:
-    container_name: nextcloud-mariadb
-    image: mariadb:latest
+    container_name: "nextcloud-mariadb"
+    image: "mariadb:latest"
     security_opt:
       - no-new-privileges:true
     networks:
@@ -30,8 +30,8 @@ services:
     restart: unless-stopped
 
   nextcloud-fpm:
-    container_name: nextcloud-fpm
-    image: nextcloud:fpm-alpine
+    container_name: "nextcloud-fpm"
+    image: "nextcloud:fpm-alpine"
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -56,8 +56,8 @@ services:
     restart: unless-stopped
 
   nextcloud-nginx:
-    container_name: nextcloud-nginx
-    image: nginx:latest
+    container_name: "nextcloud-nginx"
+    image: "nginx:latest"
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -85,15 +85,15 @@ services:
       - "traefik.http.routers.nextcloud-nginx-secure.entrypoints=https"
       - "traefik.http.routers.nextcloud-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.nextcloud-nginx-secure.tls=true"
-      - "traefik.http.routers.nextcloud-nginx-secure.tls.certresolver=http"
+      - "traefik.http.routers.nextcloud-nginx-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.nextcloud-nginx-secure.service=nextcloud-nginx"
       - "traefik.http.services.nextcloud-nginx.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"
     restart: unless-stopped
 
   nextcloud-redis:
-    container_name: nextcloud-redis
-    image: redis:alpine
+    container_name: "nextcloud-redis"
+    image: "redis:alpine"
     security_opt:
       - no-new-privileges:true
     networks: 
@@ -107,8 +107,8 @@ services:
     restart: unless-stopped
 
   nextcloud-cron:
-    container_name: nextcloud-cron
-    image: nextcloud:fpm-alpine
+    container_name: "nextcloud-cron"
+    image: "nextcloud:fpm-alpine"
     security_opt:
       - no-new-privileges:true
     depends_on:

@@ -10,7 +10,8 @@ networks:
 services:
 
   ghost-db:
-    image: mariadb
+    container_name: "ghost-db"
+    image: "mariadb"
     volumes:
       - ghostdb:/var/lib/mysql
       - /etc/timezone:/etc/timezone:ro
@@ -27,7 +28,8 @@ services:
     restart: unless-stopped
 
   ghost:
-    image: ghost:latest
+    container_name: "ghost-app"
+    image: "ghost:latest"
     volumes:
       - ghostdata:/var/lib/ghost/content
       - /etc/timezone:/etc/timezone:ro
@@ -40,7 +42,7 @@ services:
       - "traefik.http.routers.ghost-secure.entrypoints=https"
       - "traefik.http.routers.ghost-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.ghost-secure.tls=true"
-      - "traefik.http.routers.ghost-secure.tls.certresolver=http"
+      - "traefik.http.routers.ghost-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.ghost-secure.service=ghost"
       - "traefik.http.services.ghost.loadbalancer.server.port=2368"
       - "traefik.docker.network=proxy"

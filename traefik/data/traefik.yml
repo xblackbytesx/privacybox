@@ -1,8 +1,12 @@
+log:
+  level: info
+
 global:
   checkNewVersion: true
   sendAnonymousUsage: false
 
 api:
+  insecure: true
   dashboard: true
   debug: true
 
@@ -20,17 +24,16 @@ providers:
     filename: /config.yml
 
 certificatesResolvers:
-  http:
+  le-http:
     acme:
       email: {{env "LETSENCRYPT_EMAIL"}}
       storage: acme.json
       httpChallenge:
         entryPoint: http
-  # Example for DNS challenge if so desired 
-  # http:
-  #   acme:
-  #     email: {{env "LETSENCRYPT_EMAIL"}}
-  #     storage: acme.json
-  #     dnsChallenge:
-  #       provider: transip
-  #       delayBeforeCheck: 0
+  le-dns:
+    acme:
+      email: {{env "LETSENCRYPT_EMAIL"}}
+      storage: acme.json
+      dnsChallenge:
+        provider: transip
+        delayBeforeCheck: 0

@@ -2,12 +2,12 @@ version: '3'
 
 services:
   portainer:
-    image: portainer/portainer:latest
-    container_name: portainer
-    command: --no-analytics
-    restart: unless-stopped
+    container_name: "portainer"
+    image: "portainer/portainer:latest"
     security_opt:
       - no-new-privileges:true
+    command: --no-analytics
+    restart: unless-stopped
     networks:
       - proxy
     volumes:
@@ -22,7 +22,7 @@ services:
       - "traefik.http.routers.portainer-secure.entrypoints=https"
       - "traefik.http.routers.portainer-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.portainer-secure.tls=true"
-      - "traefik.http.routers.portainer-secure.tls.certresolver=http"
+      - "traefik.http.routers.portainer-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.portainer-secure.service=portainer"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
       - "traefik.docker.network=proxy"

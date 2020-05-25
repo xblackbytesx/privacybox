@@ -10,8 +10,8 @@ networks:
 services:
 
   spotweb-mariadb:
-    container_name: spotweb-mariadb
-    image: mariadb:latest
+    container_name: "spotweb-mariadb"
+    image: "mariadb:latest"
     security_opt:
       - no-new-privileges:true
     networks:
@@ -30,8 +30,8 @@ services:
     restart: unless-stopped
 
   spotweb-app:
-    image: jgeusebroek/spotweb:latest
-    container_name: spotweb-app
+    container_name: "spotweb-app"
+    image: "jgeusebroek/spotweb:latest"
     security_opt:
       - no-new-privileges:true
     # command: sed -i 's+= $$nwsetting+= "https://beta-spotweb.dropdoos.nl"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
@@ -54,7 +54,7 @@ services:
       - "traefik.http.routers.spotweb-secure.entrypoints=https"
       - "traefik.http.routers.spotweb-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.spotweb-secure.tls=true"
-      - "traefik.http.routers.spotweb-secure.tls.certresolver=http"
+      - "traefik.http.routers.spotweb-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.spotweb-secure.service=spotweb"
       - "traefik.http.services.spotweb.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"

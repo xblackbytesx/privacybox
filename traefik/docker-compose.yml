@@ -1,22 +1,23 @@
-version: '3'
+version: "3.3"
 
 services:
   traefik:
-    image: traefik:v2.0
-    container_name: traefik
+    container_name: "traefik"
+    image: "traefik:v2.2"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     networks:
       - proxy
     ports:
-      - 80:80
-      - 443:443
-    # Example for DNS challenge if so desired 
-    # environment:
-    #   - TRANSIP_ACCOUNT_NAME=${TRANSIP_ACCOUNT_NAME}
-    #   - TRANSIP_PRIVATE_KEY_PATH=transip.key
+      - "80:80"
+      - "443:443"
+    # DNS Challenge only 
+    environment:
+      - TRANSIP_ACCOUNT_NAME=${TRANSIP_ACCOUNT_NAME}
+      - TRANSIP_PRIVATE_KEY_PATH=transip.key
     volumes:
+      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./data/traefik.yml:/traefik.yml:ro
@@ -32,12 +33,11 @@ services:
       - "traefik.http.routers.traefik-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
       - "traefik.http.routers.traefik-secure.tls=true"
-      - "traefik.http.routers.traefik-secure.tls.certresolver=http"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.traefik-secure.service=api@internal"
-      # - "traefik.http.routers.traefik-secure.service=traefik"
       - "traefik.http.services.traefik.loadbalancer.server.port=8080"
       - "traefik.docker.network=proxy"
-      
+
 networks:
   proxy:
     external: true

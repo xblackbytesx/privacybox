@@ -8,15 +8,15 @@ networks:
 services:
 
   pihole:
-    container_name: pihole
-    image: pihole/pihole:latest
+    container_name: "pihole"
+    image: "pihole/pihole:latest"
     ports:
       - "53:53/tcp"
       - "53:53/udp"
       - "67:67/udp"
     environment:
-      TZ: 'Europe/Amsterdam'
-      WEBPASSWORD: 'secret'
+      - TZ=Europe/Amsterdam
+      - WEBPASSWORD=secret
     volumes:
       - './etc-pihole/:/etc/pihole/'
       - './etc-dnsmasq.d/:/etc/dnsmasq.d/'
@@ -28,7 +28,7 @@ services:
       - "traefik.http.routers.pihole-secure.entrypoints=https"
       - "traefik.http.routers.pihole-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.pihole-secure.tls=true"
-      - "traefik.http.routers.pihole-secure.tls.certresolver=http"
+      - "traefik.http.routers.pihole-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.pihole-secure.service=pihole"
       - "traefik.http.services.pihole.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"

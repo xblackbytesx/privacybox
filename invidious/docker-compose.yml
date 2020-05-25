@@ -10,7 +10,8 @@ networks:
 services:
 
   invidious-db:
-    image: postgres:10
+    container_name: "invidious-db"
+    image: "postgres:10"
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -23,11 +24,11 @@ services:
 
 
   # invidious-app:
-  #   image: omarroth/invidious
-  #   container_name: invidious-app
-  #   restart: unless-stopped
+  #   container_name: "invidious-app"
+  #   image: "omarroth/invidious"
   #   security_opt:
   #     - no-new-privileges:true
+  #   restart: unless-stopped
   #   environment:
   #     INVIDIOUS_CONFIG: |
   #       channel_threads: 1
@@ -49,7 +50,7 @@ services:
   #     - "traefik.http.routers.invidious-app-secure.entrypoints=https"
   #     - "traefik.http.routers.invidious-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
   #     - "traefik.http.routers.invidious-app-secure.tls=true"
-  #     - "traefik.http.routers.invidious-app-secure.tls.certresolver=http"
+  #     - "traefik.http.routers.invidious-app-secure.tls.certresolver=le-dns"
   #     - "traefik.http.routers.invidious-app-secure.service=invidious-app"
   #     - "traefik.http.services.invidious-app.loadbalancer.server.port=3000"
   #     - "traefik.docker.network=proxy"
@@ -60,8 +61,8 @@ services:
   #     - invidious-db
 
   invidious-app:
-    image: flourgaz/invidious
-    container_name: invidious-app
+    container_name: "invidious-app"
+    image: "flourgaz/invidious"
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -74,7 +75,7 @@ services:
       - "traefik.http.routers.invidious-app-secure.entrypoints=https"
       - "traefik.http.routers.invidious-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.invidious-app-secure.tls=true"
-      - "traefik.http.routers.invidious-app-secure.tls.certresolver=http"
+      - "traefik.http.routers.invidious-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.invidious-app-secure.service=invidious-app"
       - "traefik.http.services.invidious-app.loadbalancer.server.port=3000"
       - "traefik.docker.network=proxy"

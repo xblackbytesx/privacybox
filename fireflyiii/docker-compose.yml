@@ -10,7 +10,8 @@ networks:
 services:
 
   fireflyiii-db:
-    image: postgres:10-alpine
+    image: "postgres:10-alpine"
+    container_name: "fireflyiii-db"
     security_opt:
       - no-new-privileges:true
     environment:
@@ -21,7 +22,8 @@ services:
     restart: unless-stopped
 
   fireflyiii-app:
-    image: jc5x/firefly-iii:latest
+    image: "jc5x/firefly-iii:latest"
+    container_name" "fireflyiii-app"
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -35,7 +37,7 @@ services:
       - "traefik.http.routers.fireflyiii-app-secure.entrypoints=https"
       - "traefik.http.routers.fireflyiii-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.fireflyiii-app-secure.tls=true"
-      - "traefik.http.routers.fireflyiii-app-secure.tls.certresolver=http"
+      - "traefik.http.routers.fireflyiii-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.fireflyiii-app-secure.service=fireflyiii-app"
       - "traefik.http.services.fireflyiii-app.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"

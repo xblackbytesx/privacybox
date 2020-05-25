@@ -10,7 +10,8 @@ networks:
 services:
 
   gitea-db:
-    image: mariadb:10
+    container_name: "gitea-db"
+    image: "mariadb:10"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -29,7 +30,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
 
   gitea-app:
-    image: gitea/gitea:1.8.3
+    container_name: "gitea-app"
+    image: "gitea/gitea:1.8.3"
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -57,7 +59,7 @@ services:
       - "traefik.http.routers.gitea-app-secure.entrypoints=https"
       - "traefik.http.routers.gitea-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.gitea-app-secure.tls=true"
-      - "traefik.http.routers.gitea-app-secure.tls.certresolver=http"
+      - "traefik.http.routers.gitea-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.gitea-app-secure.service=gitea-app"
       - "traefik.http.services.gitea-app.loadbalancer.server.port=3000"
       - "traefik.docker.network=proxy"
