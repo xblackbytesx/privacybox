@@ -1,0 +1,31 @@
+version: "2.1"
+services:
+  nzbget:
+    image: linuxserver/nzbget
+    container_name: nzbget
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ${STORAGE_ROOT}/docker/nzbget/config:/config
+      - ${STORAGE_ROOT}/docker/nzbget/downloads:/downloads
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nzbget.entrypoints=http"
+      - "traefik.http.routers.nzbget.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.nzbget.middlewares=https-redirect@file"
+      - "traefik.http.routers.nzbget-secure.entrypoints=https"
+      - "traefik.http.routers.nzbget-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.nzbget-secure.tls=true"
+      - "traefik.http.routers.nzbget-secure.tls.certresolver=http"
+      - "traefik.http.routers.nzbget-secure.service=nzbget"
+      - "traefik.http.services.nzbget.loadbalancer.server.port=7878"
+      - "traefik.docker.network=proxy"
+    ports:
+      - "6789:6789"
+    restart: unless-stopped
