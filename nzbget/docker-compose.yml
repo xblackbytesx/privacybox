@@ -29,7 +29,7 @@ services:
       - "traefik.http.routers.nzbget-secure.tls=true"
       - "traefik.http.routers.nzbget-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.nzbget-secure.service=nzbget"
-      - "traefik.http.services.nzbget.loadbalancer.server.port=7878"
+      - "traefik.http.services.nzbget.loadbalancer.server.port=6789"
       - "traefik.docker.network=proxy"
     networks:
       - proxy
