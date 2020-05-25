@@ -23,6 +23,7 @@ services:
       - ./data/traefik.yml:/traefik.yml:ro
       - ./data/acme.json:/acme.json
       - ./data/config.yml:/config.yml:ro
+      - ./data/transip.key:/transip.key:ro # DNS Challenge only
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.entrypoints=http"
