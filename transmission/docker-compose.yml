@@ -23,15 +23,15 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.radarr.entrypoints=http"
-      - "traefik.http.routers.radarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.radarr.middlewares=https-redirect@file"
-      - "traefik.http.routers.radarr-secure.entrypoints=https"
-      - "traefik.http.routers.radarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.radarr-secure.tls=true"
-      - "traefik.http.routers.radarr-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.radarr-secure.service=radarr"
-      - "traefik.http.services.radarr.loadbalancer.server.port=9091"
+      - "traefik.http.routers.transmission.entrypoints=http"
+      - "traefik.http.routers.transmission.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.transmission.middlewares=https-redirect@file"
+      - "traefik.http.routers.transmission-secure.entrypoints=https"
+      - "traefik.http.routers.transmission-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.transmission-secure.tls=true"
+      - "traefik.http.routers.transmission-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.transmission-secure.service=transmission"
+      - "traefik.http.services.transmission.loadbalancer.server.port=9091"
       - "traefik.docker.network=proxy"
     networks:
       - proxy
