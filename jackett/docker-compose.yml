@@ -32,8 +32,6 @@ services:
       - "traefik.http.routers.jackett-secure.service=jackett"
       - "traefik.http.services.jackett.loadbalancer.server.port=9117"
       - "traefik.docker.network=proxy"
-    # ports:
-    #   - 9117
     networks:
       - proxy
     restart: unless-stopped

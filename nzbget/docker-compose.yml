@@ -1,4 +1,10 @@
 version: "2.1"
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
 services:
   nzbget:
     image: "linuxserver/nzbget"
@@ -26,6 +32,6 @@ services:
       - "traefik.http.routers.nzbget-secure.service=nzbget"
       - "traefik.http.services.nzbget.loadbalancer.server.port=7878"
       - "traefik.docker.network=proxy"
-    ports:
-      - "6789:6789"
+    networks:
+      - proxy
     restart: unless-stopped

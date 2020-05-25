@@ -1,4 +1,10 @@
 version: "2.1"
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
 services:
   transmission:
     container_name: "transmission"
@@ -28,8 +34,9 @@ services:
       - "traefik.http.routers.radarr-secure.service=radarr"
       - "traefik.http.services.radarr.loadbalancer.server.port=9091"
       - "traefik.docker.network=proxy"
+    networks:
+      - proxy
     ports:
-      # - 9091:9091
       - 51413:51413
       - 51413:51413/udp
     restart: unless-stopped

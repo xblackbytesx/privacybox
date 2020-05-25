@@ -1,5 +1,10 @@
 version: "2.1"
 
+networks:
+  proxy:
+    external:
+      name: proxy
+
 services:
 
   sonarr:
@@ -30,6 +35,6 @@ services:
       - "traefik.http.routers.sonarr-secure.service=sonarr"
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
       - "traefik.docker.network=proxy"
-    # ports:
-    #   - 8989:8989
+    networks:
+      - proxy
     restart: unless-stopped

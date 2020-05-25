@@ -1,5 +1,12 @@
 version: "2.1"
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
 services:
+
   radarr:
     container_name: "radarr"
     image: "linuxserver/radarr"
@@ -28,6 +35,6 @@ services:
       - "traefik.http.routers.radarr-secure.service=radarr"
       - "traefik.http.services.radarr.loadbalancer.server.port=7878"
       - "traefik.docker.network=proxy"
-    # ports:
-    #   - 7878:7878
+    networks:
+      - proxy
     restart: unless-stopped
