@@ -1,0 +1,35 @@
+version: "3.7"
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
+services:
+  node-red:
+    container_name: node-red
+    image: nodered/node-red:latest
+    restart: always
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ${STORAGE_ROOT}/docker/node-red/data:/data
+      # - ${STORAGE_ROOT}/Downloads/complete/tv:/watch/tv
+      # - ${STORAGE_ROOT}/Downloads/complete/tv-converted:/export
+      # - ./.ssh:/root.ssh
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nodered.entrypoints=http"
+      - "traefik.http.routers.nodered.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.nodered.middlewares=https-redirect@file"
+      - "traefik.http.routers.nodered-secure.entrypoints=https"
+      - "traefik.http.routers.nodered-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.nodered-secure.tls=true"
+      - "traefik.http.routers.nodered-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.nodered-secure.service=nodered"
+      - "traefik.http.services.nodered.loadbalancer.server.port=1880"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy

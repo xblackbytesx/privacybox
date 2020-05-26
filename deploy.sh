@@ -47,7 +47,7 @@ if [ "$confirmation" = "y" ]; then
 
 
 	echo "#################################"
-	echo "#### -INSTALLING THE BASICS- ####"
+	echo "#### ~INSTALLING THE BASICS~ ####"
 	echo "#################################"
 	sudo apt-get install curl gnupg2 ca-certificates python-setuptools software-properties-common git htop -y
 
@@ -58,6 +58,7 @@ if [ "$confirmation" = "y" ]; then
 	echo "Installing docker-ce"
 	sudo apt-get update
 	sudo apt-get install docker-ce
+	sudo gpasswd -a $USER docker
 	sudo systemctl enable --now docker
 
 	echo "Installing docker-compose"
@@ -65,82 +66,63 @@ if [ "$confirmation" = "y" ]; then
 	sudo chmod +x /usr/local/bin/docker-compose
 	echo "Succesfully installed $(docker-compose --version)"
 
-	echo "Setting up the Traefik container"
-	docker network create proxy
-	mkdir -p traefik/data
-	touch traefik/data/acme.json
-	chmod 600 traefik/data/acme.json
-	curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/traefik/docker-compose.yml" -o ./nginx-proxy/docker-compose.yml
-	cd ./traefik
-	docker-compose up -d
-	cd ../
 
-	if [ "$installNextcloud" = "y" ]; then
-		echo "Creating Nextcloud Network"
-		docker network create nextcloud_network
+	echo "#######################"
+	echo "#### ~DOCKER TIME~ ####"
+	echo "#######################"
 
-		echo "Fetching compose file"
-		mkdir ./nextcloud
-		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/nextcloud/docker-compose.yml" -o ./nextcloud/docker-compose.yml
+	echo -n "What should be your main domain?: "
+	read globalDomain
 
-		echo "Composing now"
-		cd ./nextcloud
+	echo -n "What should be the global database 'root' password? [secret]: "
+	read globalDbRootPass
+
+	echo -n "What should be the global database 'user' password? [secret]: "
+	read globalDbUserPass
+
+	echo -n "What should be the data storage root folder? [/media/storage]: "
+	read globalStorageRoot
+
+	declare -a appsToInstall=("traefik" "portainer" "sonarr" "radarr" "jackett" "spotweb" "transmission" "nzbget")
+
+	for app in ${appsToInstall[@]}; do
+		echo "Setting up the ${app^} container"
+		cd ./$app
+
+		mv .env.example .env
+
+		sed -i 's/DOMAIN=privacy.box/DOMAIN=$globalDomain/g' .env
+
+		if [ "$globalDbRootPass" ]; then
+			sed -i 's/ROOT_PASS=secret/ROOT_PASS=$globalDbRootPass/g' .env
+		fi
+		if [ "$globalDbUserPass" ]; then
+			sed -i 's/USER_PASS=secret/USER_PASS=$globalDbUserPass/g' .env
+		fi
+		if [ "$globalStorageRoot" ]; then
+			sed -i 's/STORAGE_ROOT=\/media\/storage/STORAGE_ROOT=$globalStorageRoot/g' .env
+		fi
+
+		echo "Proposed ${app^} configuration:"
+		cat .env
+
+		echo -n "Customize ${app^} install? [n]: "
+		read _customizeInstall
+
+		if [ "$_customizeInstall" = "y" ]; then
+			source start.sh;
+		fi
+
+		echo "Effective ${app^} configuration:"
+		cat .env
+
+		echo "Starting ${app^} containers"
 		docker-compose up -d
+
+		echo "POW!! Done!... NEXT!"
+
 		cd ../
-	fi
-
-	if [ "$installGitea" = "y" ]; then
-		echo "Creating Gitea Network"
-		docker network create gitea
-
-		echo "Fetching compose file"
-		mkdir ./gitea
-		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/gitea/docker-compose.yml" -o ./gitea/docker-compose.yml
-
-		echo "Composing now"
-		cd ./gitea
-		docker-compose up -d
-		cd ../
-	fi
-
-	if [ "$installInvidious" = "y"]; then
-		echo "Creating Invidious Network"
-		docker network create invidious_network
-
-		echo "Fetching compose file"
-		git clone git@github.com:omarroth/invidious.git
-		cd ./invidious
-		docker-compose up -d
-		cd ../
-	fi
-
-	if [ "$installWordpress" = "y"]; then
-		echo "Creating Wordpress Network"
-		docker network create wordpress_network
-
-		echo "Fetching compose file"
-		mkdir ./wordpress
-		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/wordpress/docker-compose.yml" -o ./wordpress/docker-compose.yml
-
-		echo "Composing now"
-		cd ./invidious
-		docker-compose up -d
-		cd ../
-	fi
-
-	if [ "$installSpotweb" = "y"]; then
-		echo "Fetching compose file"
-		mkdir ./spotweb
-		curl -L "https://raw.githubusercontent.com/xblackbytesx/privacybox-docker/master/spotweb/docker-compose.yml" -o ./spotweb/docker-compose.yml
-
-		echo "Composing now"
-		cd ./spotweb
-		docker-compose up -d
-		cd ../
-
-		docker exec spotweb-app sed -i 's+= $nwsetting+= "https://spotweb.example.com"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
-		# docker exec spotweb-app su -l www-data -s /usr/bin/php /var/www/spotweb/retrieve.php >/dev/null 2>&1
-	fi
+	done
 
 	echo 'Cleaning up'
 	sudo apt-get clean
