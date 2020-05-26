@@ -26,10 +26,6 @@ fi
 
 if [ "$_spotwebDbUserPass" ]; then
     sed -i 's/USER_PASS=secret/USER_PASS=$_spotwebSubDomain/g' .env
-fi    
-
-if [ "$globalStorageRoot" ]; then
-    sed -i 's/STORAGE_ROOT=\/media/storage/STORAGE_ROOT=$globalStorageRoot/g' .env
 fi
 
 # Tips to run after install:

@@ -96,9 +96,11 @@ if [ "$confirmation" = "y" ]; then
 		if [ "$globalDbRootPass" ]; then
 			sed -i 's/ROOT_PASS=secret/ROOT_PASS=$globalDbRootPass/g' .env
 		fi
+
 		if [ "$globalDbUserPass" ]; then
 			sed -i 's/USER_PASS=secret/USER_PASS=$globalDbUserPass/g' .env
 		fi
+		
 		if [ "$globalStorageRoot" ]; then
 			sed -i 's/STORAGE_ROOT=\/media\/storage/STORAGE_ROOT=$globalStorageRoot/g' .env
 		fi
