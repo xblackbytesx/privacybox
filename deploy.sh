@@ -132,7 +132,7 @@ if [ "$confirmation" = "y" ]; then
 		echo "----------------"
 
 		echo "Starting ${app^} containers"
-		# docker-compose up -d
+		docker-compose up -d
 
 		echo "POW!! Done!... NEXT!"
 
