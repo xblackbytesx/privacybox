@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo -n "What should be the Jackett main domain? [$globalDomain]:"
+echo -n "What should be the Jackett main domain? [$globalDomain]: "
 read _jackettDomain
 
-echo -n "What should be the Jackett subdomain? [jackett]"
+echo -n "What should be the Jackett subdomain? [jackett]: "
 read _jackettSubDomain
 
 if [ "$_jackettDomain" ]; then

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo -n "What should be the Sonarr main domain? [$globalDomain]:"
+echo -n "What should be the Sonarr main domain? [$globalDomain]: "
 read _sonarrDomain
 
-echo -n "What should be the Sonarr subdomain? [sonarr]"
+echo -n "What should be the Sonarr subdomain? [sonarr]: "
 read _sonarrSubDomain
 
 if [ "$_sonarrDomain" ]; then

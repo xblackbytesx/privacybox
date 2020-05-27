@@ -83,30 +83,39 @@ if [ "$confirmation" = "y" ]; then
 	echo -n "What should be the data storage root folder? [/media/storage]: "
 	read globalStorageRoot
 
+	if [ -z "$globalDomain" ]; then
+		globalDomain='privacy.box'
+	fi
+
+	# TODO: Make this list configurable
 	declare -a appsToInstall=("traefik" "portainer" "sonarr" "radarr" "jackett" "spotweb" "transmission" "nzbget")
 
 	for app in ${appsToInstall[@]}; do
 		echo "Setting up the ${app^} container"
 		cd ./$app
 
-		mv .env.example .env
+		cp .env.example .env
 
-		sed -i 's/DOMAIN=privacy.box/DOMAIN=$globalDomain/g' .env
+		sed -i 's/DOMAIN=privacy.box/DOMAIN='$globalDomain'/g' .env
 
 		if [ "$globalDbRootPass" ]; then
-			sed -i 's/ROOT_PASS=secret/ROOT_PASS=$globalDbRootPass/g' .env
+			sed -i 's/ROOT_PASS=secret/ROOT_PASS='$globalDbRootPass'/g' .env
 		fi
 
 		if [ "$globalDbUserPass" ]; then
-			sed -i 's/USER_PASS=secret/USER_PASS=$globalDbUserPass/g' .env
+			sed -i 's/USER_PASS=secret/USER_PASS='$globalDbUserPass'/g' .env
 		fi
-		
+
 		if [ "$globalStorageRoot" ]; then
-			sed -i 's/STORAGE_ROOT=\/media\/storage/STORAGE_ROOT=$globalStorageRoot/g' .env
+			sed -i 's/STORAGE_ROOT=\/media\/storage/STORAGE_ROOT='$globalStorageRoot'/g' .env
 		fi
 
 		echo "Proposed ${app^} configuration:"
+		echo "----------------"
+		echo ""
 		cat .env
+		echo ""
+		echo "----------------"
 
 		echo -n "Customize ${app^} install? [n]: "
 		read _customizeInstall
@@ -116,10 +125,14 @@ if [ "$confirmation" = "y" ]; then
 		fi
 
 		echo "Effective ${app^} configuration:"
+		echo "----------------"
+		echo ""
 		cat .env
+		echo ""
+		echo "----------------"
 
 		echo "Starting ${app^} containers"
-		docker-compose up -d
+		# docker-compose up -d
 
 		echo "POW!! Done!... NEXT!"
 

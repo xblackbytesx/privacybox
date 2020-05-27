@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo -n "What should be the NZBget main domain? [$globalDomain]:"
+echo -n "What should be the NZBget main domain? [$globalDomain]: "
 read _nzbgetDomain
 
-echo -n "What should be the NZBget subdomain? [nzbget]"
+echo -n "What should be the NZBget subdomain? [nzbget]: "
 read _nzbgetSubDomain
 
 if [ "$_nzbgetDomain" ]; then

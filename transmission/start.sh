@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo -n "What should be the Transmission main domain? [$globalDomain]:"
+echo -n "What should be the Transmission main domain? [$globalDomain]: "
 read _transmissionDomain
 
-echo -n "What should be the Transmission subdomain? [transmission]"
+echo -n "What should be the Transmission subdomain? [transmission]: "
 read _transmissionSubDomain
 
 if [ "$_transmissionDomain" ]; then

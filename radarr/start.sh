@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo -n "What should be the Radarr main domain? [$globalDomain]:"
+echo -n "What should be the Radarr main domain? [$globalDomain]: "
 read _radarrDomain
 
-echo -n "What should be the Radarr subdomain? [radarr]"
+echo -n "What should be the Radarr subdomain? [radarr]: "
 read _radarrSubDomain
 
 if [ "$_radarrDomain" ]; then

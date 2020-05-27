@@ -1,15 +1,15 @@
 #!/bin/bash
 
-echo -n "What should be the Spotweb main domain? [$globalDomain]:"
+echo -n "What should be the Spotweb main domain? [$globalDomain]: "
 read _spotwebDomain
 
-echo -n "What should be the Spotweb subdomain? [spotweb]"
+echo -n "What should be the Spotweb subdomain? [spotweb]: "
 read _spotwebSubDomain
 
-echo -n "What should be the Spotweb 'root' database password? [global db root pass]:"
+echo -n "What should be the Spotweb 'root' database password? [global db root pass]: "
 read _spotwebDbRootPass
 
-echo -n "What should be the Spotweb 'spotweb' database password [db user pass]"
+echo -n "What should be the Spotweb 'spotweb' database password [db user pass]: "
 read _spotwebDbUserPass
 
 if [ "$_spotwebDomain" ]; then

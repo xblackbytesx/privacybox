@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo -n "What should be the Portainer main domain? [$globalDomain]:"
+echo -n "What should be the Portainer main domain? [$globalDomain]: "
 read _portainerDomain
 
-echo -n "What should be the Portainer subdomain? [portainer]"
+echo -n "What should be the Portainer subdomain? [portainer]: "
 read _portainerSubDomain
 
 if [ "$_portainerDomain" ]; then
