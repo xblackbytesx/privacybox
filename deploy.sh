@@ -104,7 +104,7 @@ if [ "$confirmation" = "y" ]; then
 		cp .env.example .env
 
 		sed -i 's/DOMAIN=privacy.box/DOMAIN='$globalDomain'/g' .env
-		sed -i 's/EMAIL=john.doe@privacy.box/DOMAIN='$globalEmail'/g' .env
+		sed -i 's/EMAIL=john.doe@privacy.box/EMAIL='$globalEmail'/g' .env
 
 		if [ "$app" == "traefik"]; then
 			sed -i 's/email: john.doe@privacy.box/email: '$globalEmail'/g' ./data/traefik.yml
