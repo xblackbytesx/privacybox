@@ -2,20 +2,28 @@
 Zero-config self-hosted alternatives to most popular services.
 
 ## Instructions
-Installtion is incredibly simple.
-Make sure the bash script is executable like this:
+Installation is incredibly simple and consists of either one or two stages depending on the state of your setup.
+
+Make sure the start script is executable like this:
 ```
-chmod +x deploy.sh
+chmod +x start.sh
 ```
 
-And simply run the script to get started:
+If you have a freshly installed Debian server you can opt to start the script with the `--provision` flag to install all the prerequisites neccesary to run the Docker instances.
+
+If all you need is the Docker configuration itself you simply run this to get started:
 ```
-./deploy.sh
+./start.sh
+```
+
+If you have to install the prerequisites first simply run:
+```
+./start.sh --provision
 ```
 
 ## Monitoring & Swarm control
 This project gives you two endpoints for proxy-monitoring and controlling your containers.
-After succesfully running the `deploy.sh` script you should be able to visit the following subdomains:
+After succesfully running the `start.sh` script you should be able to visit the following subdomains:
 
 traefik.YOUR_DOMAIN.TLD  
 portainer.YOUR_DOMAIN.TLD
@@ -40,6 +48,7 @@ portainer.YOUR_DOMAIN.TLD
 | Sonarr | Done |   |
 | Radarr | Done |   |
 | Transmission | Done |   |
+| Node-Red | Done |   |
 
 ## LetsEncrypt ACME support out of the box!
 All of the above listed apps come equipped with the ability to request a valid LetsEncrypt Certificate on the fly. There are two ACME challenge types baked into this configuration: TLS and DNS challenge.
