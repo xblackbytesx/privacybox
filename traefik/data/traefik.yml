@@ -26,13 +26,13 @@ providers:
 certificatesResolvers:
   le-http:
     acme:
-      email: {{env "LETSENCRYPT_EMAIL"}}
+      email: john.doe@privacy.box
       storage: acme.json
       httpChallenge:
         entryPoint: http
   le-dns:
     acme:
-      email: {{env "LETSENCRYPT_EMAIL"}}
+      email: john.doe@privacy.box
       storage: acme.json
       dnsChallenge:
         provider: transip

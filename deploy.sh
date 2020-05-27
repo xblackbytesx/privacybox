@@ -4,7 +4,7 @@ echo "This script will ready a Dockerized Debian server setup"
 
 # Environment variables
 osHostname=$(hostname)
-userEmail='someone@example.com'
+userEmail='john.doe@privacy.box'
 
 echo -n "Are you sure you want to continue? [y/n]: "
 read confirmation
@@ -71,8 +71,11 @@ if [ "$confirmation" = "y" ]; then
 	echo "#### ~DOCKER TIME~ ####"
 	echo "#######################"
 
-	echo -n "What should be your main domain?: "
+	echo -n "What should be your main domain? [privacy.box]: "
 	read globalDomain
+
+	echo -n "What should be your main email address? [john.doe@privacy.box]: "
+	read globalEmail
 
 	echo -n "What should be the global database 'root' password? [secret]: "
 	read globalDbRootPass
@@ -87,6 +90,10 @@ if [ "$confirmation" = "y" ]; then
 		globalDomain='privacy.box'
 	fi
 
+	if [ -z "$globalEmail" ]; then
+		globalEmail='john.doe@privacy.box'
+	fi
+
 	# TODO: Make this list configurable
 	declare -a appsToInstall=("traefik" "portainer" "sonarr" "radarr" "jackett" "spotweb" "transmission" "nzbget")
 
@@ -97,6 +104,12 @@ if [ "$confirmation" = "y" ]; then
 		cp .env.example .env
 
 		sed -i 's/DOMAIN=privacy.box/DOMAIN='$globalDomain'/g' .env
+		sed -i 's/EMAIL=john.doe@privacy.box/DOMAIN='$globalEmail'/g' .env
+
+		if [ "$app" == "traefik"]; then
+			sed -i 's/email: john.doe@privacy.box/email: '$globalEmail'/g' ./data/traefik.yml
+			sed -i 's/email: john.doe@privacy.box/email: '$globalEmail'/g' ./data/traefik.yml
+		fi
 
 		if [ "$globalDbRootPass" ]; then
 			sed -i 's/ROOT_PASS=secret/ROOT_PASS='$globalDbRootPass'/g' .env
@@ -121,7 +134,7 @@ if [ "$confirmation" = "y" ]; then
 		read _customizeInstall
 
 		if [ "$_customizeInstall" = "y" ]; then
-			source start.sh;
+			source config.sh;
 		fi
 
 		echo "Effective ${app^} configuration:"
