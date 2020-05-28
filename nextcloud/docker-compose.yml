@@ -44,10 +44,10 @@ services:
       - MYSQL_USER=nextcloud
     volumes:
       - nextcloud:/var/www/html
-      - ./apps:/var/www/html/custom_apps
-      - ./config:/var/www/html/config
-      - ./data:/var/www/html/data
-      - ./logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
+      - ${STORAGE_ROOT}/docker/nextcloud/apps:/var/www/html/custom_apps
+      - ${STORAGE_ROOT}/docker/nextcloud/config:/var/www/html/config
+      - ${STORAGE_ROOT}/docker/nextcloud/data:/var/www/html/data
+      - ${STORAGE_ROOT}/docker/nextcloud/logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"

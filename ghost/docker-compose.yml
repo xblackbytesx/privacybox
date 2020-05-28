@@ -13,7 +13,7 @@ services:
     container_name: "ghost-db"
     image: "mariadb"
     volumes:
-      - ghostdb:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/ghost/ghostdb:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     environment:
       - MYSQL_ROOT_PASSWORD=secret
@@ -30,7 +30,7 @@ services:
     container_name: "ghost-app"
     image: "ghost:latest"
     volumes:
-      - ghostdata:/var/lib/ghost/content
+      - ${STORAGE_ROOT}/docker/ghost/ghostdata:/var/lib/ghost/content
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

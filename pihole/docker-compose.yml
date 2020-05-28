@@ -18,8 +18,8 @@ services:
       - TZ=Europe/Amsterdam
       - WEBPASSWORD=secret
     volumes:
-      - './etc-pihole/:/etc/pihole/'
-      - './etc-dnsmasq.d/:/etc/dnsmasq.d/'
+      - '${STORAGE_ROOT}/docker/pihole/etc-pihole/:/etc/pihole/'
+      - '${STORAGE_ROOT}/docker/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/'
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

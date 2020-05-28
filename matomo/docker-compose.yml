@@ -17,7 +17,7 @@ services:
     command: --max-allowed-packet=64MB
     restart: unless-stopped
     volumes:
-      - matomo-db:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/matomo/matomo-db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -39,7 +39,7 @@ services:
     volumes:
       # - ./config:/var/www/html/config:rw
       # - ./logs:/var/www/html/logs
-      - matomo-app:/var/www/html
+      - ${STORAGE_ROOT}/docker/matomo/matomo-app:/var/www/html
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
