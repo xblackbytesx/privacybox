@@ -37,6 +37,7 @@ for app in ${appsToInstall[@]}; do
     echo "Setting up the ${app^} container"
     cd ./$app
 
+    rm .env
     cp .env.example .env
 
     sed -i 's/DOMAIN=privacy.box/DOMAIN='$globalDomain'/g' .env
