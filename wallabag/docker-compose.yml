@@ -15,12 +15,12 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
-      - MYSQL_PASSWORD=mysql
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS}
       - MYSQL_DATABASE=wallabag
       - MYSQL_USER=wallabag
+      - MYSQL_PASSWORD=${MYSQL_USER_PASS}
     volumes:
-      - /opt/wallabag/data:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/wallabag/data:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -54,7 +54,7 @@ services:
       - SYMFONY__ENV__DATABASE_PORT=3306
       - SYMFONY__ENV__DATABASE_NAME=wallabag
       - SYMFONY__ENV__DATABASE_USER=wallabag
-      - SYMFONY__ENV__DATABASE_PASSWORD=mysql
+      - SYMFONY__ENV__DATABASE_PASSWORD=${MYSQL_USER_PASS}
       - SYMFONY__ENV__DATABASE_CHARSET=utf8mb4
       - SYMFONY__ENV__MAILER_HOST=127.0.0.1
       - SYMFONY__ENV__MAILER_USER=~

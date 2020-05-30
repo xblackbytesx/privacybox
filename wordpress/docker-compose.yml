@@ -14,17 +14,17 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - wp-site1-db:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/wordpress/wp-site1-db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
     networks:
       - internal
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS}
       - MYSQL_DATABASE=wordpress
       - MYSQL_USER=wordpress
-      - MYSQL_PASSWORD=wordpress
+      - MYSQL_PASSWORD=${MYSQL_USER_PASS}
     restart: unless-stopped
 
   wp-site1-app:
@@ -37,7 +37,7 @@ services:
     environment:
       - WORDPRESS_DB_HOST=wp-site1-db:3306
       - WORDPRESS_DB_USER=wordpress
-      - WORDPRESS_DB_PASSWORD=wordpress
+      - WORDPRESS_DB_PASSWORD=${MYSQL_USER_PASS}
     volumes:
       - /etc/localtime:/etc/localtime:ro
     labels:
