@@ -38,6 +38,7 @@ for app in ${appsToInstall[@]}; do
     cd ./$app
 
     rm .env
+    git checkout .env.example
     cp .env.example .env
 
     sed -i 's/DOMAIN=privacy.box/DOMAIN='$globalDomain'/g' .env

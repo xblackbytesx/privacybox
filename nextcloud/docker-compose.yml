@@ -17,10 +17,10 @@ services:
       - internal
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      - MYSQL_PASSWORD=mysql
+      - MYSQL_PASSWORD=${MYSQL_USER_PASS}
     volumes:
       - nextcloud-db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
@@ -39,7 +39,7 @@ services:
       - internal
     environment:
       - MYSQL_HOST=nextcloud-db
-      - MYSQL_PASSWORD=mysql
+      - MYSQL_PASSWORD=${MYSQL_USER_PASS}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
     volumes:
