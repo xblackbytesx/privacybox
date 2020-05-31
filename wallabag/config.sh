@@ -26,10 +26,10 @@ if [ "$_customizeInstall" = "y" ]; then
     fi
 
     if [ "$_wallabagDbRootPass" ]; then
-        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_wallabagDomain'/g' .env
+        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_wallabagDbRootPass'/g' .env
     fi
 
     if [ "$_wallabagDbUserPass" ]; then
-        sed -i 's/USER_PASS=secret/USER_PASS='$_wallabagSubDomain'/g' .env
+        sed -i 's/USER_PASS=secret/USER_PASS='$_wallabagDbUserPass'/g' .env
     fi
 fi

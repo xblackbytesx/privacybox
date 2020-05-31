@@ -26,11 +26,11 @@ if [ "$_customizeInstall" = "y" ]; then
     fi
 
     if [ "$_spotwebDbRootPass" ]; then
-        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_spotwebDomain'/g' .env
+        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_spotwebDbRootPass'/g' .env
     fi
 
     if [ "$_spotwebDbUserPass" ]; then
-        sed -i 's/USER_PASS=secret/USER_PASS='$_spotwebSubDomain'/g' .env
+        sed -i 's/USER_PASS=secret/USER_PASS='$_spotwebDbUserPass'/g' .env
     fi
 fi
 

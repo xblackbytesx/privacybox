@@ -26,10 +26,10 @@ if [ "$_customizeInstall" = "y" ]; then
     fi
 
     if [ "$_wordpressDbRootPass" ]; then
-        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_wordpressDomain'/g' .env
+        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_wordpressDbRootPass'/g' .env
     fi
 
     if [ "$_wordpressDbUserPass" ]; then
-        sed -i 's/USER_PASS=secret/USER_PASS='$_wordpressSubDomain'/g' .env
+        sed -i 's/USER_PASS=secret/USER_PASS='$_wordpressDbUserPass'/g' .env
     fi
 fi
