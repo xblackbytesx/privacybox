@@ -7,8 +7,12 @@ if [ "$_initialConfig" = "true" ]; then
     read _wpInstanceName
 
     if [ "$_wpInstanceName" ]; then
-        sed -i 's/INSTANCE_NAME=wp-site1/DOMAIN='$_wpInstanceName'/g' .env
+        sed -i 's/PROJECT_NAME=wp-site1/DOMAIN='$_wpInstanceName'/g' .env
     fi
+
+    mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/database
+    mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/plugins
+    mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/themes
 fi
 
 if [ "$_customizeInstall" = "y" ]; then

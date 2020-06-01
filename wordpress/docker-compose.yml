@@ -8,13 +8,13 @@ networks:
     internal: true
 
 services:
-  ${WP_INSTANCE_NAME}-db:
-    container_name: "${WP_INSTANCE_NAME}-db"
+  wp-db:
+    container_name: "${COMPOSE_PROJECT_NAME}-db"
     image: "mariadb"
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ${STORAGE_ROOT}/docker/wordpress/${WP_INSTANCE_NAME}/database:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -27,32 +27,32 @@ services:
       - MYSQL_PASSWORD=${MYSQL_USER_PASS}
     restart: unless-stopped
 
-  ${WP_INSTANCE_NAME}-app:
-    container_name: "${WP_INSTANCE_NAME}-app"
+  wp-app:
+    container_name: "${COMPOSE_PROJECT_NAME}-app"
     image: "wordpress:latest"
     security_opt:
       - no-new-privileges:true
     depends_on:
-      - ${WP_INSTANCE_NAME}-db
+      - wp-db
     environment:
-      - WORDPRESS_DB_HOST=${WP_INSTANCE_NAME}-db:3306
+      - WORDPRESS_DB_HOST=wp-db:3306
       - WORDPRESS_DB_USER=wordpress
       - WORDPRESS_DB_PASSWORD=${MYSQL_USER_PASS}
     volumes:
-      - ${STORAGE_ROOT}/docker/wordpress/${WP_INSTANCE_NAME}/plugins:/var/www/html/wp-content/plugins/
-      - ${STORAGE_ROOT}/docker/wordpress/${WP_INSTANCE_NAME}/themes:/var/www/html/wp-content/themes/
+      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/plugins:/var/www/html/wp-content/plugins/
+      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/themes:/var/www/html/wp-content/themes/
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.wp-site1-app.entrypoints=http"
-      - "traefik.http.routers.wp-site1-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.wp-site1-app.middlewares=https-redirect@file"
-      - "traefik.http.routers.wp-site1-app-secure.entrypoints=https"
-      - "traefik.http.routers.wp-site1-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.wp-site1-app-secure.tls=true"
-      - "traefik.http.routers.wp-site1-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.wp-site1-app-secure.service=wp-site1-app"
-      - "traefik.http.services.wp-site1-app.loadbalancer.server.port=80"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.entrypoints=http"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=https"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.service=${COMPOSE_PROJECT_NAME}-app"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-app.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"
     networks:
       - proxy
@@ -60,4 +60,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  wp-site1-db:
+  wp-db:
