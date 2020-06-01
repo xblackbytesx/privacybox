@@ -8,13 +8,13 @@ networks:
     internal: true
 
 services:
-  wp-site1-db:
-    container_name: "wp-site1-db"
+  ${WP_INSTANCE_NAME}-db:
+    container_name: "${WP_INSTANCE_NAME}-db"
     image: "mariadb"
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ${STORAGE_ROOT}/docker/wordpress/wp-site1-db:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/wordpress/${WP_INSTANCE_NAME}/database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -27,18 +27,20 @@ services:
       - MYSQL_PASSWORD=${MYSQL_USER_PASS}
     restart: unless-stopped
 
-  wp-site1-app:
-    container_name: "wp-site1-app"
+  ${WP_INSTANCE_NAME}-app:
+    container_name: "${WP_INSTANCE_NAME}-app"
     image: "wordpress:latest"
     security_opt:
       - no-new-privileges:true
     depends_on:
-      - wp-site1-db
+      - ${WP_INSTANCE_NAME}-db
     environment:
-      - WORDPRESS_DB_HOST=wp-site1-db:3306
+      - WORDPRESS_DB_HOST=${WP_INSTANCE_NAME}-db:3306
       - WORDPRESS_DB_USER=wordpress
       - WORDPRESS_DB_PASSWORD=${MYSQL_USER_PASS}
     volumes:
+      - ${STORAGE_ROOT}/docker/wordpress/${WP_INSTANCE_NAME}/plugins:/var/www/html/wp-content/plugins/
+      - ${STORAGE_ROOT}/docker/wordpress/${WP_INSTANCE_NAME}/themes:/var/www/html/wp-content/themes/
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

@@ -1,6 +1,19 @@
 #!/bin/bash
 
 if [ "$_initialConfig" = "true" ]; then
+    echo "Checking if neccesary .key file exists"
+    count=`ls -1 data/*.key 2>/dev/null | wc -l`
+    if [ $count = 0 ]; then 
+        echo "Please ensure a valid private/API key is present in '${pwd}/data for your DNS provider"
+        exit 1
+    fi 
+
+    echo -n "What is your DNS providers username: [someone] "
+    read _traefikDnsAccountUser
+    if [ "$_traefikDnsAccountUser" ]; then
+        sed -i 's/ACCOUNT_NAME=someone/ACCOUNT_NAME='$_traefikDnsAccountUser'/g' .env
+    fi
+
     sed -i 's/EMAIL=john.doe@privacy.box/EMAIL='$globalEmail'/g' .env
 
     echo "${app^} specific changes"
@@ -32,5 +45,10 @@ if [ "$_customizeInstall" = "y" ]; then
 
     if [ "$_traefikLeEmail" ]; then
         sed -i 's/EMAIL='$globalEmail'/EMAIL='$_traefikLeEmail'/g' .env
+
+        git checkout data/traefik.yml
+
+        sed -i 's/email: '$globalEmail'/email: '$_traefikLeEmail'/g' ./data/traefik.yml
+        sed -i 's/email: '$globalEmail'/email: '$_traefikLeEmail'/g' ./data/traefik.yml
     fi
 fi

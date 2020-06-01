@@ -2,6 +2,13 @@
 
 if [ "$_initialConfig" = "true" ]; then
     echo "${app^} specific changes"
+
+    echo -n "What should be the name of this ${app^} instance: [wp-site1] "
+    read _wpInstanceName
+
+    if [ "$_wpInstanceName" ]; then
+        sed -i 's/INSTANCE_NAME=wp-site1/DOMAIN='$_wpInstanceName'/g' .env
+    fi
 fi
 
 if [ "$_customizeInstall" = "y" ]; then
