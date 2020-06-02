@@ -1,0 +1,32 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+ 
+services:  
+  tpb-nginx:
+    container_name: "tpb-nginx"
+    image: "nginx:latest"
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
+      - ./logs/nginx:/var/log/nginx
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tpb-nginx.entrypoints=http"
+      - "traefik.http.routers.tpb-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.tpb-nginx.middlewares=https-redirect@file"
+      - "traefik.http.routers.tpb-nginx-secure.entrypoints=https"
+      - "traefik.http.routers.tpb-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.tpb-nginx-secure.tls=true"
+      - "traefik.http.routers.tpb-nginx-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.tpb-nginx-secure.service=tpb-nginx"
+      - "traefik.http.services.tpb-nginx.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
+    restart: unless-stopped
