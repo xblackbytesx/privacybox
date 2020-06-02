@@ -2,6 +2,17 @@
 
 if [ "$_initialConfig" = "true" ]; then
     echo "${app^} specific changes"
+
+    echo -n "What should be the name of this ${app^} instance: [wp-site1] "
+    read _wpInstanceName
+
+    if [ "$_wpInstanceName" ]; then
+        sed -i 's/PROJECT_NAME=wp-site1/PROJECT_NAME='$_wpInstanceName'/g' .env
+    fi
+
+    mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/database
+    mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/plugins
+    mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/themes
 fi
 
 if [ "$_customizeInstall" = "y" ]; then
@@ -26,10 +37,10 @@ if [ "$_customizeInstall" = "y" ]; then
     fi
 
     if [ "$_wordpressDbRootPass" ]; then
-        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_wordpressDomain'/g' .env
+        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_wordpressDbRootPass'/g' .env
     fi
 
     if [ "$_wordpressDbUserPass" ]; then
-        sed -i 's/USER_PASS=secret/USER_PASS='$_wordpressSubDomain'/g' .env
+        sed -i 's/USER_PASS=secret/USER_PASS='$_wordpressDbUserPass'/g' .env
     fi
 fi

@@ -27,6 +27,11 @@ if [ -z "$globalEmail" ]; then
     globalEmail='john.doe@privacy.box'
 fi
 
+if [ -z "$globalStorageRoot" ]; then
+    globalStorageRoot='/media/storage'
+fi
+
+
 # TODO: Make this list configurable
 declare -a appsToInstall=("traefik" "portainer" "sonarr" "radarr" "jackett" "spotweb" "transmission" "nzbget")
 

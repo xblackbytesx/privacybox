@@ -26,10 +26,10 @@ if [ "$_customizeInstall" = "y" ]; then
     fi
 
     if [ "$_nextcloudDbRootPass" ]; then
-        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_nextcloudDomain'/g' .env
+        sed -i 's/ROOT_PASS=secret/ROOT_PASS='$_nextcloudDbRootPass'/g' .env
     fi
 
     if [ "$_nextcloudDbUserPass" ]; then
-        sed -i 's/USER_PASS=secret/USER_PASS='$_nextcloudSubDomain'/g' .env
+        sed -i 's/USER_PASS=secret/USER_PASS='$_nextcloudDbUserPass'/g' .env
     fi
 fi
