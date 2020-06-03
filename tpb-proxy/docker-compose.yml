@@ -56,3 +56,58 @@ services:
       - "traefik.http.services.tpb-nginx.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy"
     restart: unless-stopped
+
+
+
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+ 
+services:  
+  php-fpm:
+    container_name: tpb-proxy-fpm
+    image: php:7.4-fpm-alpine
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./app:/app
+      - /etc/localtime:/etc/localtime:ro
+    working_dir: /app
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
+  nginx:
+    container_name: tpb-proxy-nginx
+    image: nginx:stable-alpine
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./app:/app
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - php-fpm
+    networks:
+      - internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tpb-nginx.entrypoints=http"
+      - "traefik.http.routers.tpb-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.tpb-nginx.middlewares=https-redirect@file"
+      - "traefik.http.routers.tpb-nginx-secure.entrypoints=https"
+      - "traefik.http.routers.tpb-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.tpb-nginx-secure.tls=true"
+      - "traefik.http.routers.tpb-nginx-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.tpb-nginx-secure.service=tpb-nginx"
+      - "traefik.http.services.tpb-nginx.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
+    restart: unless-stopped
