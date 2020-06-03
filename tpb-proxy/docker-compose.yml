@@ -14,6 +14,11 @@ services:
     image: "crunchgeek/php-fpm:7.3"
     security_opt:
       - no-new-privileges:true
+    environments:
+      - PHP_UID=1000
+      - PHP_GID=1000
+      - PHP_HOME=/app
+      - PHP_USER=php-fpm
     entrypoint: php index.php
     volumes:
       - ./app:/app
