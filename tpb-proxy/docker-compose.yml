@@ -4,14 +4,35 @@ networks:
   proxy:
     external: 
       name: proxy
+  internal:
+    internal: true
  
 services:  
+
+  tpb-fpm:
+    container_name: "tpb-fpm"
+    image: "crunchgeek/php-fpm:7.3"
+    security_opt:
+      - no-new-privileges:true
+    entrypoint: php index.php
+    volumes:
+      - ./app:/app
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
   tpb-nginx:
     container_name: "tpb-nginx"
     image: "nginx:latest"
     security_opt:
       - no-new-privileges:true
+    depends_on:
+      - tpb-fpm
     networks:
+      - internal
       - proxy
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
