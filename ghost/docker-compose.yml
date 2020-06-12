@@ -13,13 +13,13 @@ services:
     container_name: "ghost-db"
     image: "mariadb"
     volumes:
-      - ${STORAGE_ROOT}/docker/ghost/ghostdb:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/ghost/database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASS}
       - MYSQL_DATABASE=ghost
       - MYSQL_USER=ghost
-      - MYSQL_PASSWORD=mysql
+      - MYSQL_PASSWORD=${DB_USER_PASS}
     labels:
       - "traefik.enable=false"
     networks:
@@ -30,7 +30,7 @@ services:
     container_name: "ghost-app"
     image: "ghost:latest"
     volumes:
-      - ${STORAGE_ROOT}/docker/ghost/ghostdata:/var/lib/ghost/content
+      - ${STORAGE_ROOT}/docker/ghost/data:/var/lib/ghost/content
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
@@ -49,7 +49,7 @@ services:
       - database__client=mysql
       - database__connection__host=ghost-db
       - database__connection__user=ghost
-      - database__connection__password=mysql
+      - database__connection__password=${DB_USER_PASS}
       - database__connection__database=ghost
     networks:
       - proxy

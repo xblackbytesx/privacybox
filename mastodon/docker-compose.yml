@@ -21,7 +21,7 @@ services:
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - ${STORAGE_ROOT}/docker/mastodon/database:/var/lib/postgresql/data
     labels:
       - "traefik.enable=false"
 

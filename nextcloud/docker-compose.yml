@@ -17,12 +17,12 @@ services:
       - internal
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS}
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASS}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      - MYSQL_PASSWORD=${MYSQL_USER_PASS}
+      - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
-      - nextcloud-db:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/nextcloud/database/:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -39,7 +39,7 @@ services:
       - internal
     environment:
       - MYSQL_HOST=nextcloud-db
-      - MYSQL_PASSWORD=${MYSQL_USER_PASS}
+      - MYSQL_PASSWORD=${DB_USER_PASS}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
     volumes:

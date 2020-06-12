@@ -10,9 +10,10 @@ services:
     container_name: node-red
     image: nodered/node-red:latest
     restart: always
+    user: root
     environment:
-      - PUID=1000
-      - PGID=1000
+      # - PUID=1000
+      # - PGID=1000
       - TZ=Europe/Amsterdam
     volumes:
       - ${STORAGE_ROOT}/docker/node-red/data:/data

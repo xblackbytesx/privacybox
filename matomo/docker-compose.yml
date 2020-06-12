@@ -24,7 +24,7 @@ services:
     networks:
       - internal
     environment:
-      - MYSQL_PASSWORD=secret
+      - MYSQL_PASSWORD=${DB_USER_PASS}
       - MYSQL_DATABASE=matomo
       - MYSQL_USER=matomo
 
@@ -37,9 +37,9 @@ services:
     depends_on:
       - matomo-db
     volumes:
-      # - ./config:/var/www/html/config:rw
+      - ${STORAGE_ROOT}/docker/matomo/config:/var/www/html/config:rw
       # - ./logs:/var/www/html/logs
-      - ${STORAGE_ROOT}/docker/matomo/matomo-app:/var/www/html
+      - matomo-app:/var/www/html
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -50,7 +50,7 @@ services:
       - MATOMO_DATABASE_ADAPTER=mysql
       - MATOMO_DATABASE_TABLES_PREFIX=matomo_
       - MATOMO_DATABASE_USERNAME=matomo
-      - MATOMO_DATABASE_PASSWORD=secret
+      - MATOMO_DATABASE_PASSWORD=${DB_USER_PASS}
       - MATOMO_DATABASE_DBNAME=matomo
 
   matomo-nginx:

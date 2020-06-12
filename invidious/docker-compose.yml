@@ -15,7 +15,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - postgresdata:/var/lib/postgresql/data
+      - ${STORAGE_ROOT}/docker/invidious/database:/var/lib/postgresql/data
     labels:
       - "traefik.enable=false"
     networks:
@@ -66,7 +66,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ./config.yml:/invidious-app/config/config.yml
+      - ${STORAGE_ROOT}/docker/invidious/config/config.yml:/invidious-app/config/config.yml
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

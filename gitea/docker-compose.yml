@@ -16,7 +16,7 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
+      - DB_ROOT_PASSWORD=secret
       - MYSQL_DATABASE=gitea
       - MYSQL_USER=gitea
       - MYSQL_PASSWORD=secret
@@ -25,7 +25,7 @@ services:
     networks:
       - internal
     volumes:
-      - ./giteadb/:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/gitea/database/:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
 
   gitea-app:
@@ -34,7 +34,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ./gitea:/data
+      - ${STORAGE_ROOT}/docker/gitea/data:/data
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - gitea-db

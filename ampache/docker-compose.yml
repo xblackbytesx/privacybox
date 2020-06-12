@@ -15,15 +15,15 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ampache-db:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/ampache/database/:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
     networks:
       - internal
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
-      - MYSQL_PASSWORD=mysql
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_PASSWORD=${DB_USER_PASS}
       - MYSQL_DATABASE=ampache
       - MYSQL_USER=ampache
     restart: unless-stopped
@@ -37,7 +37,7 @@ services:
       - ampache-db
     volumes:
       # - ./path/to/media/files:/media:ro
-      - ./data/mysql:/var/lib/mysql
+      - ${STORAGE_ROOT}/docker/ampache/database/:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

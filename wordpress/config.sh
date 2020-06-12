@@ -11,8 +11,12 @@ if [ "$_initialConfig" = "true" ]; then
     fi
 
     mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/database
+
+    echo "Creating mounts and setting proper ownership"
     mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/plugins
     mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/themes
+    chown -R www-data:www-data $globalStorageRoot/docker/${app}/$_wpInstanceName/plugins
+    chown -R www-data:www-data $globalStorageRoot/docker/${app}/$_wpInstanceName/themes
 fi
 
 if [ "$_customizeInstall" = "y" ]; then
