@@ -29,7 +29,7 @@ services:
 
   wp-app:
     container_name: "wp-${COMPOSE_PROJECT_NAME}-app"
-    image: "wordpress:latest"
+    image: "wordpress:php7.4-fpm-alpine"
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -39,25 +39,54 @@ services:
       - WORDPRESS_DB_USER=wordpress
       - WORDPRESS_DB_PASSWORD=${DB_USER_PASS}
     volumes:
+      - wordpress:/var/www/html
       - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/plugins:/var/www/html/wp-content/plugins/
       - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/themes:/var/www/html/wp-content/themes/
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.entrypoints=http"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app.middlewares=https-redirect@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=https"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-app-secure.service=${COMPOSE_PROJECT_NAME}-app"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-app.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy"
+      - "traefik.enable=false"
     networks:
       - proxy
       - internal
     restart: unless-stopped
 
+
+  wp-nginx:
+    container_name: "wp-${COMPOSE_PROJECT_NAME}-nginx"
+    image: "nginx:alpine"
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - wp-app
+    networks:
+      - internal
+      - proxy
+    volumes:
+      - wordpress:/var/www/html:ro
+      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/plugins:/var/www/html/wp-content/plugins/:ro
+      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/themes:/var/www/html/wp-content/themes/:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
+      - ./logs/nginx:/var/log/nginx
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.entrypoints=http"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.middlewares=https-redirect@file"
+      - "traefik.http.middlewares.nc-rep.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav"
+      - "traefik.http.middlewares.nc-rep.redirectregex.replacement=https://$$1/remote.php/dav/"
+      - "traefik.http.middlewares.nc-rep.redirectregex.permanent=true"
+      - "traefik.http.middlewares.nc-header.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.middlewares=nc-rep,nc-header"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=https"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.service=${COMPOSE_PROJECT_NAME}-nginx"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-nginx.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
+    restart: unless-stopped
+
 volumes:
+  wordpress:
   wp-db:

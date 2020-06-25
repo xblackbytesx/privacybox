@@ -31,7 +31,7 @@ services:
 
   tpb-nginx:
     container_name: "tpb-nginx"
-    image: "nginx:latest"
+    image: "nginx:alpine"
     security_opt:
       - no-new-privileges:true
     depends_on:

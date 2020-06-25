@@ -3,11 +3,12 @@
 if [ "$_initialConfig" = "true" ]; then
     echo "${app^} specific changes"
 
-    echo -n "What should be the name of this ${app^} instance: [wp-site1] "
+    echo -n "What should be the name of this ${app^} instance: [site1] "
     read _wpInstanceName
 
     if [ "$_wpInstanceName" ]; then
-        sed -i 's/PROJECT_NAME=wp-site1/PROJECT_NAME='$_wpInstanceName'/g' .env
+        sed -i 's/PROJECT_NAME=site1/PROJECT_NAME='$_wpInstanceName'/g' .env
+        sed -i 's/wp-site1-app/wp-'$_wpInstanceName'-app/g' ./nginx/nginx.conf
     fi
 
     mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/database
@@ -17,6 +18,8 @@ if [ "$_initialConfig" = "true" ]; then
     mkdir -p $globalStorageRoot/docker/${app}/$_wpInstanceName/themes
     chown -R www-data:www-data $globalStorageRoot/docker/${app}/$_wpInstanceName/plugins
     chown -R www-data:www-data $globalStorageRoot/docker/${app}/$_wpInstanceName/themes
+    chmod -R 777 $globalStorageRoot/docker/${app}/$_wpInstanceName/plugins
+    chmod -R 777 $globalStorageRoot/docker/${app}/$_wpInstanceName/themes
 fi
 
 if [ "$_customizeInstall" = "y" ]; then
