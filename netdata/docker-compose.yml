@@ -1,4 +1,10 @@
 version: '3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
 services:
   netdata:
     image: netdata/netdata:latest
@@ -33,8 +39,3 @@ services:
       - "traefik.docker.network=proxy"
     networks:
       - proxy
-
-networks:
-  traefik:
-    external:
-      name: proxy
