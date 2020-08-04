@@ -6,7 +6,6 @@ networks:
       name: proxy
 
 services:
-
   sonarr:
     container_name: "sonarr"
     image: "linuxserver/sonarr"

@@ -8,7 +8,6 @@ networks:
     internal: true
 
 services:
-
   wallabag-db:
     container_name: "wallabag-db"
     image: "mariadb"

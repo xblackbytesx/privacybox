@@ -1,0 +1,40 @@
+version: '3'
+services:
+  netdata:
+    image: netdata/netdata:latest
+    container_name: netdata
+    hostname: ${SUBDOMAIN}.${DOMAIN}
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    environment:
+      - DO_NOT_TRACK=1
+    volumes:
+      - ./netdatalib:/var/lib/netdata
+      - ./netdatacache:/var/cache/netdata
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.netdata.entrypoints=http"
+      - "traefik.http.routers.netdata.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.netdata.middlewares=https-redirect@file"
+      - "traefik.http.routers.netdata-secure.entrypoints=https"
+      - "traefik.http.routers.netdata-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.netdata-secure.tls=true"
+      - "traefik.http.routers.netdata-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.netdata-secure.service=netdata"
+      - "traefik.http.services.netdata.loadbalancer.server.port=19999"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+
+networks:
+  traefik:
+    external:
+      name: proxy

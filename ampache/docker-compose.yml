@@ -8,7 +8,6 @@ networks:
     internal: true
 
 services:
-
   ampache-db:
     container_name: "ampache-db"
     image: "mariadb"

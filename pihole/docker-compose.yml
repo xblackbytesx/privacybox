@@ -6,7 +6,6 @@ networks:
       name: proxy
 
 services:
-
   pihole:
     container_name: "pihole"
     image: "pihole/pihole:latest"

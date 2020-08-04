@@ -28,7 +28,7 @@ services:
 
   ghost:
     container_name: "ghost-app"
-    image: "ghost:latest"
+    image: "ghost:alpine"
     volumes:
       - ${STORAGE_ROOT}/docker/ghost/data:/var/lib/ghost/content
       - /etc/localtime:/etc/localtime:ro

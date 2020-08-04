@@ -8,7 +8,6 @@ networks:
     internal: true
 
 services:
-
   fireflyiii-db:
     container_name: "fireflyiii-db"
     image: "postgres:10-alpine"
@@ -24,7 +23,7 @@ services:
 
   fireflyiii-app:
     image: "jc5x/firefly-iii:latest"
-    container_name" "fireflyiii-app"
+    container_name": "fireflyiii-app"
     security_opt:
       - no-new-privileges:true
     volumes:

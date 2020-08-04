@@ -6,7 +6,6 @@ networks:
       name: proxy
 
 services:
-
   radarr:
     container_name: "radarr"
     image: "linuxserver/radarr"
