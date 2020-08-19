@@ -1,4 +1,4 @@
-version: "3"
+version: "2.1"
 
 networks:
   proxy:
@@ -7,19 +7,21 @@ networks:
 
 services:
   plex:
-    image: "plexinc/pms-docker"
-    container_name: "Plex Media Server"
+    image: linuxserver/plex
+    container_name: plex
     security_opt:
       - no-new-privileges:true
+    network_mode: host
     environment:
-      - PLEX_UID=1000
-      - PLEX_GID=1000
-      - TZ=Europe/Amsterdam
-      - ALLOWED_NETWORKS=${ALLOWED_NETWORKS}
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - UMASK_SET=022 #optional
+      - PLEX_CLAIM= #optional
     volumes:
       - ${STORAGE_ROOT}/docker/plex/config:/config
-      - ${STORAGE_ROOT}/docker/plex/transcode/temp:/transcode
-      - ${STORAGE_ROOT}/video:/data
+      - ${STORAGE_ROOT}/video/Series:/tv
+      - ${STORAGE_ROOT}/video/Movies:/movies
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
