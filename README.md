@@ -49,6 +49,9 @@ portainer.YOUR_DOMAIN.TLD
 | Radarr | Done |   |
 | Transmission | Done |   |
 | Node-Red | Done |   |
+| Wireguard | WIP |   |
+| Netdata | WIP |   |
+| Mastodon | WIP |   |
 
 ## LetsEncrypt ACME support out of the box!
 All of the above listed apps come equipped with the ability to request a valid LetsEncrypt Certificate on the fly. There are two ACME challenge types baked into this configuration: TLS and DNS challenge.

@@ -1,0 +1,27 @@
+
+version: "2.1"
+services:
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: wireguard
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Amsterdam
+      - SERVERURL=${SERVER_URL}
+      - SERVERPORT=${SERVER_PORT}
+      - PEERS=${PEERS}
+      - PEERDNS=${PEERDNS}
+      - INTERNAL_SUBNET=${INTERNAL_SUBNET}
+    volumes:
+      - ./config:/config
+      - /lib/modules:/lib/modules
+    ports:
+      - ${SERVER_PORT}:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    network_mode: bridge
