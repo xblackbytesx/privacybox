@@ -46,7 +46,7 @@ services:
       - nextcloud:/var/www/html
       - ${STORAGE_ROOT}/docker/nextcloud/apps:/var/www/html/custom_apps
       - ${STORAGE_ROOT}/docker/nextcloud/config:/var/www/html/config
-      - ${STORAGE_ROOT}/docker/nextcloud/data:/var/www/html/data
+      - nextcloud-data:/var/www/html/data
       - ${STORAGE_ROOT}/docker/nextcloud/logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
       - /etc/localtime:/etc/localtime:ro
     labels:
@@ -118,7 +118,7 @@ services:
       - nextcloud:/var/www/html
       - ./apps:/var/www/html/custom_apps
       - ./config:/var/www/html/config
-      - ./data:/var/www/html/data
+      - nextcloud-data/data
       - ./logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
       - /etc/localtime:/etc/localtime:ro
     labels:
@@ -126,6 +126,22 @@ services:
     restart: unless-stopped
 
 volumes:
-  nextcloud:
+  nextcloud-app:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH_DATA}
+  nextcloud-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH_DATA}
   nextcloud-db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH_DB}
   nextcloud-redis:
