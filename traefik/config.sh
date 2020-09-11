@@ -26,6 +26,7 @@ if [ "$_initialConfig" = "true" ]; then
 
     # Make sure acme.json exists
     touch ./data/acme.json
+    chmod 600 ./data/acme.json
 fi
 
 if [ "$_customizeInstall" = "y" ]; then
