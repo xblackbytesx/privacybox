@@ -1,17 +1,17 @@
 version: '3'
 
-volumes:
-  dbdata:
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/srv/db-data'
+# volumes:
+#   dbdata:
+#     driver: local
+#     driver_opts:
+#       type: 'none'
+#       o: 'bind'
+#       device: '/srv/db-data'
 
 services:
   portainer:
     container_name: "portainer"
-    image: "portainer/portainer:latest"
+    image: "portainer/portainer-ce:2.0.0-alpine"
     security_opt:
       - no-new-privileges:true
     command: --no-analytics
