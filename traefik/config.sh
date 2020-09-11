@@ -23,6 +23,9 @@ if [ "$_initialConfig" = "true" ]; then
 
     sed -i 's/email: john.doe@privacy.box/email: '$globalEmail'/g' ./data/traefik.yml
     sed -i 's/email: john.doe@privacy.box/email: '$globalEmail'/g' ./data/traefik.yml
+
+    # Make sure acme.json exists
+    touch ./data/acme.json
 fi
 
 if [ "$_customizeInstall" = "y" ]; then
