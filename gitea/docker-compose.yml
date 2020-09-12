@@ -8,7 +8,6 @@ networks:
     internal: true
 
 services:
-
   gitea-db:
     container_name: "gitea-db"
     image: "mariadb"
@@ -16,7 +15,7 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - DB_ROOT_PASSWORD=secret
+      - MYSQL_ROOT_PASSWORD=secret
       - MYSQL_DATABASE=gitea
       - MYSQL_USER=gitea
       - MYSQL_PASSWORD=secret
@@ -25,7 +24,7 @@ services:
     networks:
       - internal
     volumes:
-      - ${STORAGE_ROOT}/docker/gitea/database/:/var/lib/mysql
+      - gitea-db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
 
   gitea-app:
@@ -34,7 +33,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ${STORAGE_ROOT}/docker/gitea/data:/data
+      - gitea-data:/data
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - gitea-db
@@ -69,5 +68,15 @@ services:
     restart: unless-stopped
 
 volumes:
-  gitea:
-  giteadb:
+  gitea-db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/gitea/database/
+  gitea-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/gitea/data
