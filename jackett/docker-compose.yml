@@ -5,6 +5,20 @@ networks:
     external: 
       name: proxy
 
+volumes:
+  jackett-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/jackett/config
+  jackett-downloads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/jackett/downloads
+
 services:
   jackett:
     container_name: "jackett"
@@ -16,8 +30,8 @@ services:
       - PGID=1000
       - TZ=Europe/Amsterdam
     volumes:
-      - ${STORAGE_ROOT}/docker/jackett/config:/config
-      - ${STORAGE_ROOT}/docker/jackett/downloads:/downloads
+      - jackett-config:/config
+      - jackett-downloads:/downloads
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

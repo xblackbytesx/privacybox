@@ -6,6 +6,33 @@ networks:
       name: proxy
   internal:
     internal: true
+
+volumes:
+  nextcloud-app:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH_APP}
+  nextcloud-custom-apps:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH_APPS}
+  nextcloud-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH_DATA}
+  nextcloud-db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH_DB}
+  nextcloud-redis:
  
 services:
   nextcloud-mariadb:
@@ -64,8 +91,8 @@ services:
       - internal
       - proxy
     volumes:
-      - nextcloud:/var/www/html:ro
-      - ./apps:/var/www/html/custom_apps:ro
+      - nextcloud-app:/var/www/html:ro
+      - nextcloud-custom-apps:/var/www/html/custom_apps:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
       - ./logs/nginx:/var/log/nginx
       - /etc/localtime:/etc/localtime:ro
@@ -115,7 +142,7 @@ services:
     networks:
       - internal
     volumes:
-      - nextcloud:/var/www/html
+      - nextcloud-app:/var/www/html
       - ./apps:/var/www/html/custom_apps
       - ./config:/var/www/html/config
       - nextcloud-data/data
@@ -124,24 +151,3 @@ services:
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
-
-volumes:
-  nextcloud-app:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_PATH_DATA}
-  nextcloud-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_PATH_DATA}
-  nextcloud-db:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_PATH_DB}
-  nextcloud-redis:

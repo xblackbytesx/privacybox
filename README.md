@@ -28,12 +28,41 @@ After succesfully running the `start.sh` script you should be able to visit the 
 traefik.YOUR_DOMAIN.TLD  
 portainer.YOUR_DOMAIN.TLD
 
+## Why these services?:
+Each of these services serve a purpose of either substituting a non-free and non-privacy respecting Saas service and/or as a means to improve your overall digital independance. Most of the services are completely Open Source and peer-reviewed. A lot of the recommendations for these apps are extensively motivated at the [https://prism-break.org](Prism Break) project where security experts and community members come together to review the privacy implementations and implications of each service.
+
+| App | Use-case |
+|---|---|
+| Nextcloud | Google Drive, Contacts, Calendar and Photos |
+| Spotweb |  |
+| Jackett | Proxy and aggregate torrent API's |
+| Ampache | Substitutes: Spotify |
+| Ghost | Free publishing platform |
+| Wordpress | Free publishing platform |
+| Hugo | Advanced static page generator |
+| Portainer | Manage your containers, images etc. |
+| Wallabag | Substitutes: Pocket, Instapaper |
+| Matrix Synapse | Substitutes: Slack, Teams |
+| Matomo | Substitutes: Google Analytics |
+| Gitea | Substitutes: Github, Gitlab |
+| Jitsi Meet | Substitutes: Skype, Zoom |
+| Invidious | Free YouTube front-end |
+| PiHole |  |
+| Sonarr |  |
+| Radarr |  |
+| Transmission |  |
+| Node-Red |  |
+| Wireguard |  |
+| Netdata |  |
+| Mastodon | Substitutes: Twitter |
+
 ## Implementation status:
 | App | Status | Notes |
 |---|---|---|
 | Nextcloud | WIP  |  No write access to data dir |
 | Spotweb | Done | Ugly fix for crappy protocol detection on Spotweb part |
 | Jackett | Done |  |
+| Ampache | WIP  |  |
 | Ghost | Done |   |
 | Wordpress | Done |   |
 | Hugo | Done | Only serving of public dir, no generating |

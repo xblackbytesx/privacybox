@@ -7,6 +7,20 @@ networks:
   internal:
     internal: true
 
+volumes:
+  gitea-db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/gitea/database/
+  gitea-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/gitea/data
+
 services:
   gitea-db:
     container_name: "gitea-db"
@@ -66,17 +80,3 @@ services:
     ports:
       - "222:22"
     restart: unless-stopped
-
-volumes:
-  gitea-db:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/gitea/database/
-  gitea-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/gitea/data
