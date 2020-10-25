@@ -8,7 +8,7 @@ networks:
 services:
   node-red:
     container_name: node-red
-    image: nodered/node-red:latest
+    image: nodered/node-red:latest-minimal
     restart: always
     user: root
     environment:

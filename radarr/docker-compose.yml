@@ -7,8 +7,8 @@ networks:
 
 services:
   radarr:
-    container_name: "radarr"
-    image: "linuxserver/radarr"
+    container_name: radarr:latest
+    image: linuxserver/radarr
     security_opt:
       - no-new-privileges:true
     environment:

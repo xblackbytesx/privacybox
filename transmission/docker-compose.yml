@@ -7,8 +7,8 @@ networks:
 
 services:
   transmission:
-    container_name: "transmission"
-    image: "linuxserver/transmission"
+    container_name: transmission
+    image: linuxserver/transmission:latest
     environment:
       - PUID=1000
       - PGID=1000

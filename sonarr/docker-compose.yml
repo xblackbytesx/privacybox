@@ -7,8 +7,8 @@ networks:
 
 services:
   sonarr:
-    container_name: "sonarr"
-    image: "linuxserver/sonarr"
+    container_name: sonarr:latest
+    image: linuxserver/sonarr
     security_opt:
       - no-new-privileges:true
     environment:
