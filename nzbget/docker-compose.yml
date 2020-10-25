@@ -7,8 +7,8 @@ networks:
 
 services:
   nzbget:
+    container_name: nzbget
     image: linuxserver/nzbget:latest
-    container_name: "nzbget"
     security_opt:
       - no-new-privileges:true
     environment:
