@@ -7,67 +7,58 @@ networks:
   internal:
     internal: true
 
-services:
+volumes:
+  invidious-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/invidious/data  
 
+services:
   invidious-db:
-    container_name: "invidious-db"
-    image: "postgres:10-alpine"
+    container_name: invidious-db
+    image: postgres:10-alpine
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ${STORAGE_ROOT}/docker/invidious/database:/var/lib/postgresql/data
+      - invidious-data:/var/lib/postgresql/data
+      - ./config/sql:/config/sql
+      - ./docker/init-invidious-db.sh:/docker-entrypoint-initdb.d/init-invidious-db.sh
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
     networks:
       - internal
+    environment:
+      POSTGRES_DB: invidious
+      POSTGRES_USER: kemal
+      POSTGRES_PASSWORD: ${DB_USER_PASS}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
     restart: unless-stopped
 
-
-  # invidious-app:
-  #   container_name: "invidious-app"
-  #   image: "omarroth/invidious"
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   restart: unless-stopped
-  #   environment:
-  #     INVIDIOUS_CONFIG: |
-  #       channel_threads: 1
-  #       feed_threads: 1
-  #       db:
-  #         user: invidious
-  #         password: secret
-  #         host: invidious-db
-  #         port: 5432
-  #         dbname: invidious
-  #       full_refresh: false
-  #       https_only: true
-  #       domain: https://beta-videos.dropdoos.nl
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.invidious-app.entrypoints=http"
-  #     - "traefik.http.routers.invidious-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-  #     - "traefik.http.routers.invidious-app.middlewares=https-redirect@file"
-  #     - "traefik.http.routers.invidious-app-secure.entrypoints=https"
-  #     - "traefik.http.routers.invidious-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-  #     - "traefik.http.routers.invidious-app-secure.tls=true"
-  #     - "traefik.http.routers.invidious-app-secure.tls.certresolver=le-dns"
-  #     - "traefik.http.routers.invidious-app-secure.service=invidious-app"
-  #     - "traefik.http.services.invidious-app.loadbalancer.server.port=3000"
-  #     - "traefik.docker.network=proxy"
-  #   networks:
-  #     - proxy
-  #     - internal
-  #   depends_on:
-  #     - invidious-db
-
   invidious-app:
-    container_name: "invidious-app"
-    image: "flourgaz/invidious"
+    container_name: invidious-app
+    image: omarroth/invidious:latest
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ${STORAGE_ROOT}/docker/invidious/config/config.yml:/invidious-app/config/config.yml
       - /etc/localtime:/etc/localtime:ro
+    environment:
+      INVIDIOUS_CONFIG: |
+        channel_threads: 1
+        check_tables: true
+        feed_threads: 1
+        db:
+          user: kemal
+          password: ${DB_USER_PASS}
+          host: invidious-db
+          port: 5432
+          dbname: invidious
+        full_refresh: false
+        https_only: false
+        domain: https://${SUBDOMAIN}.${DOMAIN}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.invidious-app.entrypoints=http"
@@ -86,8 +77,3 @@ services:
     depends_on:
       - invidious-db
     restart: unless-stopped
-
-volumes: 
-  postgresdata: 
-    external: 
-      name: invidious_postgresdata
