@@ -43,7 +43,7 @@ services:
 
   wallabag-redis:
     container_name: wallabag-redis
-    image: redis:alpine"
+    image: redis:alpine
     security_opt:
       - no-new-privileges:true
     volumes:
