@@ -57,8 +57,8 @@ services:
           port: 5432
           dbname: invidious
         full_refresh: false
-        https_only: false
-        domain: https://${SUBDOMAIN}.${DOMAIN}
+        https_only: true
+        domain: ${SUBDOMAIN}.${DOMAIN}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.invidious-app.entrypoints=http"
