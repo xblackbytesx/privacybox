@@ -7,19 +7,33 @@ networks:
   internal:
     internal: true
 
+volumes:
+  wallabag-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/wallabag/data
+  wallabag-media:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/wallabag/media
+
 services:
   wallabag-db:
-    container_name: "wallabag-db"
-    image: "mariadb"
+    container_name: wallabag-db
+    image: mariadb
     security_opt:
       - no-new-privileges:true
     environment:
-      - DB_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
       - MYSQL_DATABASE=wallabag
       - MYSQL_USER=wallabag
       - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
-      - ${STORAGE_ROOT}/docker/wallabag/data:/var/lib/mysql
+      - wallabag-data:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -28,8 +42,8 @@ services:
     restart: unless-stopped
 
   wallabag-redis:
-    container_name: "wallabag-redis"
-    image: "redis:alpine"
+    container_name: wallabag-redis
+    image: redis:alpine"
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -41,13 +55,13 @@ services:
     restart: unless-stopped
 
   wallabag-app:
-    container_name: "wallabag-app"
-    image: "wallabag/wallabag:latest"
+    container_name: wallabag-app
+    image: wallabag/wallabag:latest
     depends_on:
       - wallabag-db
       - wallabag-redis
     environment:
-      - DB_ROOT_PASSWORD=secret
+      - MYSQL_ROOT_PASSWORD=secret
       - SYMFONY__ENV__DATABASE_DRIVER=pdo_mysql
       - SYMFONY__ENV__DATABASE_HOST=wallabag-db
       - SYMFONY__ENV__DATABASE_PORT=3306
@@ -58,11 +72,11 @@ services:
       - SYMFONY__ENV__MAILER_HOST=127.0.0.1
       - SYMFONY__ENV__MAILER_USER=~
       - SYMFONY__ENV__MAILER_PASSWORD=~
-      - SYMFONY__ENV__FROM_EMAIL=${LETSENCRYPT_EMAIL}
+      - SYMFONY__ENV__FROM_EMAIL=${SMTP_EMAIL}
       - SYMFONY__ENV__DOMAIN_NAME=https://${SUBDOMAIN}.${DOMAIN}
       - SYMFONY__ENV__REDIS_HOST=wallabag-redis
     volumes:
-      - /opt/wallabag/images:/var/www/wallabag/web/assets/images
+      - wallabag-media:/var/www/wallabag/web/assets/images
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
