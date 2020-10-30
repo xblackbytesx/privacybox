@@ -23,8 +23,8 @@ volumes:
 
 services:
   gitea-db:
-    container_name: "gitea-db"
-    image: "mariadb"
+    container_name: gitea-db
+    image: mariadb
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -42,8 +42,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
 
   gitea-app:
-    container_name: "gitea-app"
-    image: "gitea/gitea:latest"
+    container_name: gitea-app
+    image: gitea/gitea:latest
     security_opt:
       - no-new-privileges:true
     volumes:
