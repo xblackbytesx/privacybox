@@ -29,10 +29,10 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - MYSQL_ROOT_PASSWORD=$(DB_ROOT_PASS)
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
       - MYSQL_DATABASE=gitea
       - MYSQL_USER=gitea
-      - MYSQL_PASSWORD=$(DB_USER_PASS)
+      - MYSQL_PASSWORD=${DB_USER_PASS}
     labels:
       - "traefik.enable=false"
     networks:
@@ -61,7 +61,7 @@ services:
       - DB_HOST=gitea-db:3306
       - DB_NAME=gitea
       - DB_USER=gitea
-      - DB_PASSWD=$(DB_USER_PASS)
+      - DB_PASSWD=${DB_USER_PASS}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.gitea-app.entrypoints=http"
