@@ -5,10 +5,24 @@ networks:
     external: 
       name: proxy
 
+volumes:
+  pihole-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/pihole/etc-pihole/
+  pihole-dnsmasq:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/pihole/etc-dnsmasq.d/
+
 services:
   pihole:
-    container_name: "pihole"
-    image: "pihole/pihole:latest"
+    container_name: pihole
+    image: pihole/pihole:latest
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -17,8 +31,8 @@ services:
       - TZ=Europe/Amsterdam
       - WEBPASSWORD=secret
     volumes:
-      - '${STORAGE_ROOT}/docker/pihole/etc-pihole/:/etc/pihole/'
-      - '${STORAGE_ROOT}/docker/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/'
+      - 'pihole-config:/etc/pihole/'
+      - 'pihole-dnsmasq:/etc/dnsmasq.d/'
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
