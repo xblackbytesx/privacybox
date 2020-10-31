@@ -11,13 +11,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/pihole/etc-pihole/
+      device: ${STORAGE_ROOT}/docker/pihole/etc/
   pihole-dnsmasq:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/pihole/etc-dnsmasq.d/
+      device: ${STORAGE_ROOT}/docker/pihole/dnsmasq/
 
 services:
   pihole:
