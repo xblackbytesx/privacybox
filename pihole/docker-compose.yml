@@ -29,7 +29,8 @@ services:
       - "67:67/udp"
     environment:
       - TZ=Europe/Amsterdam
-      - WEBPASSWORD=secret
+      - WEBPASSWORD=${ADMIN_PASS}
+      - VIRTUAL_HOST=https://${SUBDOMAIN}.${DOMAIN}
     volumes:
       - 'pihole-config:/etc/pihole/'
       - 'pihole-dnsmasq:/etc/dnsmasq.d/'
