@@ -29,9 +29,6 @@ services:
       - no-new-privileges:true
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=wallabag
-      - MYSQL_USER=wallabag
-      - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
       - wallabag-data:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro

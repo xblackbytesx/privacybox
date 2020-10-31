@@ -67,12 +67,12 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Wordpress | Done |   |
 | Hugo | Done | Only serving of public dir, no generating |
 | Portainer | Done |   |
-| Wallabag | WIP | Backend works, no front-end yet |
+| Wallabag | Done |   |
 | Matrix Synapse | WIP | Untested
 | Matomo | Done |   |
 | Gitea | Done |   |
 | Jitsi Meet | WIP | Untested |
-| Invidious | WIP | Not serving page |
+| Invidious | Done |   |
 | PiHole | Done |   |
 | Sonarr | Done |   |
 | Radarr | Done |   |
