@@ -38,12 +38,12 @@ volumes:
       type: none
       o: bind
       device: ${STORAGE_ROOT}/docker/nextcloud/database/
-  nextcloud-logs:
+  nextcloud-log:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/nextcloud/log/
+      device: ${STORAGE_ROOT}/docker/nextcloud/log/nextcloud.log
  
 services:
   nextcloud-db:
@@ -85,7 +85,7 @@ services:
       - nextcloud-custom-apps:/var/www/html/custom_apps
       - nextcloud-config:/var/www/html/config
       - nextcloud-data:/var/www/html/data
-      - nextcloud-logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
+      - nextcloud-log:/var/www/html/data/nextcloud.log
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -157,7 +157,7 @@ services:
       - nextcloud-custom-apps:/var/www/html/custom_apps
       - nextcloud-config:/var/www/html/config
       - nextcloud-data/data
-      - nextcloud-logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
+      - nextcloud-log:/var/www/html/data/nextcloud.log
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
