@@ -13,31 +13,42 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_PATH_APP}
+      device: ${STORAGE_ROOT}/docker/nextcloud/app
+  nextcloud-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/nextcloud/config
   nextcloud-custom-apps:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_PATH_APPS}
+      device: ${STORAGE_ROOT}/docker/nextcloud/apps
   nextcloud-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_PATH_DATA}
+      device: ${STORAGE_ROOT}/docker/nextcloud/data
   nextcloud-db:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_PATH_DB}
-  nextcloud-redis:
+      device: ${STORAGE_ROOT}/docker/nextcloud/database/
+  nextcloud-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/nextcloud/log/
  
 services:
-  nextcloud-mariadb:
-    container_name: "nextcloud-mariadb"
-    image: "mariadb"
+  nextcloud-db:
+    container_name: nextcloud-db
+    image: mariadb
     security_opt:
       - no-new-privileges:true
     networks:
@@ -49,19 +60,19 @@ services:
       - MYSQL_USER=nextcloud
       - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
-      - ${STORAGE_ROOT}/docker/nextcloud/database/:/var/lib/mysql
+      - nextcloud-db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
 
   nextcloud-fpm:
-    container_name: "nextcloud-fpm"
-    image: "nextcloud:fpm-alpine"
+    container_name: nextcloud-fpm
+    image: nextcloud:fpm-alpine
     security_opt:
       - no-new-privileges:true
     depends_on:
-      - nextcloud-mariadb
+      - nextcloud-db
     networks:
       - internal
     environment:
@@ -70,19 +81,19 @@ services:
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
     volumes:
-      - nextcloud:/var/www/html
-      - ${STORAGE_ROOT}/docker/nextcloud/apps:/var/www/html/custom_apps
-      - ${STORAGE_ROOT}/docker/nextcloud/config:/var/www/html/config
+      - nextcloud-app:/var/www/html
+      - nextcloud-custom-apps:/var/www/html/custom_apps
+      - nextcloud-config:/var/www/html/config
       - nextcloud-data:/var/www/html/data
-      - ${STORAGE_ROOT}/docker/nextcloud/logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
+      - nextcloud-logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
 
   nextcloud-nginx:
-    container_name: "nextcloud-nginx"
-    image: "nginx:alpine"
+    container_name: nextcloud-nginx
+    image: nginx:alpine
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -116,8 +127,8 @@ services:
     restart: unless-stopped
 
   nextcloud-redis:
-    container_name: "nextcloud-redis"
-    image: "redis:alpine"
+    container_name: nextcloud-redis
+    image: redis:alpine
     security_opt:
       - no-new-privileges:true
     networks: 
@@ -130,12 +141,12 @@ services:
     restart: unless-stopped
 
   nextcloud-cron:
-    container_name: "nextcloud-cron"
-    image: "nextcloud:fpm-alpine"
+    container_name: nextcloud-cron
+    image: nextcloud:fpm-alpine
     security_opt:
       - no-new-privileges:true
     depends_on:
-      - nextcloud-mariadb
+      - nextcloud-db
       - nextcloud-fpm
       - nextcloud-redis
     entrypoint: /cron.sh
@@ -143,10 +154,10 @@ services:
       - internal
     volumes:
       - nextcloud-app:/var/www/html
-      - ./apps:/var/www/html/custom_apps
-      - ./config:/var/www/html/config
+      - nextcloud-custom-apps:/var/www/html/custom_apps
+      - nextcloud-config:/var/www/html/config
       - nextcloud-data/data
-      - ./logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
+      - nextcloud-logs/nextcloud/nextcloud.log:/var/www/html/data/nextcloud.log
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
