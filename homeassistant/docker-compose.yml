@@ -1,0 +1,43 @@
+version: '3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+      
+volumes:
+  homeassistant-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/homeassistant/confg      
+
+services:
+  homeassistant:
+    container_name: home-assistant
+    image: homeassistant/home-assistant:stable
+    volumes:
+      - homeassistant-config:/config
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyACM0:/dev/ttyACM0
+    environment:
+      - TZ=Europe/Amsterdam
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hass.entrypoints=http"
+      - "traefik.http.routers.hass.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.hass.middlewares=https-redirect@file"
+      - "traefik.http.routers.hass-secure.entrypoints=https"
+      - "traefik.http.routers.hass-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.hass-secure.tls=true"
+      - "traefik.http.routers.hass-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.hass-secure.service=hass"
+      - "traefik.http.services.hass.loadbalancer.server.port=8123"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+    network_mode: host
+    restart: always
