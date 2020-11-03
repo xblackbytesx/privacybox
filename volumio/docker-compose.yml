@@ -27,14 +27,14 @@ services:
       - no-new-privileges:true
     environment:
       - HOST=${SUBDOMAIN}.${DOMAIN}
-      - PULSE_SERVER=unix:/pulse/native
-      - PULSE_COOKIE_DATA="$(cat $HOME/.config/pulse/cookie)"
-      - HOST_USER=$(id -u):$(id -g)
-      - AUDIO_OUTPUT=pulse
+      # - PULSE_SERVER=unix:/pulse/native
+      # - PULSE_COOKIE_DATA="$(cat $HOME/.config/pulse/cookie)"
+      # - HOST_USER=$(id -u):$(id -g)
+      # - AUDIO_OUTPUT=pulse
     volumes:
       - volumio-config:/data
       - volumio-music:/var/lib/mpd/music/:ro 
-      - $(readlink $HOME/.config/pulse/$(cat /etc/machine-id)-runtime):/pulse:ro
+      # - $(readlink $HOME/.config/pulse/$(cat /etc/machine-id)-runtime):/pulse:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
