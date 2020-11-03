@@ -14,7 +14,7 @@ volumes:
       device: ${STORAGE_ROOT}/docker/homeassistant/confg      
 
 services:
-  homeassistant:
+  homeassistant-app:
     container_name: home-assistant
     image: homeassistant/home-assistant:stable
     volumes:
@@ -26,18 +26,32 @@ services:
     environment:
       - TZ=Europe/Amsterdam
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.hass.entrypoints=http"
-      - "traefik.http.routers.hass.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.hass.middlewares=https-redirect@file"
-      - "traefik.http.routers.hass-secure.entrypoints=https"
-      - "traefik.http.routers.hass-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.hass-secure.tls=true"
-      - "traefik.http.routers.hass-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.hass-secure.service=hass"
-      - "traefik.http.services.hass.loadbalancer.server.port=8123"
-      - "traefik.docker.network=proxy"
-    networks:
-      - proxy
+      - "traefik.enable=false"
     network_mode: host
     restart: always
+
+  homeassistant-nginx:
+    container_name: homeassistant-nginx
+    image: nginx:alpine
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - homeassistant-app
+    networks:
+      - internal
+      - proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homeassistant.entrypoints=http"
+      - "traefik.http.routers.homeassistant.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.homeassistant.middlewares=https-redirect@file"
+      - "traefik.http.routers.homeassistant-secure.entrypoints=https"
+      - "traefik.http.routers.homeassistant-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.homeassistant-secure.tls=true"
+      - "traefik.http.routers.homeassistant-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.homeassistant-secure.service=homeassistant"
+      - "traefik.http.services.homeassistant.loadbalancer.server.port=9117"
+      - "traefik.docker.network=proxy"
+    restart: unless-stopped
