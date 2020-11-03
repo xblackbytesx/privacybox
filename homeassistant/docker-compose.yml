@@ -4,6 +4,8 @@ networks:
   proxy:
     external: 
       name: proxy
+  internal:
+    internal: true
       
 volumes:
   homeassistant-config:
