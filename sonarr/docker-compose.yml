@@ -30,7 +30,7 @@ volumes:
   #   driver_opts:
   #     type: nfs4
   #     o: "addr=${NFS_REMOTE_IP},rw"
-  #     device: ":${NFS_REMOTE_PATH}
+  #     device: ":${NFS_REMOTE_PATH}"
 
 services:
   sonarr:
