@@ -5,6 +5,26 @@ networks:
     external:
       name: proxy
 
+volumes:
+  transmission-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/transmission/config
+  transmission-downloads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/transmission/downloads
+  transmission-watchdir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/transmission/watch
+
 services:
   transmission:
     container_name: transmission
@@ -17,9 +37,9 @@ services:
       - USER=${TRANSMISSION_USER}
       - PASS=${TRANSMISSION_PASS}
     volumes:
-      - ${STORAGE_ROOT}/docker/transmission/config:/config
-      - ${STORAGE_ROOT}/docker/transmission/downloads:/downloads
-      - ${STORAGE_ROOT}/docker/transmission/watch:/watch
+      - transmission-config:/config
+      - transmission-downloads:/downloads
+      - transmission-watchdir:/watch
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

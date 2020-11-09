@@ -5,6 +5,26 @@ networks:
     external:
       name: proxy
 
+volumes:
+  radarr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/radarr/config
+  radarr-movies-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/video/Movies
+  radarr-downloads-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/transmission/downloads
+
 services:
   radarr:
     container_name: radarr
@@ -17,9 +37,9 @@ services:
       - TZ=Europe/Amsterdam
       - UMASK_SET=022 #optional
     volumes:
-      - ${STORAGE_ROOT}/docker/radarr/config:/config
-      - ${STORAGE_ROOT}/video/Movies:/movies
-      - ${STORAGE_ROOT}/docker/transmission/downloads:/downloads
+      - radarr-config:/config
+      - radarr-movies-dir:/movies
+      - radarr-downloads-dir:/downloads
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

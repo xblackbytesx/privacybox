@@ -5,6 +5,20 @@ networks:
     external:
       name: proxy
 
+volumes:
+  nzbget-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/nzbget/config
+  nzbget-downloads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/nzbget/downloads
+
 services:
   nzbget:
     container_name: nzbget
@@ -16,8 +30,8 @@ services:
       - PGID=1000
       - TZ=Europe/Amsterdam
     volumes:
-      - ${STORAGE_ROOT}/docker/nzbget/config:/config
-      - ${STORAGE_ROOT}/docker/nzbget/downloads:/downloads
+      - nzbget-config:/config
+      - nzbget-downloads:/downloads
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"

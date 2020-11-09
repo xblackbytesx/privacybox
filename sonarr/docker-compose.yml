@@ -5,6 +5,26 @@ networks:
     external:
       name: proxy
 
+volumes:
+  sonarr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/sonarr/config
+  sonarr-series-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/video/Series
+  sonarr-downloads-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/transmission/downloads
+
 services:
   sonarr:
     container_name: sonarr
@@ -17,9 +37,9 @@ services:
       - TZ=Europe/Amsterdam
       - UMASK_SET=022 #optional
     volumes:
-      - ${STORAGE_ROOT}/docker/sonarr/config:/config
-      - ${STORAGE_ROOT}/video/Series:/tv
-      - ${STORAGE_ROOT}/docker/transmission/downloads:/downloads
+      - sonarr-config:/config
+      - sonarr-series-dir:/tv
+      - sonarr-downloads-dir:/downloads
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
