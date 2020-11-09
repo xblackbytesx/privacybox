@@ -23,7 +23,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/transmission/downloads
+      device: ${STORAGE_ROOT}/downloads
 
 services:
   radarr:
