@@ -50,7 +50,7 @@ services:
     depends_on:
       - spotweb-mariadb
     volumes:
-      - spootweb-config:/config
+      - spotweb-config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=Europe/Amsterdam
