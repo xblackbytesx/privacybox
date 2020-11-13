@@ -101,4 +101,4 @@ Also feel free to use this setup for your own purposes, just know that I'm const
 ## Attribution
 This project is in itself largely building on top of the wonderul work done in the Open Source community at large. Everything from Linux, Docker and the many volunteers that create ready-made images.
 
-However thoughout the compilation of this project I've had lots of support from friend and fellow container fanboy Bart: [https://github.com/bartjekel].
+However thoughout the compilation of this project I've had lots of support from friend and fellow container fanboy Bart: [https://github.com/bartjekel](https://github.com/bartjekel).

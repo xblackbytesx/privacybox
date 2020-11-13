@@ -5,6 +5,21 @@ networks:
     external:
       name: proxy
 
+volumes:
+  nodered-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/node-red/data
+  # nodered-download-dir:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${STORAGE_ROOT}/downloads/complete
+      
+
 services:
   node-red:
     container_name: node-red
@@ -16,10 +31,9 @@ services:
       # - PGID=1000
       - TZ=Europe/Amsterdam
     volumes:
-      - ${STORAGE_ROOT}/docker/node-red/data:/data
-      # - ${STORAGE_ROOT}/Downloads/complete/tv:/watch/tv
-      # - ${STORAGE_ROOT}/Downloads/complete/tv-converted:/export
-      # - ./.ssh:/root.ssh
+      - nodered-data:/data
+      - /etc/localtime:/etc/localtime:ro
+      # - nodered-download-dir:/storage
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.nodered.entrypoints=http"

@@ -46,7 +46,7 @@ services:
     image: "jgeusebroek/spotweb:latest"
     security_opt:
       - no-new-privileges:true
-    # command: sed -i 's+= $$nwsetting+= "https://beta-spotweb.dropdoos.nl"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
+    # command: sed -i 's+= $$nwsetting+= "https://spotweb.privacy.box"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
     depends_on:
       - spotweb-mariadb
     volumes:

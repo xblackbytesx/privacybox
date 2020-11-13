@@ -1,5 +1,14 @@
 
 version: "2.1"
+
+volumes:
+  wireguard-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/wireguard/config
+
 services:
   wireguard:
     image: linuxserver/wireguard:latest
@@ -18,8 +27,9 @@ services:
       - PEERDNS=${PEERDNS}
       - INTERNAL_SUBNET=${INTERNAL_SUBNET}
     volumes:
-      - ./config:/config
+      - wireguard-config:/config
       - /lib/modules:/lib/modules
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - ${SERVER_PORT}:51820/udp
     sysctls:
