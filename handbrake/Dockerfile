@@ -4,6 +4,7 @@ CMD ["date"]
 
 RUN apt-get update -q && \
     apt-get install apt-transport-https -qy && \
+    apt-get update -q && \
     apt-get install handbrake-cli -qy && \
     apt-get clean && rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/*
 
