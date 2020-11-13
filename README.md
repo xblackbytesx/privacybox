@@ -29,7 +29,7 @@ traefik.YOUR_DOMAIN.TLD
 portainer.YOUR_DOMAIN.TLD
 
 ## Why these services?:
-Each of these services serve a purpose of either substituting a non-free and non-privacy respecting Saas service and/or as a means to improve your overall digital independance. Most of the services are completely Open Source and peer-reviewed. A lot of the recommendations for these apps are extensively motivated at the [https://prism-break.org](Prism Break) project where security experts and community members come together to review the privacy implementations and implications of each service.
+Each of these services serve a purpose of either substituting a non-free and non-privacy respecting Saas service and/or as a means to improve your overall digital independance. Most of the services are completely Open Source and peer-reviewed. A lot of the recommendations for these apps are extensively motivated at the [Prism Break](https://prism-break.org) project where security experts and community members come together to review the privacy implementations and implications of each service.
 
 | App | Use-case |
 |---|---|
@@ -60,7 +60,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | App | Status | Notes |
 |---|---|---|
 | Nextcloud | WIP  |  No write access to data dir |
-| Spotweb | Done | Ugly fix for crappy protocol detection on Spotweb part |
+| Spotweb | Done | [Detailed Notes](./docs/spotweb.md) |
 | Jackett | Done |  |
 | Ampache | WIP  |  |
 | Ghost | Done |   |
