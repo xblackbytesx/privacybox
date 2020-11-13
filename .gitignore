@@ -1,3 +1,4 @@
 *.env
 *.key
 acme.json
+traefik.yml
