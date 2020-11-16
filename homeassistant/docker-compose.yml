@@ -13,7 +13,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/homeassistant/confg      
+      device: ${STORAGE_ROOT}/docker/homeassistant/config      
 
 services:
   homeassistant-app:
@@ -21,10 +21,10 @@ services:
     image: homeassistant/home-assistant:stable
     volumes:
       - homeassistant-config:/config
-    devices:
-      - /dev/ttyUSB0:/dev/ttyUSB0
-      - /dev/ttyUSB1:/dev/ttyUSB1
-      - /dev/ttyACM0:/dev/ttyACM0
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0
+    #   - /dev/ttyUSB1:/dev/ttyUSB1
+    #   - /dev/ttyACM0:/dev/ttyACM0
     environment:
       - TZ=Europe/Amsterdam
     labels:

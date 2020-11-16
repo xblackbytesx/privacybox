@@ -78,7 +78,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Radarr | Done |   |
 | Transmission | Done |   |
 | Node-Red | Done |   |
-| Wireguard | WIP |   |
+| Wireguard | Done |  Some special instructions for combining with PiHole  |
 | Netdata | WIP |   |
 | Mastodon | WIP |   |
 
