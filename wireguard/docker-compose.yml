@@ -1,6 +1,11 @@
 
 version: "2.1"
 
+networks:
+  proxy:
+    external: 
+      name: proxy
+
 volumes:
   wireguard-config:
     driver: local
@@ -34,3 +39,5 @@ services:
       - ${SERVER_PORT}:51820/udp
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
+    networks:
+      - proxy
