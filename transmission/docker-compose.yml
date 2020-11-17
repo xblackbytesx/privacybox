@@ -42,11 +42,9 @@ services:
     tty: true
     command: /bin/bash
     privileged: true
-    restart: unless-stopped
     ports:
       - 51413:51413
       - 51413:51413/udp
-      - 9091:9091
     networks:
       - proxy
     labels:
@@ -61,6 +59,7 @@ services:
       - "traefik.http.routers.transmission-vpn-secure.service=transmission-vpn"
       - "traefik.http.services.transmission-vpn.loadbalancer.server.port=9091"
       - "traefik.docker.network=proxy"
+    restart: unless-stopped
 
   transmission:
     container_name: transmission

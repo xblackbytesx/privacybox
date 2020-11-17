@@ -36,9 +36,6 @@ services:
     tty: true
     command: /bin/bash
     privileged: true
-    restart: unless-stopped
-    ports:
-      - 6789:6789
     networks:
       - proxy
     labels:
@@ -53,6 +50,7 @@ services:
       - "traefik.http.routers.nzbget-vpn-secure.service=nzbget-vpn"
       - "traefik.http.services.nzbget-vpn.loadbalancer.server.port=6789"         
       - "traefik.docker.network=proxy"
+    restart: unless-stopped
 
   nzbget:
     container_name: nzbget
