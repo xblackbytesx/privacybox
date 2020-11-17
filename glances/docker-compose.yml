@@ -38,7 +38,7 @@ services:
       - "traefik.http.routers.glances-app-secure.tls=true"
       - "traefik.http.routers.glances-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.glances-app-secure.service=glances-app"
-      - "traefik.http.services.glances-app.loadbalancer.server.port=3000"
+      - "traefik.http.services.glances-app.loadbalancer.server.port=61208"
       - "traefik.docker.network=proxy"
     networks:
       - proxy
