@@ -21,7 +21,7 @@ volumes:
 
 services:
   nzbget-vpn:
-    container_name: expressvpn
+    container_name: nzbget-vpn
     image: polkaned/expressvpn
     security_opt:
       - no-new-privileges:true

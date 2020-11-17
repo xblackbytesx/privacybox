@@ -27,7 +27,7 @@ volumes:
 
 services:
   transmission-vpn:
-    container_name: expressvpn
+    container_name: transmission-vpn
     image: polkaned/expressvpn
     security_opt:
       - no-new-privileges:true

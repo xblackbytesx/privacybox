@@ -21,7 +21,7 @@ volumes:
 
 services:
   jackett-vpn:
-    container_name: expressvpn
+    container_name: jackett-vpn
     image: polkaned/expressvpn
     security_opt:
       - no-new-privileges:true

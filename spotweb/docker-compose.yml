@@ -23,7 +23,7 @@ volumes:
 
 services:
   spotweb-vpn:
-    container_name: expressvpn
+    container_name: spotweb-vpn
     image: polkaned/expressvpn
     security_opt:
       - no-new-privileges:true
