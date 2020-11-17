@@ -8,7 +8,6 @@ networks:
     internal: true
 
 services:
-
   matomo-db:
     container_name: "matomo-db"
     image: "mariadb"

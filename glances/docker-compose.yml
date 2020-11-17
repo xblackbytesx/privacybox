@@ -1,0 +1,45 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+volumes:
+  glances-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/glances/data  
+
+services:
+  glances:
+    container_name: glances
+    image: vimagick/glances:latest
+    security_opt:
+      - no-new-privileges:true
+    pid: host
+    environment:
+      - GLANCES_OPT=-w
+    volumes:
+      - glances-data:/etc/glances
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.glances-app.entrypoints=http"
+      - "traefik.http.routers.glances-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.glances-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.glances-app-secure.entrypoints=https"
+      - "traefik.http.routers.glances-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.glances-app-secure.tls=true"
+      - "traefik.http.routers.glances-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.glances-app-secure.service=glances-app"
+      - "traefik.http.services.glances-app.loadbalancer.server.port=3000"
+      - "traefik.docker.network=proxy"
+    networks:
+      - proxy
+    restart: unless-stopped
