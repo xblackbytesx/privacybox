@@ -22,6 +22,41 @@ volumes:
       device: ${STORAGE_ROOT}/docker/spotweb/config/
 
 services:
+  spotweb-vpn:
+    container_name: expressvpn
+    image: polkaned/expressvpn
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - ACTIVATION_CODE=${VPN_ACTIVATION_CODE}
+      - SERVER=${VPN_SERVER}
+    cap_add:
+      - NET_ADMIN
+    devices: 
+      - /dev/net/tun
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - 80:80
+    networks:
+      - proxy
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.spotweb-vpn.entrypoints=http"
+      - "traefik.http.routers.spotweb-vpn.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.spotweb-vpn.middlewares=https-redirect@file"
+      - "traefik.http.routers.spotweb-vpn-secure.entrypoints=https"
+      - "traefik.http.routers.spotweb-vpn-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.spotweb-vpn-secure.tls=true"
+      - "traefik.http.routers.spotweb-vpn-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.spotweb-vpn-secure.service=spotweb-vpn"
+      - "traefik.http.services.spotweb-vpn.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
+
   spotweb-mariadb:
     container_name: spotweb-mariadb
     image: mariadb
@@ -61,19 +96,20 @@ services:
       - SPOTWEB_DB_PASS=${DB_USER_PASS}
       - SPOTWEB_CRON_RETRIEVE=*/15 * * * *
       - SPOTWEB_CRON_CACHE_CHECK=10 */1 * * *
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.spotweb.entrypoints=http"
-      - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.spotweb.middlewares=https-redirect@file"
-      - "traefik.http.routers.spotweb-secure.entrypoints=https"
-      - "traefik.http.routers.spotweb-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.spotweb-secure.tls=true"
-      - "traefik.http.routers.spotweb-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.spotweb-secure.service=spotweb"
-      - "traefik.http.services.spotweb.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy"
-    networks:
-      - proxy
-      - internal
+    # If NOT using the above VPN service uncomment the section below:
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.spotweb.entrypoints=http"
+    #   - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.spotweb.middlewares=https-redirect@file"
+    #   - "traefik.http.routers.spotweb-secure.entrypoints=https"
+    #   - "traefik.http.routers.spotweb-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.spotweb-secure.tls=true"
+    #   - "traefik.http.routers.spotweb-secure.tls.certresolver=le-dns"
+    #   - "traefik.http.routers.spotweb-secure.service=spotweb"
+    #   - "traefik.http.services.spotweb.loadbalancer.server.port=80"
+    #   - "traefik.docker.network=proxy"
+    # networks:
+    #   - proxy
+    #   - internal
     restart: unless-stopped

@@ -20,6 +20,40 @@ volumes:
       device: ${STORAGE_ROOT}/docker/jackett/downloads
 
 services:
+  jackett-vpn:
+    container_name: expressvpn
+    image: polkaned/expressvpn
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - ACTIVATION_CODE=${VPN_ACTIVATION_CODE}
+      - SERVER=${VPN_SERVER}
+    cap_add:
+      - NET_ADMIN
+    devices: 
+      - /dev/net/tun
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - 9117:9117
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jackett-vpn.entrypoints=http"
+      - "traefik.http.routers.jackett-vpn.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.jackett-vpn.middlewares=https-redirect@file"
+      - "traefik.http.routers.jackett-vpn-secure.entrypoints=https"
+      - "traefik.http.routers.jackett-vpn-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.jackett-vpn-secure.tls=true"
+      - "traefik.http.routers.jackett-vpn-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.jackett-vpn-secure.service=jackett-vpn"
+      - "traefik.http.services.jackett-vpn.loadbalancer.server.port=9091"
+      - "traefik.docker.network=proxy"
+
   jackett:
     container_name: jackett
     image: linuxserver/jackett:latest
@@ -33,18 +67,22 @@ services:
       - jackett-config:/config
       - jackett-downloads:/downloads
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.jackett.entrypoints=http"
-      - "traefik.http.routers.jackett.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.jackett.middlewares=https-redirect@file"
-      - "traefik.http.routers.jackett-secure.entrypoints=https"
-      - "traefik.http.routers.jackett-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.jackett-secure.tls=true"
-      - "traefik.http.routers.jackett-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.jackett-secure.service=jackett"
-      - "traefik.http.services.jackett.loadbalancer.server.port=9117"
-      - "traefik.docker.network=proxy"
-    networks:
-      - proxy
+    # If NOT using the above VPN service uncomment the section below:
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.jackett.entrypoints=http"
+    #   - "traefik.http.routers.jackett.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.jackett.middlewares=https-redirect@file"
+    #   - "traefik.http.routers.jackett-secure.entrypoints=https"
+    #   - "traefik.http.routers.jackett-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.jackett-secure.tls=true"
+    #   - "traefik.http.routers.jackett-secure.tls.certresolver=le-dns"
+    #   - "traefik.http.routers.jackett-secure.service=jackett"
+    #   - "traefik.http.services.jackett.loadbalancer.server.port=9117"
+    #   - "traefik.docker.network=proxy"
+    # networks:
+    #   - proxy
+    network_mode: service:jackett-vpn
+    depends_on:
+      - jackett-vpn
     restart: unless-stopped
