@@ -1,42 +1,54 @@
-version: '3.3'
+version: '3'
 
 networks:
   proxy:
     external: 
       name: proxy
-  internal:
-    internal: true
+
+volumes:
+  ampache-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/ampache/config
+  ampache-log:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/ampache/log
+  ampache-media:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/ampache/media
+  ampache-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/ampache/database
+  ampache-sites-enabled:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/ampache/sites-enabled
 
 services:
-  ampache-db:
-    container_name: "ampache-db"
-    image: "mariadb"
-    restart: unless-stopped
+  ampache:
+    image: ampache/ampache:latest
+    container_name: ampache
     security_opt:
       - no-new-privileges:true
-    environment:
-      - DB_ROOT_PASSWORD=secret
-      - MYSQL_DATABASE=ampache
-      - MYSQL_USER=ampache
-      - MYSQL_PASSWORD=secret
-    labels:
-      - "traefik.enable=false"
-    networks:
-      - internal
     volumes:
-      - ${STORAGE_ROOT}/docker/ampache/database/:/var/lib/mysql
-      - /etc/localtime:/etc/localtime:ro
-
-  ampache-app:
-    container_name: "ampache-app"
-    image: "ampache/ampache:latest"
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      - ampache-db
-    volumes:
-      # - ./path/to/media/files:/media:ro
-      - ${STORAGE_ROOT}/docker/ampache/database/:/var/lib/mysql
+      - ampache-config:/var/www/config
+      - ampache-log:/var/log/ampache
+      - ampache-media:/media
+      - ampache-database:/var/lib/mysql
+      - ampache-sites-enabled:/etc/apache2/sites-enabled
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
@@ -52,9 +64,4 @@ services:
       - "traefik.docker.network=proxy"
     networks:
       - proxy
-      - internal
     restart: unless-stopped
-
-volumes:
-  ampache:
-  ampache-db:

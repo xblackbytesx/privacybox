@@ -18,7 +18,8 @@ services:
   wireguard:
     image: linuxserver/wireguard:latest
     container_name: wireguard
-    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -41,3 +42,4 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
     networks:
       - proxy
+    restart: unless-stopped

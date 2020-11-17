@@ -60,9 +60,9 @@ Each of these services serve a purpose of either substituting a non-free and non
 | App | Status | Notes |
 |---|---|---|
 | Nextcloud | WIP  |  No write access to data dir |
-| Spotweb | Done | [Detailed Notes](./docs/spotweb.md) |
+| Spotweb | Done | [Detailed notes](./docs/spotweb.md) |
 | Jackett | Done |  |
-| Ampache | WIP  |  |
+| Ampache | Done  | [Detailed notes](./docs/ampache.md) |
 | Ghost | Done |   |
 | Wordpress | Done |   |
 | Hugo | Done | Only serving of public dir, no generating |
