@@ -51,7 +51,7 @@ services:
       - "traefik.http.routers.jackett-vpn-secure.tls=true"
       - "traefik.http.routers.jackett-vpn-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.jackett-vpn-secure.service=jackett-vpn"
-      - "traefik.http.services.jackett-vpn.loadbalancer.server.port=9091"
+      - "traefik.http.services.jackett-vpn.loadbalancer.server.port=9117"
       - "traefik.docker.network=proxy"
 
   jackett:
