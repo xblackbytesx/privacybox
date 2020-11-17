@@ -23,8 +23,6 @@ services:
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
-    security_opt:
-      - no-new-privileges:true
     ports:
       - "53:53/tcp"
       - "53:53/udp"
