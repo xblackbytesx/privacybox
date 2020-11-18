@@ -1,4 +1,4 @@
-version: "3.3"
+version: '3'
 
 networks:
   proxy:
@@ -7,49 +7,68 @@ networks:
   internal:
     internal: true
 
-services:
+volumes:
+  synapse-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/synapse/database
+  synapse-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/synapse/data
 
-  synapse:
-    image: matrixdotorg/synapse:latest
+services:
+  synapse-db:
+    container_name: synapse-db
+    image: postgres:12-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      # ensure the database gets created correctly
+      # https://github.com/matrix-org/synapse/blob/master/docs/postgres.md#set-up-database
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - synapse-database:/var/lib/postgresql/data
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
     restart: unless-stopped
+
+  synapse-app:
+    container_name: synapse-app
+    image: matrixdotorg/synapse:latest
+    security_opt:
+      - no-new-privileges:true
     environment:
       - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
     volumes:
-      # You may either store all the files in a local folder
-      - ${STORAGE_ROOT}/docker/matrix-synapse/files:/data
+      - synapse-data:/data
       # .. or you may split this between different storage points
       # - ./files:/data
       # - /path/to/ssd:/data/uploads
       # - /path/to/large_hdd:/data/media
     depends_on:
-      - db
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.http-synapse.entryPoints=http
-      - traefik.http.routers.http-synapse.rule=Host(`my.matrix.host`)
-      - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true
-      - traefik.http.routers.http-synapse.middlewares=https_redirect
-      - traefik.http.routers.https-synapse.entryPoints=https
-      - traefik.http.routers.https-synapse.rule=Host(`my.matrix.host`)
-      - traefik.http.routers.https-synapse.service=synapse
-      - traefik.http.routers.https-synapse.tls=true
-      - traefik.http.services.synapse.loadbalancer.server.port=8008
-      - traefik.http.routers.https-synapse.tls.certResolver=le-ssl
+      - synapse-db
     networks:
       - proxy
       - internal
-
-  db:
-    image: postgres:10-alpine
-    environment:
-      - POSTGRES_USER=synapse
-      - POSTGRES_PASSWORD=${DB_USER_PASS}
-      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
-    volumes:
-      # You may store the database tables in a local folder..
-      - ${STORAGE_ROOT}/docker/matrix-synapse/database:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
-    networks:
-      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.synapse.entrypoints=http"
+      - "traefik.http.routers.synapse.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.synapse.middlewares=https-redirect@file"
+      - "traefik.http.routers.synapse-secure.entrypoints=https"
+      - "traefik.http.routers.synapse-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.synapse-secure.tls=true"
+      - "traefik.http.routers.synapse-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.synapse-secure.service=synapse"
+      - "traefik.http.services.synapse.loadbalancer.server.port=8008"
+      - "traefik.docker.network=proxy"
     restart: unless-stopped
