@@ -7,62 +7,76 @@ networks:
   internal:
     internal: true
 
+volumes:
+  mastodon-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/mastodon/database
+  synapse-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/synapse/data
+
 services:
 
   mastodon-db:
-    container_name: "mastodon-db"
-    image: "postgres:10-alpine"
+    container_name: mastodon-db
+    image: postgres:10-alpine
     security_opt:
       - no-new-privileges:true
-    restart: unless-stopped
     shm_size: 256mb
     networks:
       - internal
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
     volumes:
-      - ${STORAGE_ROOT}/docker/mastodon/database:/var/lib/postgresql/data
+      - mastodon-database:/var/lib/postgresql/data
     labels:
       - "traefik.enable=false"
+    restart: unless-stopped
 
   mastodon-redis:
     container_name: "mastodon-redis"
     image: "redis:alpine"
     security_opt:
       - no-new-privileges:true
-    restart: unless-stopped
     networks:
       - internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
     volumes:
       - ./redis:/data
-    labels:
-      - "traefik.enable=false"
+    restart: unless-stopped
 
-  # es:
-  #   container_name: "mastodon-search"
-  #   image: "docker.elastic.co/elasticsearch/elasticsearch-oss:6.1.3"
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   restart: unless-stopped
+  # mastodon-es:
+  #   restart: always
+  #   image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
   #   environment:
   #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #     - "cluster.name=es-mastodon"
+  #     - "discovery.type=single-node"
+  #     - "bootstrap.memory_lock=true"
   #   networks:
   #     - internal
   #   healthcheck:
   #     test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
   #   volumes:
   #     - ./elasticsearch:/usr/share/elasticsearch/data
-  #   labels:
-  #     - "traefik.enable=false"  
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
 
-  web:
-    container_name: "mastodon-app"
-    image: "tootsuite/mastodon"
+  mastodon-app:
+    container_name: mastodon-app
+    image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
-    restart: unless-stopped
+    env_file: .env.production
     command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
     networks:
       - proxy
@@ -81,21 +95,20 @@ services:
       - "traefik.http.routers.mastodon-secure.service=mastodon"
       - "traefik.http.services.mastodon.loadbalancer.server.port=3000"
       - "traefik.docker.network=proxy"
-    # ports:
-    #   - "127.0.0.1:3000:3000"
     depends_on:
       - mastodon-db
       - mastodon-redis
-      # - es
+      # - mastodon-es
     volumes:
       - ./public/system:/mastodon/public/system
+    restart: unless-stopped
 
-  streaming:
-    container_name: "mastodon-streaming"
-    image: "tootsuite/mastodon"
+  mastodon-streaming:
+    container_name: mastodon-streaming
+    image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
-    restart: unless-stopped
+    env_file: .env.production
     command: node ./streaming
     networks:
       - proxy
@@ -107,15 +120,14 @@ services:
     depends_on:
       - mastodon-db
       - mastodon-redis
-    labels:
-      - "traefik.enable=false"
+    restart: unless-stopped
 
-  sidekiq:
-    container_name: "mastodon-sidekiq"
-    image: "tootsuite/mastodon"
+  mastodon-sidekiq:
+    container_name: mastodon-sidekiq
+    image: tootsuite/mastodon
+    env_file: .env.production
     security_opt:
       - no-new-privileges:true
-    restart: unless-stopped
     command: bundle exec sidekiq
     depends_on:
       - mastodon-db
@@ -125,5 +137,21 @@ services:
       - internal
     volumes:
       - ./public/system:/mastodon/public/system
-    labels:
-      - "traefik.enable=false"
+    restart: unless-stopped
+
+  # # Uncomment to enable federation with tor instances along with adding the following ENV variables
+  # # http_proxy=http://privoxy:8118
+  # # ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
+  # mastodon-tor:
+  #   image: sirboops/tor
+  #   networks:
+  #     - proxy
+  #     - internal
+
+  # mastodon-privoxy:
+  #   image: sirboops/privoxy
+  #   volumes:
+  #     - ./priv-config:/opt/config
+  #   networks:
+  #     - proxy
+  #     - internal
