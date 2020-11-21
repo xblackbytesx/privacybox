@@ -14,15 +14,8 @@ volumes:
       type: none
       o: bind
       device: ${STORAGE_ROOT}/docker/mastodon/database
-  synapse-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/synapse/data
 
 services:
-
   mastodon-db:
     container_name: mastodon-db
     image: postgres:10-alpine
