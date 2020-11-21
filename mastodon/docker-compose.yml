@@ -69,7 +69,6 @@ services:
     image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
-    env_file: .env.production
     command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
     networks:
       - proxy
@@ -101,7 +100,6 @@ services:
     image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
-    env_file: .env.production
     command: node ./streaming
     networks:
       - proxy
@@ -118,7 +116,6 @@ services:
   mastodon-sidekiq:
     container_name: mastodon-sidekiq
     image: tootsuite/mastodon
-    env_file: .env.production
     security_opt:
       - no-new-privileges:true
     command: bundle exec sidekiq
