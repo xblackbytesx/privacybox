@@ -21,6 +21,9 @@ services:
     image: postgres:10-alpine
     security_opt:
       - no-new-privileges:true
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
     shm_size: 256mb
     networks:
       - internal
