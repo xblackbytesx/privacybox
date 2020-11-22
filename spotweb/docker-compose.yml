@@ -80,8 +80,7 @@ services:
     security_opt:
       - no-new-privileges:true
     # command: sed -i 's+= $$nwsetting+= "https://spotweb.privacy.box"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
-    depends_on:
-      - spotweb-mariadb
+    # comand: sed -i '1s/^/ServerName spotweb.privacy.box\n/' /etc/apache2/apache2.conf
     volumes:
       - spotweb-config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -107,7 +106,11 @@ services:
     #   - "traefik.http.routers.spotweb-secure.service=spotweb"
     #   - "traefik.http.services.spotweb.loadbalancer.server.port=80"
     #   - "traefik.docker.network=proxy"
-    networks:
-      # - proxy
-      - internal
+    # networks:
+    #   - proxy
+    #   - internal
+    network_mode: service:spotweb-vpn
+    depends_on:
+      - spotweb-vpn
+      - spotweb-mariadb
     restart: unless-stopped
