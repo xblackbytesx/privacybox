@@ -49,7 +49,7 @@ services:
       - internal
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
-      - DB_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
       - MYSQL_PASSWORD=${DB_USER_PASS}
@@ -67,6 +67,7 @@ services:
       - no-new-privileges:true
     depends_on:
       - nextcloud-db
+      - nextcloud-redis
     networks:
       - internal
     environment:
