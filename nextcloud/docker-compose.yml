@@ -13,7 +13,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/nextcloud/app
+      device: ./app
   nextcloud-config:
     driver: local
     driver_opts:
@@ -31,7 +31,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/nextcloud/data
+      device: ${STORAGE_ROOT}/nextcloud-data
   nextcloud-db:
     driver: local
     driver_opts:
