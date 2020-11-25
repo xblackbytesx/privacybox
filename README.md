@@ -59,7 +59,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 ## Implementation status:
 | App | Status | Notes |
 |---|---|---|
-| Nextcloud | WIP  |  No write access to data dir |
+| Nextcloud | Done |   |
 | Spotweb | Done | [Detailed notes](./docs/spotweb.md) |
 | Jackett | Done |  |
 | Ampache | Done  | [Detailed notes](./docs/ampache.md) |
