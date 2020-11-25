@@ -8,12 +8,19 @@ networks:
     internal: true
 
 volumes:
-  nextcloud-app:
+  nextcloud:
+  nextcloud-config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/nextcloud/app
+      device: ${STORAGE_ROOT}/docker/nextcloud/config
+  nextcloud-custom-apps:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/nextcloud/apps
   nextcloud-data:
     driver: local
     driver_opts:
@@ -65,7 +72,9 @@ services:
       - MYSQL_USER=nextcloud
       - REDIS_HOST=nextcloud-redis
     volumes:
-      - nextcloud-app:/var/www/html
+      - nextcloud:/var/www/html
+      - nextcloud-custom-apps:/var/www/html/custom_apps
+      - nextcloud-config:/var/www/html/config
       - nextcloud-data:/var/www/html/data
       - /etc/localtime:/etc/localtime:ro
     labels:
@@ -83,7 +92,9 @@ services:
       - internal
       - proxy
     volumes:
-      - nextcloud-app:/var/www/html:ro
+      - nextcloud:/var/www/html:ro
+      - nextcloud-custom-apps:/var/www/html/custom_apps:ro
+      - nextcloud-config:/var/www/html/config:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
       - /etc/localtime:/etc/localtime:ro
     labels:
@@ -130,7 +141,9 @@ services:
     networks:
       - internal
     volumes:
-      - nextcloud-app:/var/www/html
+      - nextcloud:/var/www/html
+      - nextcloud-custom-apps:/var/www/html/custom_apps
+      - nextcloud-config:/var/www/html/config
       - nextcloud-data/data
       - /etc/localtime:/etc/localtime:ro
     labels:
