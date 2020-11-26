@@ -51,8 +51,8 @@ services:
       - UMASK_SET=022 #optional
     volumes:
       - kodi-config:/config/.kodi
-      - kodi-series-dir:/tv
-      - kodi-series-dir:/movies
+      - kodi-series-dir:/config/media/series
+      - kodi-movies-dir:/config/media/movies
       - /etc/localtime:/etc/localtime:ro
     ports:
       - 9090:9090
