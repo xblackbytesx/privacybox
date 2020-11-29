@@ -44,9 +44,10 @@ services:
       - no-new-privileges:true
     environment:
       - TZ=Europe/Amsterdam
-    devices:
-      - /dev/ttyUSB1:/dev/ttyUSB1
-      - /dev/ttyRFXCOM:/dev/ttyRFXCOM 
+    # Add devices if present in hardware
+    # devices:
+    #   - /dev/ttyUSB1:/dev/ttyUSB1
+    #   - /dev/ttyRFXCOM:/dev/ttyRFXCOM 
     volumes:
       - ha-config:/config
       - /sys/class/thermal:/sys/class/thermal
