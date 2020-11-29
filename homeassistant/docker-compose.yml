@@ -1,5 +1,9 @@
 version: '3'
       
+networks:
+  internal:
+    internal: true
+
 volumes:
   ha-config:
     driver: local
@@ -76,6 +80,8 @@ services:
       - TZ=Europe/Amsterdam
     labels:
       - "traefik.enable=false"
+    networks:
+      - internal
     restart: unless-stopped
 
   # # Optional if working with a ZigBee adapter
@@ -90,14 +96,20 @@ services:
   #     - TZ=Europe/Amsterdam
   #   volumes:
   #     - ha-zigbee2mqtt-data:/app/data
-  #     - /run/udev:/run/udev:ro
+  #     # Optional: only required for auto-detecting port
+  #     # - /run/udev:/run/udev:ro
   #     - /etc/localtime:/etc/localtime:ro
-  #   devices:
-  #     - /dev/ttyZigbeeUSB:/dev/ttyZigbeeUSB
+  #   # Add devices if present in hardware
+  #   # devices:
+  #   #   - /dev/ttyZigbeeUSB:/dev/ttyZigbeeUSB
   #   labels:
   #     - "traefik.enable=false"
-  #   network_mode: host
-  #   privileged: true
+  #   # Only required for auto-detecting port
+  #   # network_mode: host
+  #   # Only required if mqtt server is not on shared network
+  #   # privileged: true
+  #   networks:
+  #     - internal
   #   restart: unless-stopped
 
   ha-mariadb:
