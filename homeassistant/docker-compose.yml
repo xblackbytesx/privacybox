@@ -119,6 +119,9 @@ services:
       - no-new-privileges:true
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=homeassistant
+      - MYSQL_USER=homeassistant
+      - MYSQL_PASSWORD=${DB_USER_PASS}
       - TZ=Europe/Amsterdam
     volumes:
       - ha-mariadb:/var/lib/mysql
