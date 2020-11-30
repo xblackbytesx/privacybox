@@ -1,11 +1,4 @@
 version: '3'
-      
-networks:
-  # Not ideal but required? for host network mode routing
-  fixed:
-    ipam:
-      config:
-        - subnet: 10.2.2.0/24
 
 volumes:
   ha-config:
@@ -83,9 +76,6 @@ services:
       - TZ=Europe/Amsterdam
     labels:
       - "traefik.enable=false"
-    networks:
-      fixed:
-        ipv4_address: 10.2.2.20
     restart: unless-stopped
 
   # # Optional if working with a ZigBee adapter
@@ -112,9 +102,6 @@ services:
   #   # network_mode: host
   #   # Only required if mqtt server is not on shared network
   #   # privileged: true
-  #   networks:
-  #     fixed:
-  #       ipv4_address: 10.2.2.21
   #   restart: unless-stopped
 
   ha-mariadb:
@@ -131,9 +118,6 @@ services:
     volumes:
       - ha-mariadb:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
-    networks:
-      fixed:
-        ipv4_address: 10.2.2.22
     ports:
       - "3306:3306"
     labels:
