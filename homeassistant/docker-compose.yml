@@ -45,9 +45,9 @@ services:
     environment:
       - TZ=Europe/Amsterdam
     # Add devices if present in hardware
-    # devices:
-    #   - /dev/ttyUSB1:/dev/ttyUSB1
-    #   - /dev/ttyRFXCOM:/dev/ttyRFXCOM 
+    devices:
+      - /dev/ttyUSB0:/dev/ttyRFXtrx
+      # - /dev/ttyUSB1:/dev/ttyZigbee
     volumes:
       - ha-config:/config
       - /sys/class/thermal:/sys/class/thermal
