@@ -44,10 +44,9 @@ services:
       - no-new-privileges:true
     environment:
       - TZ=Europe/Amsterdam
-    # Add devices if present in hardware
+    # Map local /dev mountpoint to docker
     devices:
-      - /dev/ttyUSB0:/dev/ttyRFXtrx
-      # - /dev/ttyUSB1:/dev/ttyZigbee
+      - ${ZIGBEE_DEVICE_MOUNT}:/dev/ttyRFXtrx
     volumes:
       - ha-config:/config
       - /sys/class/thermal:/sys/class/thermal
@@ -57,7 +56,7 @@ services:
     depends_on:
       - ha-mariadb
       - ha-mqtt
-      # - ha-zigbee2mqtt
+      - ha-zigbee2mqtt
     network_mode: host
     restart: unless-stopped
 
@@ -78,31 +77,26 @@ services:
       - "traefik.enable=false"
     restart: unless-stopped
 
-  # # Optional if working with a ZigBee adapter
-  # ha-zigbee2mqtt:
-  #   container_name: ha-zigbee2mqtt
-  #   image: koenkk/zigbee2mqtt:latest
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   depends_on:
-  #     - ha-mqtt
-  #   environment:
-  #     - TZ=Europe/Amsterdam
-  #   volumes:
-  #     - ha-zigbee2mqtt-data:/app/data
-  #     # Optional: only required for auto-detecting port
-  #     # - /run/udev:/run/udev:ro
-  #     - /etc/localtime:/etc/localtime:ro
-  #   # Add devices if present in hardware
-  #   # devices:
-  #   #   - /dev/ttyZigbeeUSB:/dev/ttyZigbeeUSB
-  #   labels:
-  #     - "traefik.enable=false"
-  #   # Only required for auto-detecting port
-  #   # network_mode: host
-  #   # Only required if mqtt server is not on shared network
-  #   # privileged: true
-  #   restart: unless-stopped
+  ha-zigbee2mqtt:
+    container_name: ha-zigbee2mqtt
+    image: koenkk/zigbee2mqtt:latest
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - ha-mqtt
+    environment:
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ha-zigbee2mqtt-data:/app/data
+      - /etc/localtime:/etc/localtime:ro
+    # Map local /dev mountpoint to docker
+    devices:
+      - ${ZIGBEE_DEVICE_MOUNT}:/dev/ttyZigbee
+    labels:
+      - "traefik.enable=false"
+    ports:
+      - "8099:8099"
+    restart: unless-stopped
 
   ha-mariadb:
     container_name: ha-mariadb
