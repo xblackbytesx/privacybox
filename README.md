@@ -34,6 +34,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | App | Use-case |
 |---|---|
 | Nextcloud | Google Drive, Contacts, Calendar and Photos |
+| Homeassistant | Full home-automation integration suite |
 | Spotweb |  |
 | Jackett | Proxy and aggregate torrent API's |
 | Ampache | Substitutes: Spotify |
@@ -60,6 +61,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | App | Status | Notes |
 |---|---|---|
 | Nextcloud | Done |   |
+| Homeassistant | Done |   |
 | Spotweb | Done | [Detailed notes](./docs/spotweb.md) |
 | Jackett | Done |  |
 | Ampache | Done  | [Detailed notes](./docs/ampache.md) |
