@@ -46,7 +46,7 @@ services:
       - TZ=Europe/Amsterdam
     # Map local /dev mountpoint to docker
     devices:
-      - ${ZIGBEE_DEVICE_MOUNT}:/dev/ttyRFXtrx
+      - ${RFX_DEVICE_MOUNT}:/dev/ttyRFXtrx
     volumes:
       - ha-config:/config
       - /sys/class/thermal:/sys/class/thermal
