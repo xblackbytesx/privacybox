@@ -28,13 +28,13 @@ volumes:
   # jellyfin-series-dir:
   #   driver: local
   #   driver_opts:
-  #     type: nfs4
+  #     type: nfs
   #     o: "addr=${NFS_REMOTE_IP},rw"
   #     device: ":${NFS_SERIES_REMOTE_PATH}"
   # jellyfin-movies-dir:
   #   driver: local
   #   driver_opts:
-  #     type: nfs4
+  #     type: nfs
   #     o: "addr=${NFS_REMOTE_IP},rw"
   #     device: ":${NFS_MOVIES_REMOTE_PATH}"
 
@@ -51,21 +51,13 @@ services:
       - UMASK_SET=<022> #optional
     ports:
       - 8096:8096
-      - 8920:8920 #optional
+      # - 8920:8920 #optional
       - 7359:7359/udp #optional
       - 1900:1900/udp #optional
-    # devices:
-    #   - /dev/dri:/dev/dri #optional
-    #   - /dev/vcsm:/dev/vcsm #optional
-    #   - /dev/vchiq:/dev/vchiq #optional
-    #   - /dev/video10:/dev/video10 #optional
-    #   - /dev/video11:/dev/video11 #optional
-    #   - /dev/video12:/dev/video12 #optional
     volumes:
       - jellyfin-config:/config
       - jellyfin-series-dir:/tvshows
       - jellyfin-movies-dir:/movies
-      # - /opt/vc/lib:/opt/vc/lib #optional
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
