@@ -5,6 +5,39 @@ networks:
     external:
       name: proxy
 
+volumes:
+  jellyfin-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/jellyfin/config
+  jellyfin-series-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/video/Series
+  jellyfin-movies-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/video/Movies
+  # Example When mounting remote NFS dir:
+  # jellyfin-series-dir:
+  #   driver: local
+  #   driver_opts:
+  #     type: nfs4
+  #     o: "addr=${NFS_REMOTE_IP},rw"
+  #     device: ":${NFS_SERIES_REMOTE_PATH}"
+  # jellyfin-movies-dir:
+  #   driver: local
+  #   driver_opts:
+  #     type: nfs4
+  #     o: "addr=${NFS_REMOTE_IP},rw"
+  #     device: ":${NFS_MOVIES_REMOTE_PATH}"
+
 services:
   jellyfin:
     image: linuxserver/jellyfin:nightly
@@ -29,9 +62,9 @@ services:
     #   - /dev/video11:/dev/video11 #optional
     #   - /dev/video12:/dev/video12 #optional
     volumes:
-      - ${STORAGE_ROOT}/docker/jellyfin/config:/config
-      - ${STORAGE_ROOT}/video/Series:/tvshows
-      - ${STORAGE_ROOT}/video/Movies:/movies
+      - jellyfin-config:/config
+      - jellyfin-series-dir:/tvshows
+      - jellyfin-movies-dir:/movies
       # - /opt/vc/lib:/opt/vc/lib #optional
       - /etc/localtime:/etc/localtime:ro
     labels:
