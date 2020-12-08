@@ -19,7 +19,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.hugo-site-1.entrypoints=http"
       - "traefik.http.routers.hugo-site-1.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.hugo-site-1.middlewares=https-only@file"
+      - "traefik.http.routers.hugo-site-1.middlewares=secured@file"
       - "traefik.http.routers.hugo-site-1-secure.entrypoints=https"
       - "traefik.http.routers.hugo-site-1-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.hugo-site-1-secure.tls=true"

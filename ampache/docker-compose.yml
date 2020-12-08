@@ -54,7 +54,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.ampache-app.entrypoints=http"
       - "traefik.http.routers.ampache-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.ampache-app.middlewares=https-only@file"
+      - "traefik.http.routers.ampache-app.middlewares=secured@file"
       - "traefik.http.routers.ampache-app-secure.entrypoints=https"
       - "traefik.http.routers.ampache-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.ampache-app-secure.tls=true"

@@ -63,7 +63,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.synapse.entrypoints=http"
       - "traefik.http.routers.synapse.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.synapse.middlewares=https-only@file"
+      - "traefik.http.routers.synapse.middlewares=secured@file"
       - "traefik.http.routers.synapse-secure.entrypoints=https"
       - "traefik.http.routers.synapse-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.synapse-secure.tls=true"

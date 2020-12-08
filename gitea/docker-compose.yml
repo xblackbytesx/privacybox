@@ -66,7 +66,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.gitea-app.entrypoints=http"
       - "traefik.http.routers.gitea-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.gitea-app.middlewares=https-only@file"
+      - "traefik.http.routers.gitea-app.middlewares=secured@file"
       - "traefik.http.routers.gitea-app-secure.entrypoints=https"
       - "traefik.http.routers.gitea-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.gitea-app-secure.tls=true"

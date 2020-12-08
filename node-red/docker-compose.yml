@@ -38,7 +38,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.nodered.entrypoints=http"
       - "traefik.http.routers.nodered.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.nodered.middlewares=https-only@file"
+      - "traefik.http.routers.nodered.middlewares=secured@file"
       - "traefik.http.routers.nodered-secure.entrypoints=https"
       - "traefik.http.routers.nodered-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.nodered-secure.tls=true"

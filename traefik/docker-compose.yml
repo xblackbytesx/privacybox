@@ -28,7 +28,7 @@ services:
       - "traefik.http.routers.traefik.entrypoints=http"
       - "traefik.http.routers.traefik.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.middlewares.traefik-auth.basicauth.users=${AUTH_USER}:${AUTH_PASS}"
-      - "traefik.http.routers.traefik.middlewares=https-only@file"
+      - "traefik.http.routers.traefik.middlewares=secured@file"
       - "traefik.http.routers.traefik-secure.entrypoints=https"
       - "traefik.http.routers.traefik-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"

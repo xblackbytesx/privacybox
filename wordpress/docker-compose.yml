@@ -75,7 +75,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.entrypoints=http"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.middlewares=https-only@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.middlewares=secured@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.middlewares=nc-rep,nc-header"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=https"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"

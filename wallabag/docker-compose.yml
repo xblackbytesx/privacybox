@@ -79,7 +79,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.wallabag.entrypoints=http"
       - "traefik.http.routers.wallabag.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.wallabag.middlewares=https-only@file"
+      - "traefik.http.routers.wallabag.middlewares=secured@file"
       - "traefik.http.routers.wallabag-secure.entrypoints=https"
       - "traefik.http.routers.wallabag-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.wallabag-secure.tls=true"

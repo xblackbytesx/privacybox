@@ -82,7 +82,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.mastodon.entrypoints=http"
       - "traefik.http.routers.mastodon.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.mastodon.middlewares=https-only@file"
+      - "traefik.http.routers.mastodon.middlewares=secured@file"
       - "traefik.http.routers.mastodon-secure.entrypoints=https"
       - "traefik.http.routers.mastodon-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.mastodon-secure.tls=true"

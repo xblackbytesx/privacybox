@@ -63,7 +63,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.invidious-app.entrypoints=http"
       - "traefik.http.routers.invidious-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.invidious-app.middlewares=https-only@file"
+      - "traefik.http.routers.invidious-app.middlewares=secured@file"
       - "traefik.http.routers.invidious-app-secure.entrypoints=https"
       - "traefik.http.routers.invidious-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.invidious-app-secure.tls=true"

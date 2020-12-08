@@ -64,7 +64,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.matomo-nginx.entrypoints=http"
       - "traefik.http.routers.matomo-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.matomo-nginx.middlewares=https-only@file"
+      - "traefik.http.routers.matomo-nginx.middlewares=secured@file"
       - "traefik.http.routers.matomo-nginx-secure.entrypoints=https"
       - "traefik.http.routers.matomo-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.matomo-nginx-secure.tls=true"

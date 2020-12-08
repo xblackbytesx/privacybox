@@ -40,7 +40,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.volumio.entrypoints=http"
       - "traefik.http.routers.volumio.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.volumio.middlewares=https-only@file"
+      - "traefik.http.routers.volumio.middlewares=secured@file"
       - "traefik.http.routers.volumio-secure.entrypoints=https"
       - "traefik.http.routers.volumio-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.volumio-secure.tls=true"

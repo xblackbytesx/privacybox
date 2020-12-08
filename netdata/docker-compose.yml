@@ -29,7 +29,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.netdata.entrypoints=http"
       - "traefik.http.routers.netdata.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.netdata.middlewares=https-only@file"
+      - "traefik.http.routers.netdata.middlewares=secured@file"
       - "traefik.http.routers.netdata-secure.entrypoints=https"
       - "traefik.http.routers.netdata-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.netdata-secure.tls=true"

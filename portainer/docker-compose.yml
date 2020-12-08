@@ -26,7 +26,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.portainer.entrypoints=http"
       - "traefik.http.routers.portainer.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.portainer.middlewares=https-only@file"
+      - "traefik.http.routers.portainer.middlewares=secured@file"
       - "traefik.http.routers.portainer-secure.entrypoints=https"
       - "traefik.http.routers.portainer-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.portainer-secure.tls=true"
