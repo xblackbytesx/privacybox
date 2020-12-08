@@ -38,13 +38,12 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.nodered.entrypoints=http"
       - "traefik.http.routers.nodered.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.nodered.middlewares=https-redirect@file"
+      - "traefik.http.routers.nodered.middlewares=https-only@file"
       - "traefik.http.routers.nodered-secure.entrypoints=https"
       - "traefik.http.routers.nodered-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.nodered-secure.tls=true"
       - "traefik.http.routers.nodered-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.nodered-secure.service=nodered"
       - "traefik.http.services.nodered.loadbalancer.server.port=1880"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy

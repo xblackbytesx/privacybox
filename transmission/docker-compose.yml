@@ -51,14 +51,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.transmission-vpn.entrypoints=http"
       - "traefik.http.routers.transmission-vpn.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.transmission-vpn.middlewares=https-redirect@file"
+      - "traefik.http.routers.transmission-vpn.middlewares=https-only@file"
       - "traefik.http.routers.transmission-vpn-secure.entrypoints=https"
       - "traefik.http.routers.transmission-vpn-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.transmission-vpn-secure.tls=true"
       - "traefik.http.routers.transmission-vpn-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.transmission-vpn-secure.service=transmission-vpn"
       - "traefik.http.services.transmission-vpn.loadbalancer.server.port=9091"
-      - "traefik.docker.network=proxy"
     restart: unless-stopped
 
   transmission:
@@ -83,14 +82,13 @@ services:
     #   - "traefik.enable=true"
     #   - "traefik.http.routers.transmission.entrypoints=http"
     #   - "traefik.http.routers.transmission.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.transmission.middlewares=https-redirect@file"
+    #   - "traefik.http.routers.transmission.middlewares=https-only@file"
     #   - "traefik.http.routers.transmission-secure.entrypoints=https"
     #   - "traefik.http.routers.transmission-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
     #   - "traefik.http.routers.transmission-secure.tls=true"
     #   - "traefik.http.routers.transmission-secure.tls.certresolver=le-dns"
     #   - "traefik.http.routers.transmission-secure.service=transmission"
     #   - "traefik.http.services.transmission.loadbalancer.server.port=9091"
-    #   - "traefik.docker.network=proxy"
     # networks:
     #   - proxy
     # ports:

@@ -61,14 +61,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.kodi.entrypoints=http"
       - "traefik.http.routers.kodi.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.kodi.middlewares=https-redirect@file"
+      - "traefik.http.routers.kodi.middlewares=https-only@file"
       - "traefik.http.routers.kodi-secure.entrypoints=https"
       - "traefik.http.routers.kodi-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.kodi-secure.tls=true"
       - "traefik.http.routers.kodi-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.kodi-secure.service=kodi"
       - "traefik.http.services.kodi.loadbalancer.server.port=8080"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy
     restart: unless-stopped

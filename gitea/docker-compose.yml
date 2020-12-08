@@ -66,14 +66,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.gitea-app.entrypoints=http"
       - "traefik.http.routers.gitea-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.gitea-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.gitea-app.middlewares=https-only@file"
       - "traefik.http.routers.gitea-app-secure.entrypoints=https"
       - "traefik.http.routers.gitea-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.gitea-app-secure.tls=true"
       - "traefik.http.routers.gitea-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.gitea-app-secure.service=gitea-app"
       - "traefik.http.services.gitea-app.loadbalancer.server.port=3000"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal

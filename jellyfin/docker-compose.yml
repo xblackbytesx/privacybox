@@ -63,14 +63,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin.entrypoints=http"
       - "traefik.http.routers.jellyfin.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.jellyfin.middlewares=https-redirect@file"
+      - "traefik.http.routers.jellyfin.middlewares=https-only@file"
       - "traefik.http.routers.jellyfin-secure.entrypoints=https"
       - "traefik.http.routers.jellyfin-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.jellyfin-secure.tls=true"
       - "traefik.http.routers.jellyfin-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.jellyfin-secure.service=jellyfin"
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy
     restart: unless-stopped

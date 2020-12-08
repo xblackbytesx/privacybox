@@ -63,14 +63,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.invidious-app.entrypoints=http"
       - "traefik.http.routers.invidious-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.invidious-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.invidious-app.middlewares=https-only@file"
       - "traefik.http.routers.invidious-app-secure.entrypoints=https"
       - "traefik.http.routers.invidious-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.invidious-app-secure.tls=true"
       - "traefik.http.routers.invidious-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.invidious-app-secure.service=invidious-app"
       - "traefik.http.services.invidious-app.loadbalancer.server.port=3000"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy
       - internal

@@ -75,11 +75,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.entrypoints=http"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.middlewares=https-redirect@file"
-      - "traefik.http.middlewares.nc-rep.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav"
-      - "traefik.http.middlewares.nc-rep.redirectregex.replacement=https://$$1/remote.php/dav/"
-      - "traefik.http.middlewares.nc-rep.redirectregex.permanent=true"
-      - "traefik.http.middlewares.nc-header.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.middlewares=https-only@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx.middlewares=nc-rep,nc-header"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=https"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
@@ -87,7 +83,6 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-nginx-secure.service=${COMPOSE_PROJECT_NAME}-nginx"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-nginx.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy"
     restart: unless-stopped
 
 volumes:

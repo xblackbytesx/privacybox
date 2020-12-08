@@ -82,14 +82,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.mastodon.entrypoints=http"
       - "traefik.http.routers.mastodon.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.mastodon.middlewares=https-redirect@file"
+      - "traefik.http.routers.mastodon.middlewares=https-only@file"
       - "traefik.http.routers.mastodon-secure.entrypoints=https"
       - "traefik.http.routers.mastodon-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.mastodon-secure.tls=true"
       - "traefik.http.routers.mastodon-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.mastodon-secure.service=mastodon"
       - "traefik.http.services.mastodon.loadbalancer.server.port=3000"
-      - "traefik.docker.network=proxy"
     depends_on:
       - mastodon-db
       - mastodon-redis

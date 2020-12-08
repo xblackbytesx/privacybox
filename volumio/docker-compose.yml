@@ -40,14 +40,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.volumio.entrypoints=http"
       - "traefik.http.routers.volumio.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.volumio.middlewares=https-redirect@file"
+      - "traefik.http.routers.volumio.middlewares=https-only@file"
       - "traefik.http.routers.volumio-secure.entrypoints=https"
       - "traefik.http.routers.volumio-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.volumio-secure.tls=true"
       - "traefik.http.routers.volumio-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.volumio-secure.service=volumio"
       - "traefik.http.services.volumio.loadbalancer.server.port=3000"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy
     restart: unless-stopped

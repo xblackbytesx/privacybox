@@ -32,14 +32,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.glances-app.entrypoints=http"
       - "traefik.http.routers.glances-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.glances-app.middlewares=https-redirect@file"
+      - "traefik.http.routers.glances-app.middlewares=https-only@file"
       - "traefik.http.routers.glances-app-secure.entrypoints=https"
       - "traefik.http.routers.glances-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.glances-app-secure.tls=true"
       - "traefik.http.routers.glances-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.glances-app-secure.service=glances-app"
       - "traefik.http.services.glances-app.loadbalancer.server.port=61208"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy
     restart: unless-stopped

@@ -27,14 +27,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.plex.entrypoints=http"
       - "traefik.http.routers.plex.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.plex.middlewares=https-redirect@file"
+      - "traefik.http.routers.plex.middlewares=https-only@file"
       - "traefik.http.routers.plex-secure.entrypoints=https"
       - "traefik.http.routers.plex-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.plex-secure.tls=true"
       - "traefik.http.routers.plex-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.plex-secure.service=plex"
       - "traefik.http.services.plex.loadbalancer.server.port=32400"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy
     ports:

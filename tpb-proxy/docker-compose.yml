@@ -47,14 +47,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.tpb-nginx.entrypoints=http"
       - "traefik.http.routers.tpb-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.tpb-nginx.middlewares=https-redirect@file"
+      - "traefik.http.routers.tpb-nginx.middlewares=https-only@file"
       - "traefik.http.routers.tpb-nginx-secure.entrypoints=https"
       - "traefik.http.routers.tpb-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.tpb-nginx-secure.tls=true"
       - "traefik.http.routers.tpb-nginx-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.tpb-nginx-secure.service=tpb-nginx"
       - "traefik.http.services.tpb-nginx.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy"
     restart: unless-stopped
 
 
@@ -102,12 +101,11 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.tpb-nginx.entrypoints=http"
       - "traefik.http.routers.tpb-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.tpb-nginx.middlewares=https-redirect@file"
+      - "traefik.http.routers.tpb-nginx.middlewares=https-only@file"
       - "traefik.http.routers.tpb-nginx-secure.entrypoints=https"
       - "traefik.http.routers.tpb-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.tpb-nginx-secure.tls=true"
       - "traefik.http.routers.tpb-nginx-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.tpb-nginx-secure.service=tpb-nginx"
       - "traefik.http.services.tpb-nginx.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy"
     restart: unless-stopped

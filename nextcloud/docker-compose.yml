@@ -101,26 +101,26 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.nextcloud-nginx.entrypoints=http"
       - "traefik.http.routers.nextcloud-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.nextcloud-nginx.middlewares=secured@file"
+      # - "traefik.http.routers.nextcloud-nginx.middlewares=secured@file"
+      - "traefik.http.middlewares.secured.chain.middlewares=https-only,known-ips,secure-headers"
       - "traefik.http.routers.nextcloud-nginx-secure.entrypoints=https"
       - "traefik.http.routers.nextcloud-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.nextcloud-nginx-secure.tls=true"
       - "traefik.http.routers.nextcloud-nginx-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.nextcloud-nginx-secure.service=nextcloud-nginx"
       - "traefik.http.services.nextcloud-nginx.loadbalancer.server.port=80"
-      # Middlewares:
-      - "traefik.http.routers.nextcloud-nginx.middlewares=nextcloud-nginx@docker,nextcloud-dav@docker"
-      # Middleware cloud adds additional headers:
-      - "traefik.http.middlewares.nextcloud-nginx.headers.customFrameOptionsValue=SAMEORIGIN"
-      - "traefik.http.middlewares.nextcloud-nginx.headers.framedeny=true"
-      - "traefik.http.middlewares.nextcloud-nginx.headers.sslredirect=true"
-      - "traefik.http.middlewares.nextcloud-nginx.headers.stsIncludeSubdomains=true"
-      - "traefik.http.middlewares.nextcloud-nginx.headers.stsPreload=true"
-      - "traefik.http.middlewares.nextcloud-nginx.headers.stsSeconds=15552000"
-      # Middleware nextcloud-dav replaces .well-known paths for caldav and carddav with proper nextcloud path
-      - "traefik.http.middlewares.nextcloud-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav"
-      - "traefik.http.middlewares.nextcloud-dav.replacepathregex.replacement=/remote.php/dav/"
-      - "traefik.docker.network=proxy"    
+      # # Middlewares:
+      # - "traefik.http.routers.nextcloud-nginx.middlewares=nextcloud-nginx@docker,nextcloud-dav@docker"
+      # # Middleware cloud adds additional headers:
+      # - "traefik.http.middlewares.nextcloud-nginx.headers.customFrameOptionsValue=SAMEORIGIN"
+      # - "traefik.http.middlewares.nextcloud-nginx.headers.framedeny=true"
+      # - "traefik.http.middlewares.nextcloud-nginx.headers.sslredirect=true"
+      # - "traefik.http.middlewares.nextcloud-nginx.headers.stsIncludeSubdomains=true"
+      # - "traefik.http.middlewares.nextcloud-nginx.headers.stsPreload=true"
+      # - "traefik.http.middlewares.nextcloud-nginx.headers.stsSeconds=15552000"
+      # # Middleware nextcloud-dav replaces .well-known paths for caldav and carddav with proper nextcloud path
+      # - "traefik.http.middlewares.nextcloud-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav"
+      # - "traefik.http.middlewares.nextcloud-dav.replacepathregex.replacement=/remote.php/dav/"
     restart: unless-stopped
 
   nextcloud-redis:

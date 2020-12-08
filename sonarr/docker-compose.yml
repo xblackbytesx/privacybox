@@ -52,14 +52,13 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.sonarr.entrypoints=http"
       - "traefik.http.routers.sonarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.sonarr.middlewares=https-redirect@file"
+      - "traefik.http.routers.sonarr.middlewares=https-only@file"
       - "traefik.http.routers.sonarr-secure.entrypoints=https"
       - "traefik.http.routers.sonarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.sonarr-secure.tls=true"
       - "traefik.http.routers.sonarr-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.sonarr-secure.service=sonarr"
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
-      - "traefik.docker.network=proxy"
     networks:
       - proxy
     restart: unless-stopped
