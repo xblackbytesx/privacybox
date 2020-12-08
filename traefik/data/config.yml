@@ -17,21 +17,12 @@ http:
           - "192.168.1.7"
           - "127.0.0.1/32"
 
-    default-headers:
-      headers:
-        frameDeny: true
-        sslRedirect: true
-        browserXssFilter: true
-        contentTypeNosniff: true
-        forceSTSHeader: true
-        stsIncludeSubdomains: true
-        stsPreload: true
-
     secure-headers:
       headers:
         browserXssFilter: true
         contentTypeNosniff: true
         frameDeny: true
+        forceSTSHeader: true
         sslRedirect: true
         stsIncludeSubdomains: true
         stsPreload: true
