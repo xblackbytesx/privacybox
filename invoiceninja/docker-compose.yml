@@ -75,12 +75,11 @@ services:
     image: invoiceninja/invoiceninja:5
     security_opt:
       - no-new-privileges:true
-    restart: always
     cap_add:
       - SYS_ADMIN
     environment: 
       - APP_URL=https://${SUBDOMAIN}.${DOMAIN}
-      - APP_KEY=<INSERT THE GENERATED APPLICATION KEY HERE>
+      - APP_KEY=${APP_KEY}
       - MULTI_DB_ENABLED=false
       - DB_HOST1=invoiceninja-db
       - DB_USERNAME1=invoiceninja
@@ -93,19 +92,9 @@ services:
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - invoiceninja-db
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.invoiceninja.entrypoints=http"
-    #   - "traefik.http.routers.invoiceninja.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.invoiceninja.middlewares=secured@file"
-    #   - "traefik.http.routers.invoiceninja-secure.entrypoints=https"
-    #   - "traefik.http.routers.invoiceninja-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.invoiceninja-secure.tls=true"
-    #   - "traefik.http.routers.invoiceninja-secure.tls.certresolver=le-dns"
-    #   - "traefik.http.routers.invoiceninja-secure.service=invoiceninja"
-    #   - "traefik.http.services.invoiceninja.loadbalancer.server.port=80"
     networks: 
       - internal
+    restart: unless-stopped
 
   invoiceninja-nginx:
     container_name: invoiceninja-nginx
