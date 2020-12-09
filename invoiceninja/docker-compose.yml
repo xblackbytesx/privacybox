@@ -1,5 +1,28 @@
 version: '3.7'
 
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+volumes:
+  invoiceninja-public:
+  invoiceninja-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/invoiceninja/storage
+
+  invoiceninja-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/invoiceninja/database
+
 services:
   # server:
   #   image: caddy:alpine
@@ -27,55 +50,86 @@ services:
   #   networks:
   #     - invoiceninja
 
+  invoiceninja-db:
+    container_name: invoiceninja-db
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=invoiceninja
+      - MYSQL_USER=invoiceninja
+      - MYSQL_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - invoiceninja-database:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
   invoiceninja-app:
+    container_name: invoiceninja-app
     image: invoiceninja/invoiceninja:5
+    security_opt:
+      - no-new-privileges:true
     restart: always
     cap_add:
       - SYS_ADMIN
     environment: 
-      - APP_URL=https://localhost
+      - APP_URL=https://${SUBDOMAIN}.${DOMAIN}
       - APP_KEY=<INSERT THE GENERATED APPLICATION KEY HERE>
       - MULTI_DB_ENABLED=false
-      - DB_HOST1=db
-      - DB_USERNAME1=ninja
-      - DB_PASSWORD1=ninja
-      - DB_DATABASE1=ninja
+      - DB_HOST1=invoiceninja-db
+      - DB_USERNAME1=invoiceninja
+      - DB_PASSWORD1=${DB_USER_PASS}
+      - DB_DATABASE1=invoiceninja
       - PHANTOMJS_PDF_GENERATION=false
     volumes:
-      # Configure your mounted directories, make sure the folder 'public' and 'storage'
-      # exist, before mounting them
-      -  public:/var/www/app/public
-      -  storage:/var/www/app/storage
-      # you may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/app/public:/var/www/app/public:rw,delegated
-      # - ./docker/app/storage:/var/www/app/storage:rw,delegated
+      - invoiceninja-public:/var/www/app/public
+      - invoiceninja-storage:/var/www/app/storage
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       - invoiceninja-db
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.invoiceninja.entrypoints=http"
+    #   - "traefik.http.routers.invoiceninja.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.invoiceninja.middlewares=secured@file"
+    #   - "traefik.http.routers.invoiceninja-secure.entrypoints=https"
+    #   - "traefik.http.routers.invoiceninja-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.invoiceninja-secure.tls=true"
+    #   - "traefik.http.routers.invoiceninja-secure.tls.certresolver=le-dns"
+    #   - "traefik.http.routers.invoiceninja-secure.service=invoiceninja"
+    #   - "traefik.http.services.invoiceninja.loadbalancer.server.port=80"
     networks: 
-      - internal  
-
-  invoiceninja-db:
-    image: mariadb:latest
-    restart: always
-    environment: 
-      - MYSQL_ROOT_PASSWORD=ninjaAdm1nPassword
-      - MYSQL_USER=ninja
-      - MYSQL_PASSWORD=ninja
-      - MYSQL_DATABASE=ninja
-    volumes:
-      - mysql-data:/var/lib/mysql:rw
-      # you may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/mysql/data:/var/lib/mysql:rw,delegated
-    networks:
       - internal
 
-volumes:
-  mysql-data:
-  public:
-  storage:
-  # This is needed for letting th cron run correctly
-  # logo:
-
-networks:
-  proxy:
-  internal:
+  invoiceninja-nginx:
+    container_name: invoiceninja-nginx
+    image: nginx:alpine
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - invoiceninja-app
+    networks:
+      - internal
+      - proxy
+    volumes:
+      - invoiceninja-public:/var/www/app/public:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.invoiceninja-nginx.entrypoints=http"
+      - "traefik.http.routers.invoiceninja-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.invoiceninja-nginx.middlewares=secured@file"
+      - "traefik.http.routers.invoiceninja-nginx-secure.entrypoints=https"
+      - "traefik.http.routers.invoiceninja-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.invoiceninja-nginx-secure.tls=true"
+      - "traefik.http.routers.invoiceninja-nginx-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.invoiceninja-nginx-secure.service=invoiceninja-nginx"
+      - "traefik.http.services.invoiceninja-nginx.loadbalancer.server.port=80"
+    restart: unless-stopped
