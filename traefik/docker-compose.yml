@@ -1,5 +1,10 @@
 version: "3.3"
 
+networks:
+  proxy:
+    external:
+      name: proxy
+
 services:
   traefik:
     container_name: "traefik"
@@ -36,7 +41,3 @@ services:
       - "traefik.http.routers.traefik-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.traefik-secure.service=api@internal"
       - "traefik.http.services.traefik.loadbalancer.server.port=8080"
-
-networks:
-  proxy:
-    external: true
