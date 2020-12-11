@@ -25,12 +25,12 @@ providers:
     filename: /config.yml
 
 certificatesResolvers:
-  le-http:
-    acme:
-      email: john.doe@privacy.box
-      storage: acme.json
-      httpChallenge:
-        entryPoint: http
+  # le-http:
+  #   acme:
+  #     email: john.doe@privacy.box
+  #     storage: acme.json
+  #     httpChallenge:
+  #       entryPoint: http
   le-dns:
     acme:
       email: john.doe@privacy.box

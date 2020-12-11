@@ -1,4 +1,81 @@
-version: "2.1"
+# version: "2.1"
+
+# networks:
+#   proxy:
+#     external:
+#       name: proxy
+
+# volumes:
+#   jellyfin-config:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/docker/jellyfin-linuxserver/config
+#   jellyfin-series-dir:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/video/Series
+#   jellyfin-movies-dir:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/video/Movies
+#   # Example When mounting remote NFS dir:
+#   # jellyfin-series-dir:
+#   #   driver: local
+#   #   driver_opts:
+#   #     type: nfs
+#   #     o: "addr=${NFS_REMOTE_IP},rw"
+#   #     device: ":${NFS_SERIES_REMOTE_PATH}"
+#   # jellyfin-movies-dir:
+#   #   driver: local
+#   #   driver_opts:
+#   #     type: nfs
+#   #     o: "addr=${NFS_REMOTE_IP},rw"
+#   #     device: ":${NFS_MOVIES_REMOTE_PATH}"
+
+# services:
+#   jellyfin:
+#     image: linuxserver/jellyfin:nightly
+#     container_name: jellyfin
+#     security_opt:
+#       - no-new-privileges:true
+#     environment:
+#       - PUID=1000
+#       - PGID=1000
+#       - TZ=Europe/Amsterdam
+#       - UMASK_SET=<022> #optional
+#     ports:
+#       - 8096:8096
+#       # - 8920:8920 #optional
+#       - 7359:7359/udp #optional
+#       - 1900:1900/udp #optional
+#     volumes:
+#       - jellyfin-config:/config
+#       - jellyfin-series-dir:/tvshows
+#       - jellyfin-movies-dir:/movies
+#       - /etc/localtime:/etc/localtime:ro
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.jellyfin.entrypoints=http"
+#       - "traefik.http.routers.jellyfin.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+#       - "traefik.http.routers.jellyfin.middlewares=secured@file"
+#       - "traefik.http.routers.jellyfin-secure.entrypoints=https"
+#       - "traefik.http.routers.jellyfin-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+#       - "traefik.http.routers.jellyfin-secure.tls=true"
+#       - "traefik.http.routers.jellyfin-secure.tls.certresolver=le-dns"
+#       - "traefik.http.routers.jellyfin-secure.service=jellyfin"
+#       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+#     networks:
+#       - proxy
+#     restart: unless-stopped
+
+
+version: "3.8"
 
 networks:
   proxy:
@@ -12,53 +89,55 @@ volumes:
       type: none
       o: bind
       device: ${STORAGE_ROOT}/docker/jellyfin/config
-  jellyfin-series-dir:
+  jellyfin-cache:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/video/Series
-  jellyfin-movies-dir:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/video/Movies
-  # Example When mounting remote NFS dir:
+      device: ${STORAGE_ROOT}/docker/jellyfin/cache
   # jellyfin-series-dir:
   #   driver: local
   #   driver_opts:
-  #     type: nfs
-  #     o: "addr=${NFS_REMOTE_IP},rw"
-  #     device: ":${NFS_SERIES_REMOTE_PATH}"
+  #     type: none
+  #     o: bind
+  #     device: ${STORAGE_ROOT}/video/Series
   # jellyfin-movies-dir:
   #   driver: local
   #   driver_opts:
-  #     type: nfs
-  #     o: "addr=${NFS_REMOTE_IP},rw"
-  #     device: ":${NFS_MOVIES_REMOTE_PATH}"
+  #     type: none
+  #     o: bind
+  #     device: ${STORAGE_ROOT}/video/Movies
+  jellyfin-series-dir:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: "addr=${NFS_REMOTE_IP},rw"
+      device: ":${NFS_SERIES_REMOTE_PATH}"
+  jellyfin-movies-dir:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: "addr=${NFS_REMOTE_IP},rw"
+      device: ":${NFS_MOVIES_REMOTE_PATH}"
 
 services:
   jellyfin:
-    image: linuxserver/jellyfin:nightly
+    image: jellyfin/jellyfin
     container_name: jellyfin
     security_opt:
       - no-new-privileges:true
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Amsterdam
-      - UMASK_SET=<022> #optional
+    # user: 1000:1000
     ports:
-      - 8096:8096
-      # - 8920:8920 #optional
       - 7359:7359/udp #optional
       - 1900:1900/udp #optional
     volumes:
       - jellyfin-config:/config
+      - jellyfin-cache:/cache
       - jellyfin-series-dir:/tvshows
       - jellyfin-movies-dir:/movies
       - /etc/localtime:/etc/localtime:ro
+    environment:
+      - JELLYFIN_PublishedServerUrl=https://${SUBDOMAIN}.${DOMAIN}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin.entrypoints=http"
