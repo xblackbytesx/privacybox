@@ -33,7 +33,6 @@ app:
   node-red:
   nzbget:
   pihole:
-  plex:
   radarr:
   rocketchat:
   sonarr:
