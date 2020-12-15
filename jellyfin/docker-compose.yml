@@ -122,8 +122,8 @@ volumes:
 
 services:
   jellyfin:
-    image: jellyfin/jellyfin
     container_name: jellyfin
+    image: jellyfin/jellyfin:20201215.17-unstable
     security_opt:
       - no-new-privileges:true
     # user: 1000:1000
