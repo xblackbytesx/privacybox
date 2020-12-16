@@ -1,0 +1,39 @@
+version: '3'
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
+volumes:
+  bitwarden-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/bitwarden/data
+
+services:
+  bitwarden:
+    container_name: bitwarden
+    image: bitwardenrs/server:alpine
+    environment:
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=true
+      - DOMAIN=${SUBDOMAIN}.${DOMAIN}
+    volumes:
+      - bitwarden-data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bitwarden.entrypoints=http"
+      - "traefik.http.routers.bitwarden.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.bitwarden.middlewares=secured@file"
+      - "traefik.http.routers.bitwarden-secure.entrypoints=https"
+      - "traefik.http.routers.bitwarden-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.bitwarden-secure.tls=true"
+      - "traefik.http.routers.bitwarden-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.bitwarden-secure.service=bitwarden"
+      - "traefik.http.services.bitwarden.loadbalancer.server.port=80"
+    networks:
+      - proxy
+    restart: unless-stopped
