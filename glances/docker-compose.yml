@@ -18,7 +18,7 @@ volumes:
 services:
   glances:
     container_name: glances
-    image: vimagick/glances:latest
+    image: vimagick/glances:latest-apline
     security_opt:
       - no-new-privileges:true
     pid: host
