@@ -24,7 +24,7 @@ volumes:
 services:
   spotweb-vpn:
     container_name: spotweb-vpn
-    image: polkaned/expressvpn
+    image: xblackbytesx/expressvpn:latest
     security_opt:
       - no-new-privileges:true
     environment:
