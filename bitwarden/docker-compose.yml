@@ -20,7 +20,7 @@ services:
     environment:
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=true
-      - DOMAIN=${SUBDOMAIN}.${DOMAIN}
+      - DOMAIN=https://${SUBDOMAIN}.${DOMAIN}
     volumes:
       - bitwarden-data:/data
     labels:
