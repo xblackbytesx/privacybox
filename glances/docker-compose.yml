@@ -1,31 +1,21 @@
-version: "3.3"
+version: "3.7"
 
 networks:
   proxy:
     external: 
       name: proxy
-  internal:
-    internal: true
-
-volumes:
-  glances-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/glances/data  
 
 services:
   glances:
     container_name: glances
-    image: vimagick/glances:latest-apline
+    image: nicolargo/glances:latest-alpine
     security_opt:
       - no-new-privileges:true
     pid: host
     environment:
       - GLANCES_OPT=-w
     volumes:
-      - glances-data:/etc/glances
+      - ./glances.conf:/glances/conf/glances.conf
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
