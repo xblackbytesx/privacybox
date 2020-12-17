@@ -142,7 +142,7 @@ services:
       - nextcloud:/var/www/html
       - nextcloud-custom-apps:/var/www/html/custom_apps
       - nextcloud-config:/var/www/html/config
-      - nextcloud-data/data
+      - nextcloud-data:/data
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
