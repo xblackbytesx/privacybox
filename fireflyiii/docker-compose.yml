@@ -34,8 +34,8 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - POSTGRES_USER=$(DB_USER)
-      - POSTGRES_PASSWORD=$(DB_USER_PASS)
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
     volumes:
       - fireflyiii-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
@@ -55,8 +55,8 @@ services:
       - fireflyiii-upload:/var/www/firefly-iii/storage/upload
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - TZ=$(TZ)
-      - DB_HOST=fireflyiii_db
+      - TZ=${TZ}
+      - DB_HOST=fireflyiii-db
       - DB_PORT=5432
       - DB_CONNECTION=pgsql
       - DB_DATABASE=fireflyiii
