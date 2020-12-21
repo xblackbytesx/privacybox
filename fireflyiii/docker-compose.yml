@@ -77,7 +77,7 @@ services:
       - "traefik.http.routers.fireflyiii-app-secure.tls=true"
       - "traefik.http.routers.fireflyiii-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.fireflyiii-app-secure.service=fireflyiii-app"
-      - "traefik.http.services.fireflyiii-app.loadbalancer.server.port=80"
+      - "traefik.http.services.fireflyiii-app.loadbalancer.server.port=8080"
     networks:
       - internal
       - proxy
