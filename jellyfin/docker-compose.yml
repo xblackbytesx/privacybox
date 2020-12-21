@@ -110,20 +110,20 @@ volumes:
   jellyfin-series-dir:
     driver: local
     driver_opts:
-      type: nfs
+      type: nfs4
       o: "addr=${NFS_REMOTE_IP},rw"
       device: ":${NFS_SERIES_REMOTE_PATH}"
   jellyfin-movies-dir:
     driver: local
     driver_opts:
-      type: nfs
+      type: nfs4
       o: "addr=${NFS_REMOTE_IP},rw"
       device: ":${NFS_MOVIES_REMOTE_PATH}"
 
 services:
   jellyfin:
     container_name: jellyfin
-    image: jellyfin/jellyfin:20201215.17-unstable
+    image: jellyfin/jellyfin:unstable
     security_opt:
       - no-new-privileges:true
     # user: 1000:1000
