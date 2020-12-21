@@ -56,6 +56,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Wireguard |  |
 | Netdata |  |
 | Mastodon | Substitutes: Twitter |
+| FireflyIII | Substitutes: Mint, AVAST Personal etc. |
 
 ## Implementation status:
 | App | Status | Notes |
@@ -83,6 +84,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Wireguard | Done |  Some special instructions for combining with PiHole  |
 | Netdata | WIP |   |
 | Mastodon | WIP |   |
+| FireflyIII | Done |   |
 
 ## LetsEncrypt ACME support out of the box!
 All of the above listed apps come equipped with the ability to request a valid LetsEncrypt Certificate on the fly. There are two ACME challenge types baked into this configuration: TLS and DNS challenge.
