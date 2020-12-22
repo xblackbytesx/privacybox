@@ -71,7 +71,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Hugo | Done | Only serving of public dir, no generating |
 | Portainer | Done |   |
 | Wallabag | Done |   |
-| Matrix Synapse | WIP | Untested
+| Matrix Synapse | Done | [Detailed notes](./docs/matrix-synapse.md) |
 | Matomo | Done |   |
 | Gitea | Done |   |
 | Jitsi Meet | WIP | Untested |

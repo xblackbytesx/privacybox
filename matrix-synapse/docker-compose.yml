@@ -1,4 +1,4 @@
-version: '3'
+version: '3.3'
 
 networks:
   proxy:
@@ -28,10 +28,9 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
+      - POSTGRES_DB=synapse
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_USER_PASS}
-      # ensure the database gets created correctly
-      # https://github.com/matrix-org/synapse/blob/master/docs/postgres.md#set-up-database
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
       - synapse-database:/var/lib/postgresql/data
@@ -47,13 +46,10 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - SYNAPSE_SERVER_NAME=${SUBDOMAIN}.${DOMAIN}
+      - SYNAPSE_REPORT_STATS=no
     volumes:
       - synapse-data:/data
-      # .. or you may split this between different storage points
-      # - ./files:/data
-      # - /path/to/ssd:/data/uploads
-      # - /path/to/large_hdd:/data/media
     depends_on:
       - synapse-db
     networks:
@@ -69,5 +65,5 @@ services:
       - "traefik.http.routers.synapse-secure.tls=true"
       - "traefik.http.routers.synapse-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.synapse-secure.service=synapse"
-      - "traefik.http.services.synapse.loadbalancer.server.port=8008"
+      - "traefik.http.services.synapse.loadbalancer.server.port=8008"   
     restart: unless-stopped
