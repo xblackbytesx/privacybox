@@ -1,4 +1,5 @@
 *.env
 *.key
 acme.json
-traefik.yml
+traefik/data/traefik.yml
+traefik/data/config.yml
