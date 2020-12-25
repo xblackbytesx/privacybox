@@ -43,6 +43,7 @@ http:
   #     entryPoints:
   #       - https
   #     rule: Host(`hass.privacy.box`)
+  #     middlewares: secured
   #     service: service-homeassistant
   #     tls:
   #       certResolver: le-dns
