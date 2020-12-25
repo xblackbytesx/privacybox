@@ -1,0 +1,53 @@
+http:
+  middlewares:
+    secured:
+      chain:
+        middlewares:
+          - https-only
+          - known-ips
+          - secure-headers
+
+    https-only:
+      redirectScheme:
+        scheme: https
+
+    known-ips:
+      ipWhiteList:
+        sourceRange:
+          - "192.168.1.7"
+          - "127.0.0.1/32"
+
+    secure-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        forceSTSHeader: true
+        sslRedirect: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+
+    # # Middleware for redirecting Nextcloud's Cal & Cardav URLS
+    # nextcloud-dav:
+    #   redirectRegex:
+    #     permanent: true
+    #     regex: "https://(.*)/.well-known/(card|cal)dav"
+    #     replacement: "https://${1}/remote.php/dav/"
+
+  # # Example of using Traefik to statically route and proxy network endpoints outside Traefik control.
+  # # This is useful for proxying routers, nas-drives or even host-mode docker containers on localhost.
+  # routers:
+  #   router-homeassistant:
+  #     entryPoints:
+  #       - https
+  #     rule: Host(`hass.privacy.box`)
+  #     service: service-homeassistant
+  #     tls:
+  #       certResolver: le-dns
+  # services:
+  #   service-homeassistant:
+  #     loadBalancer:
+  #       servers:
+  #       - url: "http://10.0.200.5:8123"
