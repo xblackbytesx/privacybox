@@ -70,7 +70,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Wordpress | Done |   |
 | Hugo | Done | Only serving of public dir, no generating |
 | Portainer | Done |   |
-| Wallabag | Done |   |
+| Wallabag | Done | [Detailed notes](./docs/wallabag.md) |
 | Matrix Synapse | Done | [Detailed notes](./docs/matrix-synapse.md) |
 | Matomo | Done |   |
 | Gitea | Done |   |
