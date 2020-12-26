@@ -1,5 +1,8 @@
 *.env
 *.key
+*.bak
 acme.json
 traefik/data/traefik.yml
 traefik/data/config.yml
+**/update-jellyfin.sh
+**/redis
