@@ -68,6 +68,7 @@ services:
       - SITE_OWNER=${SITE_OWNER}
       - TRUSTED_PROXIES=${TRUSTED_PROXIES}
       - APP_ENV=production
+      - MAIL_MAILER=sendmail
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fireflyiii-app.entrypoints=http"
