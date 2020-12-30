@@ -83,3 +83,28 @@ services:
       - "traefik.http.routers.synapse-secure.service=synapse"
       - "traefik.http.services.synapse.loadbalancer.server.port=8008"   
     restart: unless-stopped
+
+  # # Enable this to enable federation
+  # synapse-nginx:
+  #   image: "nginx:latest"
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   volumes:
+  #     - ./data/matrix/nginx/matrix.conf:/etc/nginx/conf.d/matrix.conf
+  #     - ./data/matrix/nginx/www:/var/www/
+  #     - /etc/localtime:/etc/localtime:ro
+  #   networks:
+  #     - proxy
+  #     - internal
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.synapse-proxy.entrypoints=http"
+  #     - "traefik.http.routers.synapse-proxy.rule=Host(`${SUBDOMAIN_FEDERATION}.${DOMAIN}`)"
+  #     - "traefik.http.routers.synapse-proxy.middlewares=secured@file"
+  #     - "traefik.http.routers.synapse-proxy-secure.entrypoints=https"
+  #     - "traefik.http.routers.synapse-proxy-secure.rule=Host(`${SUBDOMAIN_FEDERATION}.${DOMAIN}`)"
+  #     - "traefik.http.routers.synapse-proxy-secure.tls=true"
+  #     - "traefik.http.routers.synapse-proxy-secure.tls.certresolver=le-dns"
+  #     - "traefik.http.routers.synapse-proxy-secure.service=synapse-proxy"
+  #     - "traefik.http.services.synapse-proxy.loadbalancer.server.port=80"  
+  #   restart: "unless-stopped"

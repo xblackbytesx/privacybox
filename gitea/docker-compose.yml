@@ -24,7 +24,7 @@ volumes:
 services:
   gitea-db:
     container_name: gitea-db
-    image: mariadb
+    image: mariadb:latest
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true

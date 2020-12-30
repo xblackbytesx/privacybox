@@ -24,7 +24,7 @@ volumes:
 services:
   wallabag-db:
     container_name: wallabag-db
-    image: mariadb
+    image: mariadb:latest
     security_opt:
       - no-new-privileges:true
     environment:

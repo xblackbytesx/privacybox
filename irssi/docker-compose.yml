@@ -1,0 +1,58 @@
+docker run -it --name my-running-irssi -e TERM -u $(id -u):$(id -g) \
+    --log-driver=none \
+    -v $HOME/.irssi:/home/user/.irssi:ro \
+    -v /etc/localtime:/etc/localtime:ro \
+    irssi
+
+version: '3.3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+volumes:
+  irssi-db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/irssi/database/
+  irssi-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/irssi/data
+
+  irssi-app:
+    container_name: irssi-app
+    image: irssi:1.2.2-alpine
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - $HOME/.irssi:/home/user/.irssi:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - irssi-db
+    environment:
+      - TERM
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.irssi-app.entrypoints=http"
+      - "traefik.http.routers.irssi-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.irssi-app.middlewares=secured@file"
+      - "traefik.http.routers.irssi-app-secure.entrypoints=https"
+      - "traefik.http.routers.irssi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.irssi-app-secure.tls=true"
+      - "traefik.http.routers.irssi-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.irssi-app-secure.service=irssi-app"
+      - "traefik.http.services.irssi-app.loadbalancer.server.port=3000"
+    networks:
+      - proxy
+      - internal
+    ports:
+      - "222:22"
+    restart: unless-stopped

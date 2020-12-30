@@ -37,7 +37,7 @@ volumes:
 services:
   nextcloud-db:
     container_name: nextcloud-db
-    image: mariadb
+    image: mariadb:latest
     security_opt:
       - no-new-privileges:true
     networks:

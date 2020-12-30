@@ -56,7 +56,7 @@ services:
 
   spotweb-mariadb:
     container_name: spotweb-mariadb
-    image: mariadb
+    image: mariadb:latest
     security_opt:
       - no-new-privileges:true
     networks:
