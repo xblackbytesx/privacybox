@@ -10,19 +10,19 @@ networks:
 volumes:
   public:
   storage:
-  invoiceninja-public:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/invoiceninja/public
+  # invoiceninja-public:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${STORAGE_ROOT}/docker/invoiceninja/public
 
-  invoiceninja-storage:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/invoiceninja/storage
+  # invoiceninja-storage:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${STORAGE_ROOT}/docker/invoiceninja/storage
 
   invoiceninja-database:
     driver: local
@@ -60,6 +60,8 @@ services:
     cap_add:
       - SYS_ADMIN
     environment: 
+      - REQUIRE_HTTPS=true
+      - TRUSTED_PROXIES="*"
       - APP_URL=https://${SUBDOMAIN}.${DOMAIN}
       - APP_KEY=${APP_KEY}
       - APP_DEBUG=true
