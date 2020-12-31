@@ -46,6 +46,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Matrix Synapse | Substitutes: Slack, Teams |
 | Matomo | Substitutes: Google Analytics |
 | Gitea | Substitutes: Github, Gitlab |
+| InvoiceNinja | Substitutes: e.g. Moneybird |
 | Jitsi Meet | Substitutes: Skype, Zoom |
 | Invidious | Free YouTube front-end |
 | PiHole |  |
@@ -74,6 +75,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Matrix Synapse | Done | [Detailed notes](./docs/matrix-synapse.md) |
 | Matomo | Done |   |
 | Gitea | Done |   |
+| InvoiceNinja | Done | [Detailed notes](./docs/invoiceninja.md) |
 | Jitsi Meet | WIP | Untested |
 | Invidious | Done |   |
 | PiHole | Done |   |
