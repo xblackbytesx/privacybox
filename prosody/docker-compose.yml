@@ -1,0 +1,58 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+volumes:
+  prosody-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/prosody/config
+  prosody-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/prosody/logs
+  prosody-modules:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/prosody/modules
+
+services:
+  prosody-app:
+    container_name: prosody-app
+    image: prosody/prosody:latest
+    environment:
+      - LOCAL=${USERNAME}
+      - PASSWORD=${PASSWORD}
+      - DOMAIN=https://${SUBDOMAIN}.${DOMAIN}
+    ports:
+      - 5222:5222
+      - 5269:5269
+      - localhost:5347:5347
+    volumes:
+      - prosody-config:/etc/prosody
+      - prosody-logs:/var/log/prosody
+      - prosody-modules:/usr/lib/prosody-modules
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prosody.entrypoints=http"
+      - "traefik.http.routers.prosody.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.prosody.middlewares=secured@file"
+      - "traefik.http.routers.prosody-secure.entrypoints=https"
+      - "traefik.http.routers.prosody-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.prosody-secure.tls=true"
+      - "traefik.http.routers.prosody-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.prosody-secure.service=prosody"
+      - "traefik.http.services.prosody.loadbalancer.server.port=5280"
+    networks:
+      - proxy
+    restart: unless-stopped
