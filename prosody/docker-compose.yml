@@ -32,11 +32,11 @@ services:
     environment:
       - LOCAL=${USERNAME}
       - PASSWORD=${PASSWORD}
-      - DOMAIN=https://${SUBDOMAIN}.${DOMAIN}
+      - DOMAIN=${SUBDOMAIN}.${DOMAIN}
     ports:
       - 5222:5222
       - 5269:5269
-      - localhost:5347:5347
+      - 5347:5347
     volumes:
       - prosody-config:/etc/prosody
       - prosody-logs:/var/log/prosody
