@@ -18,7 +18,7 @@ volumes:
 services:
   invidious-db:
     container_name: invidious-db
-    image: postgres:10-alpine
+    image: postgres:12-alpine
     security_opt:
       - no-new-privileges:true
     volumes:

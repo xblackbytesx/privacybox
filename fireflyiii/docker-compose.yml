@@ -30,7 +30,7 @@ volumes:
 services:
   fireflyiii-db:
     container_name: "fireflyiii-db"
-    image: "postgres:10-alpine"
+    image: "postgres:12-alpine"
     security_opt:
       - no-new-privileges:true
     environment:
@@ -44,6 +44,8 @@ services:
       - "traefik.enable=false"
     networks:
       - internal
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
     restart: unless-stopped
 
   fireflyiii-app:

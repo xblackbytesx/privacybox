@@ -18,7 +18,7 @@ volumes:
 services:
   mastodon-db:
     container_name: mastodon-db
-    image: postgres:10-alpine
+    image: postgres:12-alpine
     security_opt:
       - no-new-privileges:true
     environment:
@@ -33,6 +33,8 @@ services:
       - mastodon-database:/var/lib/postgresql/data
     labels:
       - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
     restart: unless-stopped
 
   mastodon-redis:

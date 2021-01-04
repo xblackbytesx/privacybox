@@ -39,6 +39,8 @@ services:
       - internal
     labels:
       - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
     restart: unless-stopped
 
   synapse-redis:
