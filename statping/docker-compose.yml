@@ -1,0 +1,27 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+services:
+  statping-app:
+    container_name: statping-app
+    image: statping/statping:latest
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.statping.entrypoints=http"
+      - "traefik.http.routers.statping.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.statping.middlewares=secured@file"
+      - "traefik.http.routers.statping-secure.entrypoints=https"
+      - "traefik.http.routers.statping-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.statping-secure.tls=true"
+      - "traefik.http.routers.statping-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.statping-secure.service=statping"
+      - "traefik.http.services.statping.loadbalancer.server.port=80"
+    networks:
+      - proxy
+    restart: unless-stopped
