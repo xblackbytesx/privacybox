@@ -71,6 +71,11 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
     restart: unless-stopped
 
   spotweb-app:

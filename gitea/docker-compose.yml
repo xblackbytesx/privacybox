@@ -25,7 +25,6 @@ services:
   gitea-db:
     container_name: gitea-db
     image: mariadb:latest
-    restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     environment:
@@ -40,6 +39,12 @@ services:
     volumes:
       - gitea-db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
 
   gitea-app:
     container_name: gitea-app

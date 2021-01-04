@@ -14,7 +14,6 @@ services:
     security_opt:
       - no-new-privileges:true
     command: --max-allowed-packet=64MB
-    restart: unless-stopped
     volumes:
       - ${STORAGE_ROOT}/docker/matomo/matomo-db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
@@ -26,6 +25,12 @@ services:
       - MYSQL_PASSWORD=${DB_USER_PASS}
       - MYSQL_DATABASE=matomo
       - MYSQL_USER=matomo
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
 
   matomo-app:
     container_name: "matomo-app"

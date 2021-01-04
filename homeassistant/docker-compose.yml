@@ -37,27 +37,29 @@ volumes:
       device: ${STORAGE_ROOT}/docker/homeassistant/mosquitto/data
 
 services:
-  ha-app:
-    container_name: ha-app
-    image: homeassistant/home-assistant:latest
+  ha-mariadb:
+    container_name: ha-mariadb
+    image: mariadb:latest
     security_opt:
       - no-new-privileges:true
     environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=homeassistant
+      - MYSQL_USER=homeassistant
+      - MYSQL_PASSWORD=${DB_USER_PASS}
       - TZ=Europe/Amsterdam
-    # Map local /dev mountpoint to docker
-    devices:
-      - ${RFX_DEVICE_MOUNT}:/dev/ttyRFXtrx
     volumes:
-      - ha-config:/config
-      - /sys/class/thermal:/sys/class/thermal
+      - ha-mariadb:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3306:3306"
     labels:
       - "traefik.enable=false"
-    depends_on:
-      - ha-mariadb
-      - ha-mqtt
-      - ha-zigbee2mqtt
-    network_mode: host
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
     restart: unless-stopped
 
   ha-mqtt:
@@ -98,22 +100,25 @@ services:
       - "8099:8099"
     restart: unless-stopped
 
-  ha-mariadb:
-    container_name: ha-mariadb
-    image: mariadb:latest
+  ha-app:
+    container_name: ha-app
+    image: homeassistant/home-assistant:latest
     security_opt:
       - no-new-privileges:true
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=homeassistant
-      - MYSQL_USER=homeassistant
-      - MYSQL_PASSWORD=${DB_USER_PASS}
       - TZ=Europe/Amsterdam
+    # Map local /dev mountpoint to docker
+    devices:
+      - ${RFX_DEVICE_MOUNT}:/dev/ttyRFXtrx
     volumes:
-      - ha-mariadb:/var/lib/mysql
+      - ha-config:/config
+      - /sys/class/thermal:/sys/class/thermal
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "3306:3306"
     labels:
       - "traefik.enable=false"
+    depends_on:
+      - ha-mariadb
+      - ha-mqtt
+      - ha-zigbee2mqtt
+    network_mode: host
     restart: unless-stopped

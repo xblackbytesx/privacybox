@@ -24,6 +24,11 @@ services:
       - "traefik.enable=false"
     networks:
       - internal
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
     restart: unless-stopped
 
   ghost:
