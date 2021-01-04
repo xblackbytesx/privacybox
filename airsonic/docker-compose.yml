@@ -1,0 +1,67 @@
+version: '3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+volumes:
+  airsonic-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/airsonic/config
+  airsonic-music:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/airsonic/music
+  airsonic-playlists:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/airsonic/playlists
+  airsonic-podcasts:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/airsonic/podcasts
+
+services:
+  airsonic-app:
+    container_name: airsonic-app
+    image: linuxserver/airsonic
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+      - CONTEXT_PATH=${SUBDOMAIN}.${DOMAIN} #optional
+      # - JAVA_OPTS=<options> #optional
+    volumes:
+      - airsonic-config:/config
+      - airsonic-music:/music
+      - airsonic-playlists:/playlists
+      - airsonic-podcasts:/podcasts
+      - /etc/localtime:/etc/localtime:ro
+    # devices:
+    #   - /dev/snd:/dev/snd #optional
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.airsonic-app.entrypoints=http"
+      - "traefik.http.routers.airsonic-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.airsonic-app.middlewares=secured@file"
+      - "traefik.http.routers.airsonic-app-secure.entrypoints=https"
+      - "traefik.http.routers.airsonic-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.airsonic-app-secure.tls=true"
+      - "traefik.http.routers.airsonic-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.airsonic-app-secure.service=airsonic-app"
+      - "traefik.http.services.airsonic-app.loadbalancer.server.port=4040"
+    networks:
+      - proxy
+    restart: unless-stopped
