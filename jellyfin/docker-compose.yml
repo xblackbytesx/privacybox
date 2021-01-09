@@ -31,6 +31,12 @@ volumes:
   #     type: none
   #     o: bind
   #     device: ${STORAGE_ROOT}/video/Movies
+  # jellyfin-music-dir:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${STORAGE_ROOT}/audio/music
   jellyfin-series-dir:
     driver: local
     driver_opts:
@@ -43,6 +49,12 @@ volumes:
       type: nfs4
       o: "addr=${NFS_REMOTE_IP},rw"
       device: ":${NFS_MOVIES_REMOTE_PATH}"
+  jellyfin-music-dir:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: "addr=${NFS_REMOTE_IP},rw"
+      device: ":${NFS_MUSIC_REMOTE_PATH}"
 
 services:
   jellyfin:
@@ -60,6 +72,7 @@ services:
       - jellyfin-cache:/cache
       - jellyfin-series-dir:/tvshows
       - jellyfin-movies-dir:/movies
+      - jellyfin-music-dir:/music
       - /etc/localtime:/etc/localtime:ro
     environment:
       - JELLYFIN_PublishedServerUrl=https://${SUBDOMAIN}.${DOMAIN}
