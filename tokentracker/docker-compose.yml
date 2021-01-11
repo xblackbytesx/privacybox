@@ -15,15 +15,15 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.statping.entrypoints=http"
-      - "traefik.http.routers.statping.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.statping.middlewares=secured@file"
-      - "traefik.http.routers.statping-secure.entrypoints=https"
-      - "traefik.http.routers.statping-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.statping-secure.tls=true"
-      - "traefik.http.routers.statping-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.statping-secure.service=statping"
-      - "traefik.http.services.statping.loadbalancer.server.port=80"
+      - "traefik.http.routers.tokentracker.entrypoints=http"
+      - "traefik.http.routers.tokentracker.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.tokentracker.middlewares=secured@file"
+      - "traefik.http.routers.tokentracker-secure.entrypoints=https"
+      - "traefik.http.routers.tokentracker-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.tokentracker-secure.tls=true"
+      - "traefik.http.routers.tokentracker-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.tokentracker-secure.service=tokentracker"
+      - "traefik.http.services.tokentracker.loadbalancer.server.port=80"
     networks:
       - proxy
     restart: unless-stopped
