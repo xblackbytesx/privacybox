@@ -19,42 +19,24 @@ volumes:
       type: none
       o: bind
       device: ${STORAGE_ROOT}/docker/jellyfin/cache
-  # jellyfin-series-dir:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${STORAGE_ROOT}/video/Series
-  # jellyfin-movies-dir:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${STORAGE_ROOT}/video/Movies
-  # jellyfin-music-dir:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${STORAGE_ROOT}/audio/music
   jellyfin-series-dir:
     driver: local
     driver_opts:
-      type: nfs4
-      o: "addr=${NFS_REMOTE_IP},rw"
-      device: ":${NFS_SERIES_REMOTE_PATH}"
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${SERIES_PATH}
   jellyfin-movies-dir:
     driver: local
     driver_opts:
-      type: nfs4
-      o: "addr=${NFS_REMOTE_IP},rw"
-      device: ":${NFS_MOVIES_REMOTE_PATH}"
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${MOVIES_PATH}
   jellyfin-music-dir:
     driver: local
     driver_opts:
-      type: nfs4
-      o: "addr=${NFS_REMOTE_IP},rw"
-      device: ":${NFS_MUSIC_REMOTE_PATH}"
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${MUSIC_PATH}
 
 services:
   jellyfin:

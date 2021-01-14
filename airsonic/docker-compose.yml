@@ -15,21 +15,21 @@ volumes:
   airsonic-music:
     driver: local
     driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/airsonic/music
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${MUSIC_PATH}
   airsonic-playlists:
     driver: local
     driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/airsonic/playlists
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${PLAYLISTS_PATH}
   airsonic-podcasts:
     driver: local
     driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/airsonic/podcasts
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${PODCASTS_PATH}
 
 services:
   airsonic-app:

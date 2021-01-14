@@ -21,9 +21,9 @@ volumes:
   ampache-media:
     driver: local
     driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/ampache/media
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${MEDIA_PATH}
   ampache-database:
     driver: local
     driver_opts:
