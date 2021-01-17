@@ -21,16 +21,9 @@ volumes:
   radarr-downloads-dir:
     driver: local
     driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/downloads
-  # Example When mounting remote NFS dir:
-  # radarr-downloads-dir:
-  #   driver: local
-  #   driver_opts:
-  #     type: nfs4
-  #     o: "addr=${NFS_REMOTE_IP},rw"
-  #     device: ":${NFS_REMOTE_PATH}"
+      type: ${DOWNLOADS_DRIVER_OPT_TYPE}
+      o: ${DOWNLOADS_DRIVER_OPT_O}
+      device: ${DOWNLOADS_PATH}
 
 services:
   radarr:
