@@ -28,7 +28,7 @@ volumes:
 services:
   sonarr:
     container_name: sonarr
-    image: linuxserver/sonarr:latest
+    image: linuxserver/sonarr:preview
     security_opt:
       - no-new-privileges:true
     environment:
