@@ -8,30 +8,28 @@ networks:
     internal: true
 
 volumes:
-  # Temporarily using disposable mounts while in testing phase
+  # NOTE: It's very important that both user and group are set 
+  # to 1500 for these mounts to work properly
   invoiceninja-public:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/invoiceninja/public
+
   invoiceninja-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/invoiceninja/storage
+
   invoiceninja-database:
-  # invoiceninja-public:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${STORAGE_ROOT}/docker/invoiceninja/public
-
-  # invoiceninja-storage:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${STORAGE_ROOT}/docker/invoiceninja/storage
-
-  # invoiceninja-database:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${STORAGE_ROOT}/docker/invoiceninja/database
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/invoiceninja/database
 
 services:
   invoiceninja-db:
