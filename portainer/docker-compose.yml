@@ -11,7 +11,7 @@ version: '3'
 services:
   portainer:
     container_name: "portainer"
-    image: "portainer/portainer-ce:2.0.0-alpine"
+    image: "portainer/portainer-ce:alpine"
     security_opt:
       - no-new-privileges:true
     command: --no-analytics
