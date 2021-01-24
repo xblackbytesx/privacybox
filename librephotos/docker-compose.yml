@@ -40,6 +40,30 @@ volumes:
       device: ${STORAGE_ROOT}/docker/librephotos/cache
 
 services:
+  librephotos-proxy:
+    container_name: librephotos-proxy
+    image: reallibrephotos/librephotos-proxy:dev
+    security_opt:
+      - no-new-privileges:true
+    tty: true
+    networks:
+      - internal
+      - proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.librephotos-proxy.entrypoints=http"
+      - "traefik.http.routers.librephotos-proxy.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.librephotos-proxy.middlewares=nextcloud-dav@file,secured@file"
+      - "traefik.http.routers.librephotos-proxy-secure.entrypoints=https"
+      - "traefik.http.routers.librephotos-proxy-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.librephotos-proxy-secure.tls=true"
+      - "traefik.http.routers.librephotos-proxy-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.librephotos-proxy-secure.service=librephotos-proxy"
+      - "traefik.http.services.librephotos-proxy.loadbalancer.server.port=80"
+    restart: unless-stopped
+
   librephotos-db:
     container_name: librephotos-db
     image: postgres:12-alpine
@@ -64,7 +88,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  librephotos-frontend:
+  frontend:
     container_name: librephotos-frontend
     image: reallibrephotos/librephotos-frontend:dev
     security_opt:
@@ -72,23 +96,11 @@ services:
     tty: true
     networks:
       - internal
-      - proxy
     volumes:
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.librephotos-frontend.entrypoints=http"
-      - "traefik.http.routers.librephotos-frontend.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.librephotos-frontend.middlewares=nextcloud-dav@file,secured@file"
-      - "traefik.http.routers.librephotos-frontend-secure.entrypoints=https"
-      - "traefik.http.routers.librephotos-frontend-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.librephotos-frontend-secure.tls=true"
-      - "traefik.http.routers.librephotos-frontend-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.librephotos-frontend-secure.service=librephotos-frontend"
-      - "traefik.http.services.librephotos-frontend.loadbalancer.server.port=3000"
     restart: unless-stopped
 
-  librephotos-backend:
+  backend:
     container_name: librephotos-backend
     image: reallibrephotos/librephotos:dev
     security_opt:
@@ -103,7 +115,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     environment:
       - SECRET_KEY=${APP_SECRET}
-      - BACKEND_HOST=librephotos-backend
+      - BACKEND_HOST=backend
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_USERNAME=${USERNAME}
       - ADMIN_PASSWORD=${USERPASS}
