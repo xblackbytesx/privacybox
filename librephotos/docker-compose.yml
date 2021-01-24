@@ -44,13 +44,18 @@ services:
     container_name: librephotos-db
     image: postgres:12-alpine
     security_opt:
-      - no-new-privileges:true   
+      - no-new-privileges:true
+    networks:
+      - internal
     environment:
       - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
       - POSTGRES_DB=librephotos
     volumes:
       - librephotos-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
     command: postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c random_page_cost=1.0
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -d $dbName -U $dbUser']
@@ -65,6 +70,11 @@ services:
     security_opt:
       - no-new-privileges:true
     tty: true
+    networks:
+      - internal
+      - proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.librephotos-frontend.entrypoints=http"
@@ -83,11 +93,14 @@ services:
     image: reallibrephotos/librephotos:dev
     security_opt:
       - no-new-privileges:true
+    networks:
+      - internal
     volumes:
       - librephotos-photos:/data
       - librephotos-protected:/code/protected_media
       - librephotos-logs:/code/logs
       - librephotos-cache:/root/.cache
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - SECRET_KEY=${APP_SECRET}
       - BACKEND_HOST=librephotos-backend
@@ -98,7 +111,7 @@ services:
       - DB_BACKEND=postgresql
       - DB_NAME=librephotos
       - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
+      - DB_PASS=${DB_USER_PASS}
       - DB_HOST=librephotos-db
       - DB_PORT=5432
       - REDIS_HOST=librephotos-redis
@@ -108,6 +121,8 @@ services:
       - WEB_CONCURRENCY=${GUNNI_WORKERS}
       - WORKER_TIMEOUT=${WORKER_TIMEOUT}
       - SKIP_PATTERNS=${SKIP_PATTERNS}
+    labels:
+      - "traefik.enable=false"
     depends_on:
       librephotos-db:
         condition: service_healthy
