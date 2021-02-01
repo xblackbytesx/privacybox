@@ -22,37 +22,37 @@ volumes:
       device: ${STORAGE_ROOT}/docker/spotweb/config/
 
 services:
-  spotweb-vpn:
-    container_name: spotweb-vpn
-    image: xblackbytesx/expressvpn:latest
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      - ACTIVATION_CODE=${VPN_ACTIVATION_CODE}
-      - SERVER=${VPN_SERVER}
-    cap_add:
-      - NET_ADMIN
-    devices: 
-      - /dev/net/tun
-    stdin_open: true
-    tty: true
-    command: /bin/bash
-    privileged: true
-    networks:
-      - proxy
-      - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.spotweb-vpn.entrypoints=http"
-      - "traefik.http.routers.spotweb-vpn.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.spotweb-vpn.middlewares=secured@file"
-      - "traefik.http.routers.spotweb-vpn-secure.entrypoints=https"
-      - "traefik.http.routers.spotweb-vpn-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.spotweb-vpn-secure.tls=true"
-      - "traefik.http.routers.spotweb-vpn-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.spotweb-vpn-secure.service=spotweb-vpn"
-      - "traefik.http.services.spotweb-vpn.loadbalancer.server.port=80"
-    restart: unless-stopped
+  # spotweb-vpn:
+  #   container_name: spotweb-vpn
+  #   image: xblackbytesx/expressvpn:latest
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   environment:
+  #     - ACTIVATION_CODE=${VPN_ACTIVATION_CODE}
+  #     - SERVER=${VPN_SERVER}
+  #   cap_add:
+  #     - NET_ADMIN
+  #   devices: 
+  #     - /dev/net/tun
+  #   stdin_open: true
+  #   tty: true
+  #   command: /bin/bash
+  #   privileged: true
+  #   networks:
+  #     - proxy
+  #     - internal
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.spotweb-vpn.entrypoints=http"
+  #     - "traefik.http.routers.spotweb-vpn.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+  #     - "traefik.http.routers.spotweb-vpn.middlewares=secured@file"
+  #     - "traefik.http.routers.spotweb-vpn-secure.entrypoints=https"
+  #     - "traefik.http.routers.spotweb-vpn-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+  #     - "traefik.http.routers.spotweb-vpn-secure.tls=true"
+  #     - "traefik.http.routers.spotweb-vpn-secure.tls.certresolver=le-dns"
+  #     - "traefik.http.routers.spotweb-vpn-secure.service=spotweb-vpn"
+  #     - "traefik.http.services.spotweb-vpn.loadbalancer.server.port=80"
+  #   restart: unless-stopped
 
   spotweb-mariadb:
     container_name: spotweb-mariadb
@@ -98,20 +98,20 @@ services:
       - SPOTWEB_CRON_RETRIEVE=*/15 * * * *
       - SPOTWEB_CRON_CACHE_CHECK=10 */1 * * *
     # If NOT using the above VPN service uncomment the section below:
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.spotweb.entrypoints=http"
-    #   - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.spotweb.middlewares=secured@file"
-    #   - "traefik.http.routers.spotweb-secure.entrypoints=https"
-    #   - "traefik.http.routers.spotweb-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.spotweb-secure.tls=true"
-    #   - "traefik.http.routers.spotweb-secure.tls.certresolver=le-dns"
-    #   - "traefik.http.routers.spotweb-secure.service=spotweb"
-    #   - "traefik.http.services.spotweb.loadbalancer.server.port=80"
-    # networks:
-    #   - proxy
-    #   - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.spotweb.entrypoints=http"
+      - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.spotweb.middlewares=secured@file"
+      - "traefik.http.routers.spotweb-secure.entrypoints=https"
+      - "traefik.http.routers.spotweb-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.spotweb-secure.tls=true"
+      - "traefik.http.routers.spotweb-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.spotweb-secure.service=spotweb"
+      - "traefik.http.services.spotweb.loadbalancer.server.port=80"
+    networks:
+      - proxy
+      - internal
     network_mode: service:spotweb-vpn
     depends_on:
       - spotweb-vpn
