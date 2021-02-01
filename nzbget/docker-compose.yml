@@ -79,6 +79,6 @@ services:
     networks:
       - proxy
     # network_mode: service:nzbget-vpn
-    depends_on:
-      - nzbget-vpn
+    # depends_on:
+    #   - nzbget-vpn
     restart: unless-stopped

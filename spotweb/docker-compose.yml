@@ -114,6 +114,6 @@ services:
       - internal
     # network_mode: service:spotweb-vpn
     depends_on:
-      - spotweb-vpn
+      # - spotweb-vpn
       - spotweb-mariadb
     restart: unless-stopped
