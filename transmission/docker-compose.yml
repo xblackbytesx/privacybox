@@ -94,7 +94,7 @@ services:
     ports:
       - 51413:51413
       - 51413:51413/udp
-    network_mode: service:transmission-vpn
+    # network_mode: service:transmission-vpn
     depends_on:
       - transmission-vpn
     restart: unless-stopped

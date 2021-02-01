@@ -78,7 +78,7 @@ services:
       - "traefik.http.services.jackett.loadbalancer.server.port=9117"
     networks:
       - proxy
-    network_mode: service:jackett-vpn
+    # network_mode: service:jackett-vpn
     depends_on:
       - jackett-vpn
     restart: unless-stopped

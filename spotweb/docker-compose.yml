@@ -112,7 +112,7 @@ services:
     networks:
       - proxy
       - internal
-    network_mode: service:spotweb-vpn
+    # network_mode: service:spotweb-vpn
     depends_on:
       - spotweb-vpn
       - spotweb-mariadb

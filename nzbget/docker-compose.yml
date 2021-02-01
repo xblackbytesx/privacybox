@@ -78,7 +78,7 @@ services:
       - "traefik.http.services.nzbget.loadbalancer.server.port=6789"
     networks:
       - proxy
-    network_mode: service:nzbget-vpn
+    # network_mode: service:nzbget-vpn
     depends_on:
       - nzbget-vpn
     restart: unless-stopped
