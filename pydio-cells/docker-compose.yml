@@ -25,7 +25,7 @@ services:
       - TZ=Europe/Amsterdam
       - EXTERNALURL=${SUBDOMAIN}.${DOMAIN}
     volumes:
-      - pydio-config:/config
+      - pydio-cells-config:/config
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
