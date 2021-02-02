@@ -79,7 +79,7 @@ services:
       - "traefik.http.routers.pydio-cells-app-secure.service=pydio-cells-app"
       - "traefik.http.services.pydio-cells-app.loadbalancer.server.port=8080"
     depends_on:
-      - pydo-cells-db
+      - pydio-cells-db
     networks: 
       - internal
       - proxy
