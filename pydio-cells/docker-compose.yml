@@ -19,6 +19,7 @@ services:
     image: linuxserver/pydio-cells:latest
     security_opt:
       - no-new-privileges:true
+    hostname: pydio-cells
     environment:
       - PUID=1000
       - PGID=1000
@@ -36,7 +37,7 @@ services:
       - "traefik.http.routers.pydio-cells-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.pydio-cells-secure.tls=true"
       - "traefik.http.routers.pydio-cells-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.pydio-cells-secure.service=pydio"
+      - "traefik.http.routers.pydio-cells-secure.service=pydio-cells"
       - "traefik.http.services.pydio-cells.loadbalancer.server.port=8080"
     networks:
       - proxy
