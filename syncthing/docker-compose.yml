@@ -5,6 +5,20 @@ networks:
     external: 
       name: proxy
 
+volumes:
+  syncthing-app:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/syncthing/syncthing
+  syncthing-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/data
+
 services:
   syncthing:
     container_name: "syncthing"
@@ -12,7 +26,8 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ${STORAGE_ROOT}/docker/syncthing:/var/syncthing
+      - syncthing-app:/var/syncthing
+      - syncthing-data:/data
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
@@ -30,6 +45,3 @@ services:
     ports:
       - "22000:22000"
     restart: unless-stopped
-
-volumes:
-  syncthing:

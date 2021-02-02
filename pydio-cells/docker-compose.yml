@@ -19,7 +19,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/pydio-cells/data
+      device: ${STORAGE_ROOT}/data
   pydio-cells-cells:
     driver: local
     driver_opts:
