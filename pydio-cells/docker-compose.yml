@@ -1,44 +1,86 @@
-version: '3'
+version: '3.7'
 
 networks:
   proxy:
-    external:
+    external: 
       name: proxy
+  internal:
+    internal: true
 
 volumes:
-  pydio-cells-config:
+  pydio-cells-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/pydio-cells/config
-      
+      device: ${STORAGE_ROOT}/docker/pydio-cells/database
+  pydio-cells-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/pydio-cells/data
+  pydio-cells-cells:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/pydio-cells/cells
+
 services:
-  pydio-cells:
-    container_name: pydio-cells
-    image: linuxserver/pydio-cells:latest
+  pydio-cells-db:
+    container_name: pydio-cells-db
+    image: mariadb:latest
     security_opt:
       - no-new-privileges:true
-    hostname: pydio-cells
+    networks:
+      - internal
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci]
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Amsterdam
-      - EXTERNALURL=${SUBDOMAIN}.${DOMAIN}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=cells
+      - MYSQL_USER=pydio
+      - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
-      - pydio-cells-config:/config
+      - pydio-cells-database:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
+
+  pydio-cells-app:
+    container_name: pydio-cells-app
+    image: pydio/cells:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - CELLS_BIND=0.0.0.0:8080
+      - CELLS_EXTERNAL=http://${SUBDOMAIN}.${DOMAIN}
+      - CELLS_NO_TLS=1
+      - CELLS_LOG_LEVEL=production
+    volumes:
+      - data:/var/cells/data
+      - cellsdir:/var/cells
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pydio-cells.entrypoints=http"
-      - "traefik.http.routers.pydio-cells.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.pydio-cells.middlewares=secured@file"
-      - "traefik.http.routers.pydio-cells-secure.entrypoints=https"
-      - "traefik.http.routers.pydio-cells-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.pydio-cells-secure.tls=true"
-      - "traefik.http.routers.pydio-cells-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.pydio-cells-secure.service=pydio-cells"
-      - "traefik.http.services.pydio-cells.loadbalancer.server.port=8080"
-    networks:
+      - "traefik.http.routers.pydio-cells-app.entrypoints=http"
+      - "traefik.http.routers.pydio-cells-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pydio-cells-app.middlewares=secured@file"
+      - "traefik.http.routers.pydio-cells-app-secure.entrypoints=https"
+      - "traefik.http.routers.pydio-cells-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pydio-cells-app-secure.tls=true"
+      - "traefik.http.routers.pydio-cells-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.pydio-cells-app-secure.service=pydio-cells-app"
+      - "traefik.http.services.pydio-cells-app.loadbalancer.server.port=8080"
+    depends_on:
+      - pydo-cells-db
+    networks: 
+      - internal
       - proxy
     restart: unless-stopped
