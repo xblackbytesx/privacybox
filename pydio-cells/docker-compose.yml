@@ -64,8 +64,8 @@ services:
       - CELLS_NO_TLS=1
       - CELLS_LOG_LEVEL=production
     volumes:
-      - data:/var/cells/data
-      - cellsdir:/var/cells
+      - pydio-cells-data:/var/cells/data
+      - pydio-cells-cells:/var/cells
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
