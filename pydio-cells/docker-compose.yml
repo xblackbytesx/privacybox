@@ -1,0 +1,43 @@
+version: '3'
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
+volumes:
+  pydio-cells-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/pydio-cells/config
+      
+services:
+  pydio-cells:
+    container_name: pydio-cells
+    image: linuxserver/pydio-cells:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+      - EXTERNALURL=${SUBDOMAIN}.${DOMAIN}
+    volumes:
+      - pydio-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pydio-cells.entrypoints=http"
+      - "traefik.http.routers.pydio-cells.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pydio-cells.middlewares=secured@file"
+      - "traefik.http.routers.pydio-cells-secure.entrypoints=https"
+      - "traefik.http.routers.pydio-cells-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pydio-cells-secure.tls=true"
+      - "traefik.http.routers.pydio-cells-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.pydio-cells-secure.service=pydio"
+      - "traefik.http.services.pydio-cells.loadbalancer.server.port=8080"
+    networks:
+      - proxy
+    restart: unless-stopped
