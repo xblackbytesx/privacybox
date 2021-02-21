@@ -1,0 +1,45 @@
+version: '3'
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
+volumes:
+  dillinger-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/dillinger/config
+
+services:
+  dillinger:
+    container_name: dillinger
+    image: linuxserver/dillinger:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - dillinger-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dillinger.entrypoints=http"
+      - "traefik.http.routers.dillinger.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.dillinger.middlewares=secured@file"
+      - "traefik.http.routers.dillinger-secure.entrypoints=https"
+      - "traefik.http.routers.dillinger-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.dillinger-secure.tls=true"
+      - "traefik.http.routers.dillinger-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.dillinger-secure.service=dillinger"
+      - "traefik.http.services.dillinger.loadbalancer.server.port=8080"
+    networks:
+      - proxy
+    # # Used for SSH remoteForward
+    # ports:
+    #   - 4006:8080
+    restart: unless-stopped
