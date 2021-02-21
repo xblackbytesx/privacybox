@@ -94,4 +94,7 @@ services:
     networks:
       - proxy
       - internal
+    # Used for SSH tunnel proxy
+    ports:
+      - 4002:80
     restart: unless-stopped

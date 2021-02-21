@@ -73,6 +73,9 @@ services:
     networks:
       - proxy
       - internal
+    # Used for SSH remoteForward
+    ports:
+      - 4001:3000
     depends_on:
       - invidious-db
     restart: unless-stopped
