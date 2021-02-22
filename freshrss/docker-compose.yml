@@ -8,12 +8,18 @@ networks:
     internal: true
 
 volumes:
-  freshrss-app-config:
+  freshrss-config:
     driver: local
     driver_opts:
       type: none
       o: bind
       device: ${STORAGE_ROOT}/docker/freshrss/config
+  freshrss-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/freshrss/database/
 
 services:
   freshrss-db:
@@ -30,7 +36,7 @@ services:
       - MYSQL_USER=freshrss
       - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
-      - freshrss-db:/var/lib/mysql
+      - freshrss-database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -51,7 +57,7 @@ services:
       - PGID=1000
       - TZ=Europe/Amsterdam
     volumes:
-      - freshrss-app-config:/config
+      - freshrss-config:/config
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
