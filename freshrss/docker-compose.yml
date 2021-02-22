@@ -2,11 +2,13 @@ version: '3'
 
 networks:
   proxy:
-    external:
+    external: 
       name: proxy
+  internal:
+    internal: true
 
 volumes:
-  freshrss-config:
+  freshrss-app-config:
     driver: local
     driver_opts:
       type: none
@@ -14,9 +16,34 @@ volumes:
       device: ${STORAGE_ROOT}/docker/freshrss/config
 
 services:
-  freshrss:
-    container_name: freshrss
-    image: linuxserver/freshrss:latest
+  freshrss-db:
+    container_name: freshrss-db
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=freshrss
+      - MYSQL_USER=freshrss
+      - MYSQL_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - freshrss-db:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
+
+  freshrss-app:
+    container_name: freshrss-app
+    image: linuxserver/freshrss-app:latest
     security_opt:
       - no-new-privileges:true
     environment:
@@ -24,20 +51,23 @@ services:
       - PGID=1000
       - TZ=Europe/Amsterdam
     volumes:
-      - freshrss-config:/config
+      - freshrss-app-config:/config
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.freshrss.entrypoints=http"
-      - "traefik.http.routers.freshrss.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.freshrss.middlewares=secured@file"
-      - "traefik.http.routers.freshrss-secure.entrypoints=https"
-      - "traefik.http.routers.freshrss-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.freshrss-secure.tls=true"
-      - "traefik.http.routers.freshrss-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.freshrss-secure.service=freshrss"
-      - "traefik.http.services.freshrss.loadbalancer.server.port=80"
-    networks:
+      - "traefik.http.routers.freshrss-app.entrypoints=http"
+      - "traefik.http.routers.freshrss-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.freshrss-app.middlewares=secured@file"
+      - "traefik.http.routers.freshrss-app-secure.entrypoints=https"
+      - "traefik.http.routers.freshrss-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.freshrss-app-secure.tls=true"
+      - "traefik.http.routers.freshrss-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.freshrss-app-secure.service=freshrss-app"
+      - "traefik.http.services.freshrss-app.loadbalancer.server.port=80"
+    depends_on:
+      - freshrss-db
+    networks: 
+      - internal
       - proxy
     # # Used for SSH remoteForward
     # ports:
