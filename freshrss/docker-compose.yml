@@ -49,7 +49,7 @@ services:
 
   freshrss-app:
     container_name: freshrss-app
-    image: linuxserver/freshrss-app:latest
+    image: linuxserver/freshrss:latest
     security_opt:
       - no-new-privileges:true
     environment:
