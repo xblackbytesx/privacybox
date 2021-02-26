@@ -150,26 +150,26 @@ services:
       - "traefik.enable=false"
     restart: unless-stopped
 
-version: '3'
+# version: '3'
 
-networks:
-  proxy:
-    external: 
-      name: proxy
+# networks:
+#   proxy:
+#     external: 
+#       name: proxy
 
-volumes:
-  nextcloud-config:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/nextcloud/config
-  nextcloud-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/nextcloud-data
+# volumes:
+#   nextcloud-config:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/docker/nextcloud/config
+#   nextcloud-data:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/nextcloud-data
 
 # services:
 #   nextcloud:
