@@ -1,0 +1,114 @@
+version: '3.5'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+volumes:
+  photoprism-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/photoprism/database
+  photoprism-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/photoprism/data
+  photoprism-stories:
+    driver: local
+    driver_opts:
+      type: ${STORIES_DRIVER_OPT_TYPE}
+      o: ${STORIES_DRIVER_OPT_O}
+      device: ${STORIES_PATH}
+
+services:
+  photoprism-db:
+    container_name: photoprism-db
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+      - apparmor:unconfined
+    networks:
+      - internal
+    command: mysqld --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=50
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=photoprism
+      - MYSQL_USER=photoprism
+      - MYSQL_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - photoprism-database:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
+
+  photoprism-app:
+    container_name: photoprism-app
+    image: photoprism/photoprism:latest
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+      - apparmor:unconfined
+    environment:
+      - UID=1000
+      - GID=1000
+      - UMASK=0000
+      - PHOTOPRISM_ADMIN_PASSWORD="${ADMIN_USER_PASS}"
+      - PHOTOPRISM_HTTP_PORT=2342
+      - PHOTOPRISM_HTTP_COMPRESSION="gzip"
+      - PHOTOPRISM_DEBUG="false"
+      - PHOTOPRISM_PUBLIC="false"
+      - PHOTOPRISM_READONLY="true" # Don't modify originals directory (reduced functionality)
+      - PHOTOPRISM_EXPERIMENTAL="false"
+      - PHOTOPRISM_DISABLE_WEBDAV="false"
+      - PHOTOPRISM_DISABLE_SETTINGS="false"
+      - PHOTOPRISM_DISABLE_TENSORFLOW="false"
+      - PHOTOPRISM_DARKTABLE_PRESETS="false"
+      - PHOTOPRISM_DETECT_NSFW="false"
+      - PHOTOPRISM_UPLOAD_NSFW="true"
+      - PHOTOPRISM_DATABASE_DRIVER="mysql"
+      - PHOTOPRISM_DATABASE_SERVER="photoprism-db:3306"
+      - PHOTOPRISM_DATABASE_NAME="photoprism"
+      - PHOTOPRISM_DATABASE_USER="photoprism"
+      - PHOTOPRISM_DATABASE_PASSWORD="${DB_USER_PASS}"
+      - PHOTOPRISM_SITE_URL="https://${SUBDOMAIN}.${DOMAIN}/"
+      - PHOTOPRISM_SITE_TITLE="PhotoPrism"
+      - PHOTOPRISM_SITE_CAPTION="Browse Your Life"
+      - PHOTOPRISM_SITE_DESCRIPTION=""
+      - PHOTOPRISM_SITE_AUTHOR=""
+    volumes:
+      - "photoprism-stories:/photoprism/originals"
+      - "photoprism-data:/photoprism/storage"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.photoprism-app.entrypoints=http"
+      - "traefik.http.routers.photoprism-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.photoprism-app.middlewares=secured@file"
+      - "traefik.http.routers.photoprism-app-secure.entrypoints=https"
+      - "traefik.http.routers.photoprism-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.photoprism-app-secure.tls=true"
+      - "traefik.http.routers.photoprism-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.photoprism-app-secure.service=photoprism-app"
+      - "traefik.http.services.photoprism-app.loadbalancer.server.port=2342"
+    networks:
+      - internal
+      - proxy
+    depends_on:
+      - photoprism-db
+    # Only enable automatic restarts once your installation is properly
+    # configured as it otherwise may get stuck in a restart loop:
+    # https://docs.photoprism.org/getting-started/faq/#why-is-photoprism-getting-stuck-in-a-restart-loop
+    # restart: unless-stopped
