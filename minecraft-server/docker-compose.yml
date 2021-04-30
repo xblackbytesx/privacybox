@@ -1,0 +1,40 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+volumes:
+  minecraft-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/minecraft-data
+
+services:
+  minecraft-server:
+    container_name: minecraft-server
+    image: itzg/minecraft-server:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    environment:
+      - EULA=TRUE
+    volumes:
+      - minecraft-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minecraft-server.entrypoints=http"
+      - "traefik.http.routers.minecraft-server.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.minecraft-server.middlewares=secured@file"
+      - "traefik.http.routers.minecraft-server-secure.entrypoints=https"
+      - "traefik.http.routers.minecraft-server-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.minecraft-server-secure.tls=true"
+      - "traefik.http.routers.minecraft-server-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.minecraft-server-secure.service=minecraft-server"
+      - "traefik.http.services.minecraft-server.loadbalancer.server.port=25565"
+    restart: unless-stopped
