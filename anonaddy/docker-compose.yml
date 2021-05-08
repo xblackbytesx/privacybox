@@ -1,0 +1,103 @@
+version: "3.5"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+volumes:
+  anonaddy-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/anonaddy/data
+  anonaddy-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/anonaddy/database/
+
+services:
+  anonaddy-db:
+    container_name: anonaddy-db
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=anonaddy
+      - MYSQL_USER=anonaddy
+      - MYSQL_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - anonaddy-database:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
+
+  anonaddy-redis:
+    container_name: anonaddy-redis
+    image: redis:alpine
+    security_opt:
+      - no-new-privileges:true
+    networks: 
+      - internal
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
+  anonaddy-app:
+    container_name: anonaddy-app
+    image: anonaddy/anonaddy:latest
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - "./anonaddy.env"
+    environment:
+      - DB_HOST=anonaddy-db
+      - DB_DATABASE=anonaddy
+      - DB_USERNAME=anonaddy
+      - DB_PASSWORD=${DB_USER_PASS}
+      - REDIS_HOST=anonaddy-redis
+    volumes:
+      - anonaddy-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.anonaddy-app.entrypoints=http"
+      - "traefik.http.routers.anonaddy-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.anonaddy-app.middlewares=secured@file"
+      - "traefik.http.routers.anonaddy-app-secure.entrypoints=https"
+      - "traefik.http.routers.anonaddy-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.anonaddy-app-secure.tls=true"
+      - "traefik.http.routers.anonaddy-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.anonaddy-app-secure.service=anonaddy-app"
+      - "traefik.http.services.anonaddy-app.loadbalancer.server.port=8000"
+    depends_on:
+      - anonaddy-db
+      - anonaddy-redis
+    networks: 
+      - internal
+      - proxy
+    ports:
+      - target: 25
+        published: 25
+        protocol: tcp
+    restart: unless-stopped

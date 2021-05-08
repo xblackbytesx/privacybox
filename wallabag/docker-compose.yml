@@ -48,12 +48,14 @@ services:
     image: redis:alpine
     security_opt:
       - no-new-privileges:true
+    networks: 
+      - internal
     volumes:
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
     labels:
       - "traefik.enable=false"
-    networks:
-      - internal
     restart: unless-stopped
 
   wallabag-app:

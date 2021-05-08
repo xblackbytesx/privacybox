@@ -52,6 +52,8 @@ services:
       - internal
     volumes:
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
