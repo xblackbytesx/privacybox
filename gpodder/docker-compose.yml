@@ -1,0 +1,54 @@
+version: '3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+volumes:
+  gpodder-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/gpodder/config
+  gpodder-downloads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/gpodder/downloads/
+
+services:
+  gpodder-app:
+    container_name: gpodder-app
+    image: xthursdayx/gpodder-docker:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - HEIGHT="720"
+      - WIDTH="1280"
+      - GUAC_USER=${APP_USERNAME}
+      - GUAC_PASS=${APP_USER_PASS}
+      - TZ=Europe/Amsterdam
+    volumes:
+      - gpodder-config:/config
+      - gpodder-downloads:/downloads:rw
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gpodder-app.entrypoints=http"
+      - "traefik.http.routers.gpodder-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.gpodder-app.middlewares=secured@file"
+      - "traefik.http.routers.gpodder-app-secure.entrypoints=https"
+      - "traefik.http.routers.gpodder-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.gpodder-app-secure.tls=true"
+      - "traefik.http.routers.gpodder-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.gpodder-app-secure.service=gpodder-app"
+      - "traefik.http.services.gpodder-app.loadbalancer.server.port=8080"
+    networks: 
+      - proxy
+    # # Used for SSH remoteForward
+    # ports:
+    #   - 4010:80
+    restart: unless-stopped
