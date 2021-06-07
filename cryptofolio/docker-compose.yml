@@ -5,6 +5,14 @@ networks:
     external: 
       name: proxy
 
+volumes:
+  cryptofolio-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/cryptofolio/data
+
 services:
   cryptofolio-app:
     container_name: cryptofolio-app
@@ -12,6 +20,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
+      - cryptofolio-data:/var/www/html/api/data
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
