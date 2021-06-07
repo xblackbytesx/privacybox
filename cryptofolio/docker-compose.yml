@@ -1,0 +1,29 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+services:
+  cryptofolio-app:
+    container_name: cryptofolio-app
+    image: xtrendence/cryptofolio:V.2.0.0
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cryptofolio.entrypoints=http"
+      - "traefik.http.routers.cryptofolio.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.cryptofolio.middlewares=secured@file"
+      - "traefik.http.routers.cryptofolio-secure.entrypoints=https"
+      - "traefik.http.routers.cryptofolio-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.cryptofolio-secure.tls=true"
+      - "traefik.http.routers.cryptofolio-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.cryptofolio-secure.service=cryptofolio"
+      - "traefik.http.services.cryptofolio.loadbalancer.server.port=80"
+    networks:
+      - proxy
+    restart: unless-stopped
