@@ -58,6 +58,33 @@ http:
   #     service: service-jellyfin
   #     tls:
   #       certResolver: le-dns
+  #   router-transmission:
+  #     entryPoints:
+  #       - https
+  #     rule: Host(`transmission.privacy.box`)
+  #     middlewares: 
+  #       - secured
+  #     service: service-transmission
+  #     tls:
+  #       certResolver: le-dns
+  #   router-nzbget:
+  #     entryPoints:
+  #       - https
+  #     rule: Host(`nzbget.privacy.box`)
+  #     middlewares: 
+  #       - secured
+  #     service: service-nzbget
+  #     tls:
+  #       certResolver: le-dns
+  #   router-jackett:
+  #     entryPoints:
+  #       - https
+  #     rule: Host(`jackett.privacy.box`)
+  #     middlewares: 
+  #       - secured
+  #     service: service-jackett
+  #     tls:
+  #       certResolver: le-dns
 
   # services:
   #   service-homeassistant:
@@ -68,3 +95,15 @@ http:
   #     loadBalancer:
   #       servers:
   #       - url: "http://10.0.200.5:8096"
+  #   service-transmission:
+  #     loadBalancer:
+  #       servers:
+  #       - url: "http://10.0.200.5:9091"
+  #   service-nzbget:
+  #     loadBalancer:
+  #       servers:
+  #       - url: "http://10.0.200.5:6789"
+  #   service-jackett:
+  #     loadBalancer:
+  #       servers:
+  #       - url: "http://10.0.200.5:9117"

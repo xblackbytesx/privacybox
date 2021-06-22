@@ -1,0 +1,33 @@
+version: "3.3"
+
+services:
+    expressvpn:
+        container_name: expressvpn
+        image: polkaned/expressvpn
+        security_opt:
+            - no-new-privileges:true
+        environment:
+          - ACTIVATION_CODE=${ACTIVATION_CODE}
+          # - SERVER=${LOCATION}
+          # - PREFERRED_PROTOCOL=${PROTOCOL}
+          # - LIGHTWAY_CIPHER=${LIGHTWAY_CIPHER}
+        cap_add:
+          - NET_ADMIN
+        devices: 
+          - /dev/net/tun
+        stdin_open: true
+        tty: true
+        command: /bin/bash
+        privileged: true
+        labels:
+            - "traefik.enable=false"
+        ports:
+            # Transmission
+            - 51413:51413
+            - 51413:51413/udp
+            - 9091:9091
+            # NzbGet
+            - 6789:6789
+            # Jackett
+            - 9117:9117
+        restart: unless-stopped
