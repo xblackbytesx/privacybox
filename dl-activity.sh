@@ -3,7 +3,7 @@
 # Example crontab user entry: 
 # * * * * * ~/privacybox-docker/dl-activity.sh >/dev/null 2>&1
 
-TIMESTAMP=$(date +"%Y%m%d-%H")
+TIMESTAMP=$(date +"%Y%m%d-%H:%M")
 
 BASEIP=$(docker run --rm -it alpine wget -qO - ifconfig.me)
 VPNIP=$(docker run --rm -it --network=container:expressvpn alpine wget -qO - ifconfig.me)
