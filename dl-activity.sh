@@ -11,9 +11,9 @@ VPNIP=$(docker run --rm -it --network=container:expressvpn alpine wget -qO - ifc
 WORKDIR=$(pwd)
 
 if [ "${VPNIP}" != "${BASEIP}" ]; then
-    echo "${CURRTIME} VPN Up" >> vpnlog.txt
+    echo "${CURRTIME} VPN Up" >> ${WORKDIR}/vpnlog.txt
 
-    echo "${CURRTIME} Restarting services" >> vpnlog.txt
+    echo "${CURRTIME} Restarting services" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/transmission
     docker-compose up -d
     cd ${WORKDIR}/nzbget
@@ -21,9 +21,9 @@ if [ "${VPNIP}" != "${BASEIP}" ]; then
     cd ${WORKDIR}/jackett
     docker-compose up -d
 else
-    echo "${CURRTIME} VPN Down" >> vpnlog.txt
+    echo "${CURRTIME} VPN Down" >> ${WORKDIR}/vpnlog.txt
     
-    echo "${CURRTIME} Engaging killswitch" >> vpnlog.txt
+    echo "${CURRTIME} Engaging killswitch" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/transmission
     docker-compose down -v
     cd ${WORKDIR}/nzbget
@@ -31,7 +31,7 @@ else
     cd ${WORKDIR}/jackett
     docker-compose down -v
 
-    echo "${CURRTIME} Issuing restart" >> vpnlog.txt
+    echo "${CURRTIME} Issuing restart" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/expressvpn
     docker-compose down -v
     docker-compose up -d
