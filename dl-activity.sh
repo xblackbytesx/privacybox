@@ -3,7 +3,7 @@
 # Example crontab user entry: 
 # * * * * * ~/privacybox-docker/dl-activity.sh >/dev/null 2>&1
 
-CURRTIME=$(date +%s)
+TIMESTAMP=$(date +"%Y%m%d-%H")
 
 BASEIP=$(docker run --rm -it alpine wget -qO - ifconfig.me)
 VPNIP=$(docker run --rm -it --network=container:expressvpn alpine wget -qO - ifconfig.me)
@@ -11,27 +11,31 @@ VPNIP=$(docker run --rm -it --network=container:expressvpn alpine wget -qO - ifc
 WORKDIR=$(pwd)
 
 if [ "${VPNIP}" != "${BASEIP}" ]; then
-    echo "${CURRTIME} VPN Up" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} VPN Up" >> ${WORKDIR}/vpnlog.txt
 
-    echo "${CURRTIME} Restarting services" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} Restarting services" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/transmission
     docker-compose up -d
     cd ${WORKDIR}/nzbget
     docker-compose up -d
     cd ${WORKDIR}/jackett
+    docker-compose up -d
+    cd ${WORKDIR}/prowlarr
     docker-compose up -d
 else
-    echo "${CURRTIME} VPN Down" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} VPN Down" >> ${WORKDIR}/vpnlog.txt
     
-    echo "${CURRTIME} Engaging killswitch" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} Engaging killswitch" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/transmission
     docker-compose down -v
     cd ${WORKDIR}/nzbget
     docker-compose down -v
     cd ${WORKDIR}/jackett
     docker-compose down -v
+    cd ${WORKDIR}/prowlarr
+    docker-compose down -v
 
-    echo "${CURRTIME} Issuing restart" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} Issuing restart" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/expressvpn
     docker-compose down -v
     docker-compose up -d
@@ -43,6 +47,8 @@ if [ "$1" == "--stop" ]; then
     cd ${WORKDIR}/nzbget
     docker-compose down -v
     cd ${WORKDIR}/jackett
+    docker-compose down -v
+    cd ${WORKDIR}/prowlarr
     docker-compose down -v
 
 elif [ "$1" == "--start" ]; then
@@ -56,6 +62,8 @@ elif [ "$1" == "--start" ]; then
     cd ${WORKDIR}/nzbget
     docker-compose up -d
     cd ${WORKDIR}/jackett
+    docker-compose up -d
+    cd ${WORKDIR}/prowlarr
     docker-compose up -d
 fi
 

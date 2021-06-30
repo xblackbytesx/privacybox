@@ -85,6 +85,15 @@ http:
   #     service: service-jackett
   #     tls:
   #       certResolver: le-dns
+  #   router-prowlarr:
+  #     entryPoints:
+  #       - https
+  #     rule: Host(`prowlarr.privacy.box`)
+  #     middlewares: 
+  #       - secured
+  #     service: service-prowlarr
+  #     tls:
+  #       certResolver: le-dns
 
   # services:
   #   service-homeassistant:
@@ -107,3 +116,7 @@ http:
   #     loadBalancer:
   #       servers:
   #       - url: "http://10.0.200.5:9117"
+  #   service-prowlarr:
+  #     loadBalancer:
+  #       servers:
+  #       - url: "http://10.0.200.5:9696"

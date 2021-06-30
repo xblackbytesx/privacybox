@@ -1,0 +1,25 @@
+version: '3'
+
+volumes:
+  prowlarr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/prowlarr/config
+
+services:
+  prowlarr:
+    container_name: prowlarr
+    image: linuxserver/prowlarr:develop
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - prowlarr-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: container:expressvpn
+    restart: unless-stopped

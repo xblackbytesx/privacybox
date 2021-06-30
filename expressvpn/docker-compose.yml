@@ -30,4 +30,6 @@ services:
             - 6789:6789
             # Jackett
             - 9117:9117
+            # Prowlarr
+            - 9696:9696
         restart: unless-stopped
