@@ -1,14 +1,14 @@
 #! /bin/bash
 
 # Example crontab user entry: 
-# * * * * * ~/privacybox-docker/dl-activity.sh >/dev/null 2>&1
+# * * * * * /bin/bash /home/john/privacybox-docker/dl-activity.sh >/dev/null 2>&1
 
 TIMESTAMP=$(date +"%Y%m%d-%H:%M")
 
 BASEIP=$(docker run --rm -it alpine wget -qO - ifconfig.me)
 VPNIP=$(docker run --rm -it --network=container:expressvpn alpine wget -qO - ifconfig.me)
 
-WORKDIR=$(pwd)
+WORKDIR="${HOME}/privacybox-docker"
 
 if [ "${VPNIP}" != "${BASEIP}" ]; then
     echo "${TIMESTAMP} VPN Up" >> ${WORKDIR}/vpnlog.txt
@@ -20,7 +20,7 @@ if [ "${VPNIP}" != "${BASEIP}" ]; then
     docker-compose up -d
     cd ${WORKDIR}/prowlarr
     docker-compose up -d
-else
+elif [ "${VPNIP}" == "${BASEIP}" ]; then
     echo "${TIMESTAMP} VPN Down" >> ${WORKDIR}/vpnlog.txt
     
     echo "${TIMESTAMP} Engaging killswitch" >> ${WORKDIR}/vpnlog.txt
@@ -35,6 +35,8 @@ else
     cd ${WORKDIR}/expressvpn
     docker-compose down -v
     docker-compose up -d
+else
+    echo "Unable to determine VPN status" >> ${WORKDIR}/vpnlog.txt
 fi
 
 if [ "$1" == "--stop" ]; then
