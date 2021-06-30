@@ -18,8 +18,6 @@ if [ "${VPNIP}" != "${BASEIP}" ]; then
     docker-compose up -d
     cd ${WORKDIR}/nzbget
     docker-compose up -d
-    cd ${WORKDIR}/jackett
-    docker-compose up -d
     cd ${WORKDIR}/prowlarr
     docker-compose up -d
 else
@@ -29,8 +27,6 @@ else
     cd ${WORKDIR}/transmission
     docker-compose down -v
     cd ${WORKDIR}/nzbget
-    docker-compose down -v
-    cd ${WORKDIR}/jackett
     docker-compose down -v
     cd ${WORKDIR}/prowlarr
     docker-compose down -v
@@ -46,8 +42,6 @@ if [ "$1" == "--stop" ]; then
     docker-compose down -v
     cd ${WORKDIR}/nzbget
     docker-compose down -v
-    cd ${WORKDIR}/jackett
-    docker-compose down -v
     cd ${WORKDIR}/prowlarr
     docker-compose down -v
 
@@ -60,8 +54,6 @@ elif [ "$1" == "--start" ]; then
     cd ${WORKDIR}/transmission
     docker-compose up -d
     cd ${WORKDIR}/nzbget
-    docker-compose up -d
-    cd ${WORKDIR}/jackett
     docker-compose up -d
     cd ${WORKDIR}/prowlarr
     docker-compose up -d
