@@ -155,31 +155,31 @@ services:
       - internal
     restart: unless-stopped
 
-    standardnotes-db:
-      container_name: standardnotes-db
-      image: mariadb:latest
-      security_opt:
-        - no-new-privileges:true
-      networks:
-        - internal
-      command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
-      environment:
-        MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
-        MYSQL_DATABASE: standardnotes
-        MYSQL_USER: standardnotes
-        MYSQL_PASSWORD: ${DB_USER_PASS}
-      volumes:
-        - standardnotes-data:/var/lib/mysql
-        - ./data/import:/docker-entrypoint-initdb.d
-        - /etc/localtime:/etc/localtime:ro
-      labels:
-        - "traefik.enable=false"
-      healthcheck:
-        test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-        timeout: 20s
-        interval: 15s
-        retries: 30
-      restart: unless-stopped
+  standardnotes-db:
+    container_name: standardnotes-db
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: standardnotes
+      MYSQL_USER: standardnotes
+      MYSQL_PASSWORD: ${DB_USER_PASS}
+    volumes:
+      - standardnotes-data:/var/lib/mysql
+      - ./data/import:/docker-entrypoint-initdb.d
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
 
   standardnotes-redis:
     container_name: standardnotes-redis
