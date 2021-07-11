@@ -23,10 +23,10 @@ services:
       - no-new-privileges:true
     depends_on:
       - standardnotes-db
-      - cache
+      - standardnotes-redis
     entrypoint: [
       "./wait-for.sh", "standardnotes-db", "3306",
-      "./wait-for.sh", "cache", "6379",
+      "./wait-for.sh", "standardnotes-redis", "6379",
       "./docker/entrypoint.sh", "start-web"
     ]
     env_file: .env
@@ -55,11 +55,11 @@ services:
       - no-new-privileges:true
     depends_on:
       - standardnotes-db
-      - cache
+      - standardnotes-redis
       - standardnotes-syncing-server-js
     entrypoint: [
       "./wait-for.sh", "standardnotes-db", "3306",
-      "./wait-for.sh", "cache", "6379",
+      "./wait-for.sh", "standardnotes-redis", "6379",
       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
        "./docker/entrypoint.sh", "start-worker"
     ]
@@ -135,11 +135,11 @@ services:
       - no-new-privileges:true
     depends_on:
       - standardnotes-db
-      - cache
+      - standardnotes-redis
       - standardnotes-syncing-server-js
     entrypoint: [
       "./wait-for.sh", "standardnotes-db", "3306",
-      "./wait-for.sh", "cache", "6379",
+      "./wait-for.sh", "standardnotes-redis", "6379",
       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
       "./docker/entrypoint.sh", "start-web"
     ]
@@ -169,11 +169,11 @@ services:
       - no-new-privileges:true
     depends_on:
       - standardnotes-db
-      - cache
+      - standardnotes-redis
       - standardnotes-auth
     entrypoint: [
       "./wait-for.sh", "standardnotes-db", "3306",
-      "./wait-for.sh", "cache", "6379",
+      "./wait-for.sh", "standardnotes-redis", "6379",
       "./wait-for.sh", "standardnotes-auth", "3000",
       "./docker/entrypoint.sh", "start-worker"
     ]
@@ -222,7 +222,7 @@ services:
       retries: 30
     restart: unless-stopped
 
-  cache:
+  standardnotes-redis:
     container_name: standardnotes-redis
     image: redis:alpine
     security_opt:
