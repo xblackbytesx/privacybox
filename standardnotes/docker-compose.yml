@@ -107,7 +107,7 @@ services:
       PORT: 3000
       DB_HOST: 'standardnotes-db'
       DB_REPLICA_HOST: 'standardnotes-db'
-      DB_PORT: '${DB_PORT}'
+      DB_PORT: '3306'
       DB_DATABASE: 'standardnotes'
       DB_USERNAME: 'standardnotes'
       DB_PASSWORD: '${DB_USER_PASS}'
@@ -141,7 +141,7 @@ services:
       PORT: 3000
       DB_HOST: 'standardnotes-db'
       DB_REPLICA_HOST: 'standardnotes-db'
-      DB_PORT: '${DB_PORT}'
+      DB_PORT: '3306'
       DB_DATABASE: 'standardnotes'
       DB_USERNAME: 'standardnotes'
       DB_PASSWORD: '${DB_USER_PASS}'
@@ -164,10 +164,10 @@ services:
       - internal
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
-      MYSQL_DATABASE: standardnotes
-      MYSQL_USER: standardnotes
-      MYSQL_PASSWORD: ${DB_USER_PASS}
+      MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASS}'
+      MYSQL_DATABASE: 'standardnotes'
+      MYSQL_USER: 'standardnotes'
+      MYSQL_PASSWORD: '${DB_USER_PASS}'
     volumes:
       - standardnotes-data:/var/lib/mysql
       - ./data/import:/docker-entrypoint-initdb.d
@@ -194,42 +194,3 @@ services:
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
-
-
-# version: '3'
-
-# networks:
-#   proxy:
-#     external:
-#       name: proxy
-
-# volumes:
-#   standardnotes-config:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ${STORAGE_ROOT}/docker/standardnotes/config
-
-# services:
-#   standardnotes:
-#     container_name: standardnotes
-#     image: standardnotes/web:latest
-#     security_opt:
-#       - no-new-privileges:true
-#     volumes:
-#       - /etc/localtime:/etc/localtime:ro
-#     labels:
-#       - "traefik.enable=true"
-#       - "traefik.http.routers.standardnotes.entrypoints=http"
-#       - "traefik.http.routers.standardnotes.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       - "traefik.http.routers.standardnotes.middlewares=secured@file"
-#       - "traefik.http.routers.standardnotes-secure.entrypoints=https"
-#       - "traefik.http.routers.standardnotes-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       - "traefik.http.routers.standardnotes-secure.tls=true"
-#       - "traefik.http.routers.standardnotes-secure.tls.certresolver=le-dns"
-#       - "traefik.http.routers.standardnotes-secure.service=standardnotes"
-#       - "traefik.http.services.standardnotes.loadbalancer.server.port=3001"
-#     networks:
-#       - proxy
-#     restart: unless-stopped
