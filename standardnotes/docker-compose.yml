@@ -23,15 +23,25 @@ services:
       - no-new-privileges:true
     depends_on:
       - standardnotes-db
-      - standardnotes-redis
+      - cache
     entrypoint: [
       "./wait-for.sh", "standardnotes-db", "3306",
-      "./wait-for.sh", "standardnotes-redis", "6379",
+      "./wait-for.sh", "cache", "6379",
       "./docker/entrypoint.sh", "start-web"
     ]
     env_file: .env
     environment:
       PORT: 3000
+      DB_HOST: 'standardnotes-db'
+      DB_REPLICA_HOST: 'standardnotes-db'
+      DB_PORT: '3306'
+      DB_DATABASE: 'standardnotes'
+      DB_USERNAME: 'standardnotes'
+      DB_PASSWORD: '${DB_USER_PASS}'
+      DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
+      DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
+      REDIS_URL: '${REDIS_URL}'
+      AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
     volumes:
       - /etc/localtime:/etc/localtime:ro
     networks:
@@ -45,17 +55,27 @@ services:
       - no-new-privileges:true
     depends_on:
       - standardnotes-db
-      - standardnotes-redis
+      - cache
       - standardnotes-syncing-server-js
     entrypoint: [
       "./wait-for.sh", "standardnotes-db", "3306",
-      "./wait-for.sh", "standardnotes-redis", "6379",
+      "./wait-for.sh", "cache", "6379",
       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
        "./docker/entrypoint.sh", "start-worker"
     ]
     env_file: .env
     environment:
       PORT: 3000
+      DB_HOST: 'standardnotes-db'
+      DB_REPLICA_HOST: 'standardnotes-db'
+      DB_PORT: '3306'
+      DB_DATABASE: 'standardnotes'
+      DB_USERNAME: 'standardnotes'
+      DB_PASSWORD: '${DB_USER_PASS}'
+      DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
+      DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
+      REDIS_URL: '${REDIS_URL}'
+      AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
     volumes:
       - /etc/localtime:/etc/localtime:ro
     networks:
@@ -76,6 +96,16 @@ services:
     environment:
       PORT: 3000
       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
+      DB_HOST: 'standardnotes-db'
+      DB_REPLICA_HOST: 'standardnotes-db'
+      DB_PORT: '3306'
+      DB_DATABASE: 'standardnotes'
+      DB_USERNAME: 'standardnotes'
+      DB_PASSWORD: '${DB_USER_PASS}'
+      DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
+      DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
+      REDIS_URL: '${REDIS_URL}'
+      AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
     volumes:
       - /etc/localtime:/etc/localtime:ro
     entrypoint: [
@@ -85,6 +115,17 @@ services:
     ]
     networks:
       - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.standardnotes.entrypoints=http"
+      - "traefik.http.routers.standardnotes.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.standardnotes.middlewares=secured@file"
+      - "traefik.http.routers.standardnotes-secure.entrypoints=https"
+      - "traefik.http.routers.standardnotes-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.standardnotes-secure.tls=true"
+      - "traefik.http.routers.standardnotes-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.standardnotes-secure.service=standardnotes"
+      - "traefik.http.services.standardnotes.loadbalancer.server.port=3000"
     restart: unless-stopped
 
   standardnotes-auth:
@@ -94,11 +135,11 @@ services:
       - no-new-privileges:true
     depends_on:
       - standardnotes-db
-      - standardnotes-redis
+      - cache
       - standardnotes-syncing-server-js
     entrypoint: [
       "./wait-for.sh", "standardnotes-db", "3306",
-      "./wait-for.sh", "standardnotes-redis", "6379",
+      "./wait-for.sh", "cache", "6379",
       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
       "./docker/entrypoint.sh", "start-web"
     ]
@@ -128,11 +169,11 @@ services:
       - no-new-privileges:true
     depends_on:
       - standardnotes-db
-      - standardnotes-redis
+      - cache
       - standardnotes-auth
     entrypoint: [
       "./wait-for.sh", "standardnotes-db", "3306",
-      "./wait-for.sh", "standardnotes-redis", "6379",
+      "./wait-for.sh", "cache", "6379",
       "./wait-for.sh", "standardnotes-auth", "3000",
       "./docker/entrypoint.sh", "start-worker"
     ]
@@ -181,7 +222,7 @@ services:
       retries: 30
     restart: unless-stopped
 
-  standardnotes-redis:
+  cache:
     container_name: standardnotes-redis
     image: redis:alpine
     security_opt:
