@@ -1,0 +1,105 @@
+version: '3.3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+# volumes:
+#   huginn-db:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/docker/huginn/database/
+#   huginn-data:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/docker/huginn/data
+
+services:
+  huginn-dbdata:
+    container_name: huginn-dbdata
+    image: mysql:5.7
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    command: /bin/true
+
+  huginn-db:
+    container_name: huginn-db
+    image: mysql:5.7
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - MYSQL_PORT_3306_TCP_ADDR=huginn-db
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - HUGINN_DATABASE_PASSWORD=${DB_ROOT_PASS}
+      - HUGINN_DATABASE_USERNAME=root
+      - HUGINN_DATABASE_NAME=huginn
+    volumes_from:
+      - huginn-dbdata
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    restart: always
+
+  huginn-app:
+    container_name: huginn-app
+    image: huginn/huginn-single-process
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - MYSQL_PORT_3306_TCP_ADDR=huginn-db
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - HUGINN_DATABASE_PASSWORD=${DB_ROOT_PASS}
+      - HUGINN_DATABASE_USERNAME=root
+      - HUGINN_DATABASE_NAME=huginn
+      - APP_SECRET_TOKEN=3bd139f9186b31a85336bb89cd1a1337078921134b2f48e022fd09c234d764d3e19b018b2ab789c6e0e04a1ac9e3365116368049660234c2038dc9990513d49c
+    depends_on:
+      - huginn-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.huginn.entrypoints=http"
+      - "traefik.http.routers.huginn.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.huginn.middlewares=secured@file"
+      - "traefik.http.routers.huginn-secure.entrypoints=https"
+      - "traefik.http.routers.huginn-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.huginn-secure.tls=true"
+      - "traefik.http.routers.huginn-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.huginn-secure.service=huginn"
+      - "traefik.http.services.huginn.loadbalancer.server.port=3000"
+    networks:
+      - internal
+      - proxy
+    restart: always
+
+  huginn-threaded:
+    container_name: huginn-threaded
+    image: huginn/huginn-single-process
+    security_opt:
+      - no-new-privileges:true
+    command: /scripts/init bin/threaded.rb
+    environment:
+      - MYSQL_PORT_3306_TCP_ADDR=huginn-db
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - HUGINN_DATABASE_PASSWORD=${DB_ROOT_PASS}
+      - HUGINN_DATABASE_USERNAME=root
+      - HUGINN_DATABASE_NAME=huginn
+      - APP_SECRET_TOKEN=3bd139f9186b31a85336bb89cd1a1337078921134b2f48e022fd09c234d764d3e19b018b2ab789c6e0e04a1ac9e3365116368049660234c2038dc9990513d49c
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    depends_on:
+      - huginn-db
+      - huginn-app
+    restart: always
