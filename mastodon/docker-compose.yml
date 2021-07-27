@@ -16,14 +16,11 @@ volumes:
       device: ${STORAGE_ROOT}/docker/mastodon/database
 
 services:
+
   mastodon-db:
-    container_name: mastodon-db
-    image: postgres:12-alpine
+    image: postgres:9.6-alpine
     security_opt:
       - no-new-privileges:true
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
     shm_size: 256mb
     networks:
       - internal
@@ -31,15 +28,13 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres"]
     volumes:
       - mastodon-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
     restart: unless-stopped
 
   mastodon-redis:
-    container_name: "mastodon-redis"
-    image: "redis:alpine"
+    image: redis:6-alpine
     security_opt:
       - no-new-privileges:true
     networks:
@@ -48,29 +43,36 @@ services:
       test: ["CMD", "redis-cli", "ping"]
     volumes:
       - ./redis:/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
     restart: unless-stopped
 
-  # mastodon-es:
-  #   restart: always
-  #   image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
-  #   environment:
-  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-  #     - "cluster.name=es-mastodon"
-  #     - "discovery.type=single-node"
-  #     - "bootstrap.memory_lock=true"
-  #   networks:
-  #     - internal
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
-  #   volumes:
-  #     - ./elasticsearch:/usr/share/elasticsearch/data
-  #   ulimits:
-  #     memlock:
-  #       soft: -1
-  #       hard: -1
+#  mastodon-es:
+#    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
+#    security_opt:
+#      - no-new-privileges:true
+#    environment:
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#      - "cluster.name=es-mastodon"
+#      - "discovery.type=single-node"
+#      - "bootstrap.memory_lock=true"
+#    networks:
+#      - internal
+#    healthcheck:
+#      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+#    volumes:
+#      - ./elasticsearch:/usr/share/elasticsearch/data
+#      - /etc/localtime:/etc/localtime:ro
+#    ulimits:
+#      memlock:
+#        soft: -1
+#        hard: -1
+#    labels:
+#      - "traefik.enable=false"
+#    restart: unless-stopped
 
   mastodon-app:
-    container_name: mastodon-app
     image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
@@ -78,29 +80,29 @@ services:
     networks:
       - proxy
       - internal
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
+    # healthcheck:
+    #   test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mastodon.entrypoints=http"
-      - "traefik.http.routers.mastodon.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.mastodon.middlewares=secured@file"
-      - "traefik.http.routers.mastodon-secure.entrypoints=https"
-      - "traefik.http.routers.mastodon-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.mastodon-secure.tls=true"
-      - "traefik.http.routers.mastodon-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.mastodon-secure.service=mastodon"
-      - "traefik.http.services.mastodon.loadbalancer.server.port=3000"
+      - "traefik.http.routers.mastodon-app.entrypoints=http"
+      - "traefik.http.routers.mastodon-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.mastodon-app.middlewares=secured@file"
+      - "traefik.http.routers.mastodon-app-secure.entrypoints=https"
+      - "traefik.http.routers.mastodon-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.mastodon-app-secure.tls=true"
+      - "traefik.http.routers.mastodon-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.mastodon-app-secure.service=mastodon-app"
+      - "traefik.http.services.mastodon-app.loadbalancer.server.port=3000"
     depends_on:
       - mastodon-db
       - mastodon-redis
       # - mastodon-es
     volumes:
       - ./public/system:/mastodon/public/system
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
   mastodon-streaming:
-    container_name: mastodon-streaming
     image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
@@ -108,21 +110,31 @@ services:
     networks:
       - proxy
       - internal
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"]
-    ports:
-      - "127.0.0.1:4000:4000"
+    # healthcheck:
+    #   test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mastodon-streaming.entrypoints=http"
+      - "traefik.http.routers.mastodon-streaming.rule=Host(`${SUBDOMAIN}-streaming.${DOMAIN}`)"
+      - "traefik.http.routers.mastodon-streaming.middlewares=secured@file"
+      - "traefik.http.routers.mastodon-streaming-secure.entrypoints=https"
+      - "traefik.http.routers.mastodon-streaming-secure.rule=Host(`${SUBDOMAIN}-streaming.${DOMAIN}`)"
+      - "traefik.http.routers.mastodon-streaming-secure.tls=true"
+      - "traefik.http.routers.mastodon-streaming-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.mastodon-streaming-secure.service=mastodon-streaming"
+      - "traefik.http.services.mastodon-streaming.loadbalancer.server.port=4000"
     depends_on:
       - mastodon-db
       - mastodon-redis
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
   mastodon-sidekiq:
-    container_name: mastodon-sidekiq
     image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
-    command: bundle exec sidekiq
+    command: bundle exec mastodon-sidekiq
     depends_on:
       - mastodon-db
       - mastodon-redis
@@ -131,21 +143,35 @@ services:
       - internal
     volumes:
       - ./public/system:/mastodon/public/system
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
     restart: unless-stopped
 
-  # # Uncomment to enable federation with tor instances along with adding the following ENV variables
-  # # http_proxy=http://privoxy:8118
-  # # ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
-  # mastodon-tor:
-  #   image: sirboops/tor
-  #   networks:
-  #     - proxy
-  #     - internal
+## Uncomment to enable federation with tor instances along with adding the following ENV variables
+## http_proxy=http://privoxy:8118
+## ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
+#  mastodon-tor:
+#    image: sirboops/tor
+#    security_opt:
+#      - no-new-privileges:true
+#    networks:
+#      - proxy
+#      - internal
+#    labels:
+#      - "traefik.enable=false"
+#    restart: unless-stopped
 
-  # mastodon-privoxy:
-  #   image: sirboops/privoxy
-  #   volumes:
-  #     - ./priv-config:/opt/config
-  #   networks:
-  #     - proxy
-  #     - internal
+#  mastodon-privoxy:
+#    image: sirboops/privoxy
+#    security_opt:
+#      - no-new-privileges:true
+#    volumes:
+#      - ./priv-config:/opt/config
+#      - /etc/localtime:/etc/localtime:ro
+#    networks:
+#      - proxy
+#      - internal
+#    labels:
+#      - "traefik.enable=false"
+#    restart: unless-stopped
