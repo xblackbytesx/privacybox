@@ -18,20 +18,25 @@ volumes:
 services:
 
   mastodon-db:
-    image: postgres:9.6-alpine
+    container_name: "mastodon-db"
+    image: "postgres:12-alpine"
     security_opt:
       - no-new-privileges:true
     shm_size: 256mb
-    networks:
-      - internal
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+    environment:
+      - POSTGRES_DB=mastodon
+      - POSTGRES_USER=mastodon
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
     volumes:
       - mastodon-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    restart: unless-stopped
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+    restart: unless-stopped  
 
   mastodon-redis:
     image: redis:6-alpine
@@ -82,6 +87,13 @@ services:
       - internal
     # healthcheck:
     #   test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
+    environment:
+      - DB_HOST=mastodon-db
+      - DB_PORT=5432
+      - DB_CONNECTION=pgsql
+      - DB_DATABASE=mastodon
+      - DB_USERNAME=mastodon
+      - DB_PASSWORD=${DB_USER_PASS}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mastodon-app.entrypoints=http"
@@ -123,6 +135,13 @@ services:
       - "traefik.http.routers.mastodon-streaming-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.mastodon-streaming-secure.service=mastodon-streaming"
       - "traefik.http.services.mastodon-streaming.loadbalancer.server.port=4000"
+    environment:
+      - DB_HOST=mastodon-db
+      - DB_PORT=5432
+      - DB_CONNECTION=pgsql
+      - DB_DATABASE=mastodon
+      - DB_USERNAME=mastodon
+      - DB_PASSWORD=${DB_USER_PASS}
     depends_on:
       - mastodon-db
       - mastodon-redis
@@ -146,6 +165,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
+    environment:
+      - DB_HOST=mastodon-db
+      - DB_PORT=5432
+      - DB_CONNECTION=pgsql
+      - DB_DATABASE=mastodon
+      - DB_USERNAME=mastodon
+      - DB_PASSWORD=${DB_USER_PASS}
     restart: unless-stopped
 
 ## Uncomment to enable federation with tor instances along with adding the following ENV variables
