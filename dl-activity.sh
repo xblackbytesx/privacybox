@@ -1,19 +1,23 @@
 #! /bin/bash
 
 # Example crontab user entry: 
-# * * * * * /bin/bash /home/john/privacybox-docker/dl-activity.sh >/dev/null 2>&1
+# * * * * * . $HOME/.profile $HOME/privacybox-docker/dl-activity.sh >/dev/null 2>&1
 
 TIMESTAMP=$(date +"%Y%m%d-%H:%M")
 
-BASEIP=$(/usr/bin/docker run --rm -it alpine wget -qO - ifconfig.me)
-VPNIP=$(/usr/bin/docker run --rm -it --network=container:expressvpn alpine wget -qO - ifconfig.me)
+BASEIP=$(/usr/bin/docker run --rm alpine /usr/bin/wget -qO - ifconfig.me)
+VPNIP=$(/usr/bin/docker run --rm --network=container:expressvpn alpine /usr/bin/wget -qO - ifconfig.me)
 
 WORKDIR="${HOME}/privacybox-docker"
+
+# # Additional debugging information
+# echo "BASEIP = ${BASEIP}" >> ${WORKDIR}/vpnlog.txt
+# echo "VPNIP = ${VPNIP}" >> ${WORKDIR}/vpnlog.txt
 
 if [ "${VPNIP}" != "${BASEIP}" ]; then
     echo "${TIMESTAMP} VPN Up" >> ${WORKDIR}/vpnlog.txt
 
-    echo "${TIMESTAMP} Restarting services" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} Keeping services running" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/transmission
     /usr/local/bin/docker-compose up -d
     cd ${WORKDIR}/nzbget
@@ -31,7 +35,7 @@ elif [ "${VPNIP}" == "${BASEIP}" ]; then
     cd ${WORKDIR}/prowlarr
     /usr/local/bin/docker-compose down -v
 
-    echo "${TIMESTAMP} Issuing restart" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} Issuing VPN restart" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/expressvpn
     /usr/local/bin/docker-compose down -v
     /usr/local/bin/docker-compose up -d
