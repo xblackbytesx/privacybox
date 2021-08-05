@@ -6,3 +6,4 @@ traefik/data/traefik.yml
 traefik/data/config.yml
 **/update-jellyfin.sh
 **/redis
+vpnlog.txt
