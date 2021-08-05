@@ -31,10 +31,4 @@ services:
     networks: 
       - internal
       - proxy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://${SUBDOMAIN}.${DOMAIN} || exit 1"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
     restart: unless-stopped
