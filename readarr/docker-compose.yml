@@ -28,7 +28,7 @@ volumes:
 services:
   readarr:
     container_name: readarr
-    image: linuxserver/readarr:latest
+    image: linuxserver/readarr:nightly
     security_opt:
       - no-new-privileges:true
     environment:
