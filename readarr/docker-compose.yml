@@ -1,0 +1,57 @@
+version: '3'
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
+volumes:
+  readarr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/readarr/config
+  readarr-books-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/books
+  readarr-downloads-dir:
+    driver: local
+    driver_opts:
+      type: ${DOWNLOADS_DRIVER_OPT_TYPE}
+      o: ${DOWNLOADS_DRIVER_OPT_O}
+      device: ${DOWNLOADS_PATH}
+
+services:
+  readarr:
+    container_name: readarr
+    image: linuxserver/readarr:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+      - UMASK_SET=022 #optional
+    volumes:
+      - readarr-config:/config
+      - readarr-books-dir:/books
+      - readarr-downloads-dir:/downloads  
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.readarr.entrypoints=http"
+      - "traefik.http.routers.readarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.readarr.middlewares=secured@file"
+      - "traefik.http.routers.readarr-secure.entrypoints=https"
+      - "traefik.http.routers.readarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.readarr-secure.tls=true"
+      - "traefik.http.routers.readarr-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.readarr-secure.service=readarr"
+      - "traefik.http.services.readarr.loadbalancer.server.port=8787"
+    networks:
+      - proxy
+    restart: unless-stopped
