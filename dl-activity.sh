@@ -5,10 +5,12 @@
 
 TIMESTAMP=$(date +"%Y%m%d-%H:%M")
 
-BASEIP=$(/usr/bin/docker run --rm alpine /usr/bin/wget -qO - ifconfig.me)
-VPNIP=$(/usr/bin/docker run --rm --network=container:expressvpn alpine /usr/bin/wget -qO - ifconfig.me)
+DOCKERPATH=$(which docker)
 
-WORKDIR="${HOME}/privacybox-docker"
+BASEIP=$("${DOCKERPATH}" run --rm alpine /usr/bin/wget -qO - ifconfig.me)
+VPNIP=$("${DOCKERPATH}" run --rm --network=container:expressvpn alpine /usr/bin/wget -qO - ifconfig.me)
+
+WORKDIR=$(pwd)
 
 # # Additional debugging information
 # echo "BASEIP = ${BASEIP}" >> ${WORKDIR}/vpnlog.txt
