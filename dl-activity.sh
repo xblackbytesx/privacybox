@@ -11,7 +11,7 @@ COMPOSEPATH=$(which docker-compose)
 BASEIP=$("${DOCKERPATH}" run --rm alpine /usr/bin/wget -qO - ifconfig.me)
 VPNIP=$("${DOCKERPATH}" run --rm --network=container:expressvpn alpine /usr/bin/wget -qO - ifconfig.me)
 
-WORKDIR=$(pwd)
+WORKDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
 # # Additional debugging information
 # echo "BASEIP = ${BASEIP}" >> ${WORKDIR}/vpnlog.txt
