@@ -56,6 +56,6 @@ services:
     # networks:
     #   - proxy
     labels:
-      -"traefik.enable=false"
+      - "traefik.enable=false"
     network_mode: container:expressvpn
     restart: unless-stopped
