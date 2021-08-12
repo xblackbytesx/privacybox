@@ -224,13 +224,46 @@ volumes:
       type: none
       o: bind
       device: ${STORAGE_ROOT}/${NEXTCLOUD_DIRNAME}
+  nextcloud-db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/nextcloud/database/
 
 services:
+  nextcloud-db:
+    container_name: nextcloud-db
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - nextcloud-db:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
+
   nextcloud-app:
     container_name: nextcloud-app
     image: linuxserver/nextcloud:latest
     security_opt:
       - no-new-privileges:true
+    depends_on:
+      - nextcloud-db
     environment:
       - PUID=1000
       - PGID=1000
