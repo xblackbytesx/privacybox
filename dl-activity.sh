@@ -31,8 +31,8 @@ if [ "${VPNIP}" != "${BASEIP}" ]; then
     ${COMPOSEPATH} up -d
     cd ${WORKDIR}/radarr
     ${COMPOSEPATH} up -d
-    # cd ${WORKDIR}/readarr
-    # ${COMPOSEPATH} up -d
+    cd ${WORKDIR}/readarr
+    ${COMPOSEPATH} up -d
 elif [ "${VPNIP}" == "${BASEIP}" ]; then
     echo "${TIMESTAMP} VPN Down" >> ${WORKDIR}/vpnlog.txt
     
@@ -47,8 +47,8 @@ elif [ "${VPNIP}" == "${BASEIP}" ]; then
     ${COMPOSEPATH} down -v
     cd ${WORKDIR}/radarr
     ${COMPOSEPATH} down -v
-    # cd ${WORKDIR}/readarr
-    # ${COMPOSEPATH} down -v
+    cd ${WORKDIR}/readarr
+    ${COMPOSEPATH} down -v
 
     echo "${TIMESTAMP} Issuing VPN restart" >> ${WORKDIR}/vpnlog.txt
     cd ${WORKDIR}/expressvpn
@@ -69,8 +69,8 @@ if [ "$1" == "--stop" ]; then
     ${COMPOSEPATH} down -v
     cd ${WORKDIR}/radarr
     ${COMPOSEPATH} down -v
-    # cd ${WORKDIR}/readarr
-    # ${COMPOSEPATH} down -v
+    cd ${WORKDIR}/readarr
+    ${COMPOSEPATH} down -v
 
 elif [ "$1" == "--start" ]; then
     cd ${WORKDIR}/expressvpn
@@ -88,7 +88,7 @@ elif [ "$1" == "--start" ]; then
     ${COMPOSEPATH} up -d
     cd ${WORKDIR}/radarr
     ${COMPOSEPATH} up -d
-    # cd ${WORKDIR}/readarr
-    # ${COMPOSEPATH} up -d
+    cd ${WORKDIR}/readarr
+    ${COMPOSEPATH} up -d
 fi
 
