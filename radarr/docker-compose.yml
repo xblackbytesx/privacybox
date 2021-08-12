@@ -17,7 +17,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/video/Movies
+      device: ${STORAGE_ROOT}/video/movies
   radarr-downloads-dir:
     driver: local
     driver_opts:
@@ -42,17 +42,20 @@ services:
       - radarr-downloads-dir:/downloads
       - ./scripts:/scripts
       - /etc/localtime:/etc/localtime:ro
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.radarr.entrypoints=http"
+    #   - "traefik.http.routers.radarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.radarr.middlewares=secured@file"
+    #   - "traefik.http.routers.radarr-secure.entrypoints=https"
+    #   - "traefik.http.routers.radarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.radarr-secure.tls=true"
+    #   - "traefik.http.routers.radarr-secure.tls.certresolver=le-dns"
+    #   - "traefik.http.routers.radarr-secure.service=radarr"
+    #   - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+    # networks:
+    #   - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.radarr.entrypoints=http"
-      - "traefik.http.routers.radarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.radarr.middlewares=secured@file"
-      - "traefik.http.routers.radarr-secure.entrypoints=https"
-      - "traefik.http.routers.radarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.radarr-secure.tls=true"
-      - "traefik.http.routers.radarr-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.radarr-secure.service=radarr"
-      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
-    networks:
-      - proxy
+      -"traefik.enable=false"
+    network_mode: container:expressvpn
     restart: unless-stopped

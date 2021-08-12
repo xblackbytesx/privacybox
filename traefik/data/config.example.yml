@@ -94,6 +94,33 @@ http:
   #     service: service-prowlarr
   #     tls:
   #       certResolver: le-dns
+    # router-sonarr:
+    #   entryPoints:
+    #     - https
+    #   rule: Host(`sonarr.privacy.box`)
+    #   middlewares: 
+    #     - secured
+    #   service: service-sonarr
+    #   tls:
+    #     certResolver: le-dns
+    # router-radarr:
+    #   entryPoints:
+    #     - https
+    #   rule: Host(`radarr.privacy.box`)
+    #   middlewares: 
+    #     - secured
+    #   service: service-radarr
+    #   tls:
+    #     certResolver: le-dns
+    # router-readarr:
+    #   entryPoints:
+    #     - https
+    #   rule: Host(`readarr.privacy.box`)
+    #   middlewares: 
+    #     - secured
+    #   service: service-readarr
+    #   tls:
+    #     certResolver: le-dns
 
   # services:
   #   service-homeassistant:
@@ -120,3 +147,15 @@ http:
   #     loadBalancer:
   #       servers:
   #       - url: "http://10.0.200.5:9696"
+    # service-sonarr:
+    #   loadBalancer:
+    #     servers:
+    #     - url: "http://10.0.200.5:8989"
+    # service-radarr:
+    #   loadBalancer:
+    #     servers:
+    #     - url: "http://10.0.200.5:7878"
+    # service-readarr:
+    #   loadBalancer:
+    #     servers:
+    #     - url: "http://10.0.200.5:8787"
