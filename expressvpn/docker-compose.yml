@@ -28,8 +28,14 @@ services:
             - 9091:9091
             # NzbGet
             - 6789:6789
-            # Jackett
-            - 9117:9117
+            # # Jackett
+            # - 9117:9117
             # Prowlarr
             - 9696:9696
+            # Sonarr
+            - 8989:8989
+            # Radarr
+            - 7878:7878
+            # Readarr
+            - 8787:8787
         restart: unless-stopped
