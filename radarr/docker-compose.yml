@@ -1,9 +1,9 @@
 version: '3'
 
-networks:
-  proxy:
-    external:
-      name: proxy
+# networks:
+#   proxy:
+#     external:
+#       name: proxy
 
 volumes:
   radarr-config:
