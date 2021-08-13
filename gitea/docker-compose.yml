@@ -60,8 +60,8 @@ services:
       - ROOT_URL=https://${SUBDOMAIN}.${DOMAIN}
       - DOMAIN=${SUBDOMAIN}.${DOMAIN}
       - PROTOCOL=https
-      - USER_UID=1000
-      - USER_GID=1000
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
       - DB_TYPE=mysql
       - DB_HOST=gitea-db:3306
       - DB_NAME=gitea

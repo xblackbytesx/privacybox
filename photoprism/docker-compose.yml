@@ -63,8 +63,8 @@ services:
       - seccomp:unconfined
       - apparmor:unconfined
     environment:
-      - UID=1000
-      - GID=1000
+      - UID=${PUID}
+      - GID=${PGID}
       - UMASK=0000
       - PHOTOPRISM_ADMIN_PASSWORD=${ADMIN_USER_PASS}
       - PHOTOPRISM_HTTP_PORT=2342

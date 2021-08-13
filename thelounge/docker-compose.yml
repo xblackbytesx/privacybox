@@ -20,8 +20,8 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=Europe/Amsterdam
     volumes:
       - thelounge-config:/config
