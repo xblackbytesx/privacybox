@@ -38,8 +38,8 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=Europe/Amsterdam
       # - CONTEXT_PATH=${SUBDOMAIN}.${DOMAIN} #optional
       # - JAVA_OPTS=<options> #optional
