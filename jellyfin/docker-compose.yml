@@ -37,6 +37,12 @@ volumes:
       type: ${MEDIA_DRIVER_OPT_TYPE}
       o: ${MEDIA_DRIVER_OPT_O}
       device: ${MUSIC_PATH}
+  jellyfin-books-dir:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${BOOKS_PATH}
 
 services:
   jellyfin:
@@ -55,6 +61,7 @@ services:
       - jellyfin-series-dir:/tvshows
       - jellyfin-movies-dir:/movies
       - jellyfin-music-dir:/music
+      - jellyfin-books-dir:/books
       - /etc/localtime:/etc/localtime:ro
     environment:
       - JELLYFIN_PublishedServerUrl=https://${SUBDOMAIN}.${DOMAIN}
