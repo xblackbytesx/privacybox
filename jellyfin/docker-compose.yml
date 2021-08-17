@@ -127,6 +127,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=Europe/Amsterdam
+      - JELLYFIN_PublishedServerUrl=https://${SUBDOMAIN}.${DOMAIN}
     volumes:
       - jellyfin-config:/config
       - jellyfin-series-dir:/data/tvshows
