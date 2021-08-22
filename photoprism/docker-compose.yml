@@ -90,8 +90,9 @@ services:
       - PHOTOPRISM_SITE_DESCRIPTION=
       - PHOTOPRISM_SITE_AUTHOR=
     volumes:
-      - "photoprism-stories:/photoprism/originals"
-      - "photoprism-data:/photoprism/storage"
+      - photoprism-stories:/photoprism/originals:${STORIES_DIR_PERMISSION}
+      - photoprism-data:/photoprism/storage
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.photoprism-app.entrypoints=http"
