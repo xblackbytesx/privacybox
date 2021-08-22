@@ -45,9 +45,9 @@ services:
       # - JAVA_OPTS=<options> #optional
     volumes:
       - airsonic-config:/config
-      - airsonic-music:/music
+      - airsonic-music:/music:${MUSIC_DIR_PERMISSION}
       - airsonic-playlists:/playlists
-      - airsonic-podcasts:/podcasts
+      - airsonic-podcasts:/podcasts:${PODCAST_DIR_PERMISSION}
       - /etc/localtime:/etc/localtime:ro
     # devices:
     #   - /dev/snd:/dev/snd #optional
