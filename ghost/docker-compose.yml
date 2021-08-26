@@ -13,17 +13,17 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/ghost/content
+      device: ${STORAGE_ROOT}/docker/ghost/${COMPOSE_PROJECT_NAME}/content
   ghost-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/ghost/database/
+      device: ${STORAGE_ROOT}/docker/ghost/${COMPOSE_PROJECT_NAME}/database/
 
 services:
   ghost-db:
-    container_name: ghost-db
+    container_name: ghost-${COMPOSE_PROJECT_NAME}-db
     image: mariadb:latest
     security_opt:
       - no-new-privileges:true
@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
 
   ghost-app:
-    container_name: ghost-app
+    container_name: ghost-${COMPOSE_PROJECT_NAME}-app
     image: ghost:4-alpine
     security_opt:
       - no-new-privileges:true
@@ -65,15 +65,15 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ghost-app.entrypoints=http"
-      - "traefik.http.routers.ghost-app.rule=Host(`${BLOG_URL}`)"
-      - "traefik.http.routers.ghost-app.middlewares=secured@file"
-      - "traefik.http.routers.ghost-app-secure.entrypoints=https"
-      - "traefik.http.routers.ghost-app-secure.rule=Host(`${BLOG_URL}`)"
-      - "traefik.http.routers.ghost-app-secure.tls=true"
-      - "traefik.http.routers.ghost-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.ghost-app-secure.service=ghost-app"
-      - "traefik.http.services.ghost-app.loadbalancer.server.port=2368"
+      - "traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.entrypoints=http"
+      - "traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.rule=Host(`${BLOG_URL}`)"
+      - "traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.middlewares=secured@file"
+      - "traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=https"
+      - "traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.rule=Host(`${BLOG_URL}`)"
+      - "traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls=true"
+      - "traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.service=ghost-app"
+      - "traefik.http.services.ghost-${COMPOSE_PROJECT_NAME}-app.loadbalancer.server.port=2368"
     depends_on:
       - ghost-db
     networks: 
