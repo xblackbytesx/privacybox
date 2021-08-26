@@ -1,4 +1,4 @@
-version: "3.3"
+version: '3.1'
 
 networks:
   proxy:
@@ -7,23 +7,39 @@ networks:
   internal:
     internal: true
 
-services:
+volumes:
+  ghost-content:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/ghost/content
+  ghost-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/ghost/database/
 
+services:
   ghost-db:
-    container_name: "ghost-db"
-    image: "mariadb"
-    volumes:
-      - ${STORAGE_ROOT}/docker/ghost/database:/var/lib/mysql
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=ghost
-      - MYSQL_USER=ghost
-      - MYSQL_PASSWORD=${DB_USER_PASS}
-    labels:
-      - "traefik.enable=false"
+    container_name: ghost-db
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=ghost
+      - MYSQL_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - ghost-database:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
       timeout: 20s
@@ -31,37 +47,36 @@ services:
       retries: 30
     restart: unless-stopped
 
-  ghost:
-    container_name: "ghost-app"
-    image: "ghost:alpine"
+  ghost-app:
+    container_name: ghost-app
+    image: ghost:4-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      database__client: mysql
+      database__connection__host: ghost-db
+      database__connection__user: root
+      database__connection__password: ${DB_ROOT_PASS}
+      database__connection__database: ${DB_NAME}
+      url: https://${DOMAIN}
+      #NODE_ENV: development
     volumes:
-      - ${STORAGE_ROOT}/docker/ghost/data:/var/lib/ghost/content
+      - ghost-content:/var/lib/ghost/content
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ghost.entrypoints=http"
-      - "traefik.http.routers.ghost.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.ghost.middlewares=secured@file"
-      - "traefik.http.routers.ghost-secure.entrypoints=https"
-      - "traefik.http.routers.ghost-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.ghost-secure.tls=true"
-      - "traefik.http.routers.ghost-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.ghost-secure.service=ghost"
-      - "traefik.http.services.ghost.loadbalancer.server.port=2368"
-    environment:
-      - url=https://${SUBDOMAIN}.${DOMAIN}
-      - database__client=mysql
-      - database__connection__host=ghost-db
-      - database__connection__user=ghost
-      - database__connection__password=${DB_USER_PASS}
-      - database__connection__database=ghost
-    networks:
-      - proxy
-      - internal
-    depends_on:
-      - ghost-db
+      - "traefik.http.routers.ghost-app.entrypoints=http"
+      - "traefik.http.routers.ghost-app.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.ghost-app.middlewares=secured@file"
+      - "traefik.http.routers.ghost-app-secure.entrypoints=https"
+      - "traefik.http.routers.ghost-app-secure.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.ghost-app-secure.tls=true"
+      - "traefik.http.routers.ghost-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.ghost-app-secure.service=ghost-app"
+      - "traefik.http.services.ghost-app.loadbalancer.server.port=2368"
+      depends_on:
+        - ghost-db
+      networks: 
+        - internal
+        - proxy
     restart: unless-stopped
-
-volumes:
-  ghostdb:
-  ghostdata:
