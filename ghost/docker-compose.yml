@@ -58,7 +58,7 @@ services:
       database__connection__user: root
       database__connection__password: ${DB_ROOT_PASS}
       database__connection__database: ${DB_NAME}
-      url: https://${DOMAIN}
+      url: https://${BLOG_URL}
       #NODE_ENV: development
     volumes:
       - ghost-content:/var/lib/ghost/content
@@ -66,10 +66,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ghost-app.entrypoints=http"
-      - "traefik.http.routers.ghost-app.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.ghost-app.rule=Host(`${BLOG_URL}`)"
       - "traefik.http.routers.ghost-app.middlewares=secured@file"
       - "traefik.http.routers.ghost-app-secure.entrypoints=https"
-      - "traefik.http.routers.ghost-app-secure.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.ghost-app-secure.rule=Host(`${BLOG_URL}`)"
       - "traefik.http.routers.ghost-app-secure.tls=true"
       - "traefik.http.routers.ghost-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.ghost-app-secure.service=ghost-app"
