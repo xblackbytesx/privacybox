@@ -81,10 +81,13 @@ Each of these services serve a purpose of either substituting a non-free and non
 | PiHole | Done |   |
 | Sonarr | Done |   |
 | Radarr | Done |   |
+| Readarr | Done |   |
+| Prowlarr | Done |   |
 | Transmission | Done |   |
 | Node-Red | Done |   |
 | Wireguard | Done |  Some special instructions for combining with PiHole  |
 | Netdata | WIP |   |
+| Glances | Done |   |
 | Mastodon | WIP |   |
 | FireflyIII | Done |   |
 
