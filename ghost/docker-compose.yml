@@ -74,9 +74,9 @@ services:
       - "traefik.http.routers.ghost-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.ghost-app-secure.service=ghost-app"
       - "traefik.http.services.ghost-app.loadbalancer.server.port=2368"
-      depends_on:
-        - ghost-db
-      networks: 
-        - internal
-        - proxy
+    depends_on:
+      - ghost-db
+    networks: 
+      - internal
+      - proxy
     restart: unless-stopped
