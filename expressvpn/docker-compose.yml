@@ -38,4 +38,6 @@ services:
             - 7878:7878
             # Readarr
             - 8787:8787
+            # Lidarr
+            - 8686:8686
         restart: unless-stopped
