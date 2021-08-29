@@ -52,6 +52,9 @@ Each of these services serve a purpose of either substituting a non-free and non
 | PiHole |  |
 | Sonarr |  |
 | Radarr |  |
+| Readarr |  |
+| Lidarr |  |
+| Prowlarr |  |
 | Transmission |  |
 | Node-Red |  |
 | Wireguard |  |
@@ -82,6 +85,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Sonarr | Done |   |
 | Radarr | Done |   |
 | Readarr | Done |   |
+| Lidarr | Done |   |
 | Prowlarr | Done |   |
 | Transmission | Done |   |
 | Node-Red | Done |   |
@@ -95,6 +99,17 @@ Each of these services serve a purpose of either substituting a non-free and non
 All of the above listed apps come equipped with the ability to request a valid LetsEncrypt Certificate on the fly. There are two ACME challenge types baked into this configuration: TLS and DNS challenge.
 
 The goal of this project is for the end-user to simply configure a few environment variables and be granted security out of the box. However at this point some minimal and manual user configuration is still required to take advantage of this feature. In the near future most of the requirements for the TLS challenge will be fully cofigurable through a centralized `.env` file.
+
+## Special notes for running on Synology
+First off the default inotify limit on Synology is way too low to run apps like Syncthing properly. I advise raising the inotify limit to get some better performance out of file sync operations.
+
+You can do this by setting a script to run on `boot` as user `root`:
+```
+sh -c '(sleep 120 && echo 204800 > /proc/sys/fs/inotify/max_user_watches)&'
+```
+
+Additionally you need to make sure the proper ports are not being occupied by Synology's own apps by again running a boot-time script as root. This script can be found over at `./traefik/freeSynologyPorts.sh`.
+
 
 ## TODO:
 - Centralized storage of configurations and databases.
