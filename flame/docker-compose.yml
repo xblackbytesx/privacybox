@@ -1,0 +1,38 @@
+version: '3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+volumes:
+  flame-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/flame/data
+
+services:
+  flame:
+    container_name: flame
+    image: pawelmalak/flame:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - flame-data:/app/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flame.entrypoints=http"
+      - "traefik.http.routers.flame.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.flame.middlewares=secured@file"
+      - "traefik.http.routers.flame-secure.entrypoints=https"
+      - "traefik.http.routers.flame-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.flame-secure.tls=true"
+      - "traefik.http.routers.flame-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.flame-secure.service=flame"
+      - "traefik.http.services.flame.loadbalancer.server.port=5005"
+    networks:
+      - proxy
+    restart: unless-stopped
