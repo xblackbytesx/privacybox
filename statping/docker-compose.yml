@@ -48,7 +48,7 @@ services:
 
   statping-app:
     container_name: statping-app
-    image: statping/statping:latest
+    image: adamboutcher/statping-ng:latest
     security_opt:
       - no-new-privileges:true
     depends_on:
