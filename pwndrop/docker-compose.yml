@@ -1,0 +1,43 @@
+version: '3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+volumes:
+  pwndrop-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/pwndrop/config
+
+services:
+  pwndrop-app:
+    container_name: pwndrop-app
+    image: linuxserver/pwndrop:develop
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Amsterdam
+      - SECRET_PATH=/pwndrop #optional
+    volumes:
+      - pwndrop-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pwndrop-app.entrypoints=http"
+      - "traefik.http.routers.pwndrop-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pwndrop-app.middlewares=secured@file"
+      - "traefik.http.routers.pwndrop-app-secure.entrypoints=https"
+      - "traefik.http.routers.pwndrop-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pwndrop-app-secure.tls=true"
+      - "traefik.http.routers.pwndrop-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.pwndrop-app-secure.service=pwndrop-app"
+      - "traefik.http.services.pwndrop-app.loadbalancer.server.port=8080"
+    networks: 
+      - proxy
+    restart: unless-stopped
