@@ -1,4 +1,91 @@
-version: '3.7'
+# version: '3.7'
+
+# networks:
+#   proxy:
+#     external: 
+#       name: proxy
+#   internal:
+#     internal: true
+
+# volumes:
+#   pydio-cells-database:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/docker/pydio-cells/database
+#   pydio-cells-data:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/data
+#   pydio-cells-cells:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/docker/pydio-cells/cells
+
+# services:
+#   pydio-cells-db:
+#     container_name: pydio-cells-db
+#     image: mariadb:latest
+#     security_opt:
+#       - no-new-privileges:true
+#     networks:
+#       - internal
+#     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci]
+#     environment:
+#       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+#       - MYSQL_DATABASE=cells
+#       - MYSQL_USER=pydio
+#       - MYSQL_PASSWORD=${DB_USER_PASS}
+#     volumes:
+#       - pydio-cells-database:/var/lib/mysql
+#       - /etc/localtime:/etc/localtime:ro
+#     labels:
+#       - "traefik.enable=false"
+#     healthcheck:
+#       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+#       timeout: 20s
+#       interval: 15s
+#       retries: 30
+#     restart: unless-stopped
+
+#   pydio-cells-app:
+#     container_name: pydio-cells-app
+#     image: pydio/cells:latest
+#     security_opt:
+#       - no-new-privileges:true
+#     environment:
+#       - CELLS_BIND=0.0.0.0:8080
+#       - CELLS_EXTERNAL=http://${SUBDOMAIN}.${DOMAIN}
+#       - CELLS_NO_TLS=1
+#       - CELLS_LOG_LEVEL=production
+#     volumes:
+#       - pydio-cells-data:/var/cells/data
+#       - pydio-cells-cells:/var/cells
+#       - /etc/localtime:/etc/localtime:ro
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.pydio-cells-app.entrypoints=http"
+#       - "traefik.http.routers.pydio-cells-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+#       - "traefik.http.routers.pydio-cells-app.middlewares=secured@file"
+#       - "traefik.http.routers.pydio-cells-app-secure.entrypoints=https"
+#       - "traefik.http.routers.pydio-cells-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+#       - "traefik.http.routers.pydio-cells-app-secure.tls=true"
+#       - "traefik.http.routers.pydio-cells-app-secure.tls.certresolver=le-dns"
+#       - "traefik.http.routers.pydio-cells-app-secure.service=pydio-cells-app"
+#       - "traefik.http.services.pydio-cells-app.loadbalancer.server.port=8080"
+#     depends_on:
+#       - pydio-cells-db
+#     networks: 
+#       - internal
+#       - proxy
+#     restart: unless-stopped
+
+version: '3'
 
 networks:
   proxy:
@@ -8,24 +95,18 @@ networks:
     internal: true
 
 volumes:
+  pydio-cells-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/pydio-cells/config
   pydio-cells-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/pydio-cells/database
-  pydio-cells-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/data
-  pydio-cells-cells:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${STORAGE_ROOT}/docker/pydio-cells/cells
+      device: ${STORAGE_ROOT}/docker/pydio-cells/database/
 
 services:
   pydio-cells-db:
@@ -35,11 +116,11 @@ services:
       - no-new-privileges:true
     networks:
       - internal
-    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci]
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=cells
-      - MYSQL_USER=pydio
+      - MYSQL_DATABASE=pydio-cells
+      - MYSQL_USER=pydio-cells
       - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
       - pydio-cells-database:/var/lib/mysql
@@ -55,17 +136,17 @@ services:
 
   pydio-cells-app:
     container_name: pydio-cells-app
-    image: pydio/cells:latest
+    image: linuxserver/pydio-cells:latest
     security_opt:
       - no-new-privileges:true
     environment:
-      - CELLS_BIND=0.0.0.0:8080
-      - CELLS_EXTERNAL=http://${SUBDOMAIN}.${DOMAIN}
-      - CELLS_NO_TLS=1
-      - CELLS_LOG_LEVEL=production
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Amsterdam
+      - EXTERNALURL=${SUBDOMAIN}.${DOMAIN}
+      # - SERVER_IP=0.0.0.0 #optional
     volumes:
-      - pydio-cells-data:/var/cells/data
-      - pydio-cells-cells:/var/cells
+      - pydio-cells-config:/config
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
