@@ -143,7 +143,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=Europe/Amsterdam
-      - EXTERNALURL=${SUBDOMAIN}.${DOMAIN}
+      - EXTERNALURL=https://${SUBDOMAIN}.${DOMAIN}
       # - SERVER_IP=0.0.0.0 #optional
     volumes:
       - pydio-cells-config:/config
