@@ -17,7 +17,7 @@ volumes:
 services:
   jackett:
     container_name: jackett
-    image: linuxserver/jackett:latest
+    image: ghcr.io/linuxserver/jackett:latest
     security_opt:
       - no-new-privileges:true
     environment:

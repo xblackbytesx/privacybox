@@ -28,7 +28,7 @@ volumes:
 services:
   lidarr:
     container_name: lidarr
-    image: linuxserver/lidarr:latest
+    image: ghcr.io/linuxserver/lidarr:latest
     security_opt:
       - no-new-privileges:true
     environment:

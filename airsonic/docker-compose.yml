@@ -34,7 +34,7 @@ volumes:
 services:
   airsonic-app:
     container_name: airsonic-app
-    image: linuxserver/airsonic
+    image: ghcr.io/linuxserver/airsonic
     security_opt:
       - no-new-privileges:true
     environment:

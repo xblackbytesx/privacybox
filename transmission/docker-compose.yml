@@ -23,7 +23,7 @@ volumes:
 services:
   transmission:
     container_name: transmission
-    image: linuxserver/transmission:latest
+    image: ghcr.io/linuxserver/transmission:latest
     security_opt:
       - no-new-privileges:true
     environment:

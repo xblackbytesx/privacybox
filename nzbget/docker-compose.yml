@@ -17,7 +17,7 @@ volumes:
 services:
   nzbget:
     container_name: nzbget
-    image: linuxserver/nzbget:latest
+    image: ghcr.io/linuxserver/nzbget:latest
     security_opt:
       - no-new-privileges:true
     environment:

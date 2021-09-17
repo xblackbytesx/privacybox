@@ -55,7 +55,7 @@ services:
 
   nextcloud-app:
     container_name: nextcloud-app
-    image: linuxserver/nextcloud:latest
+    image: ghcr.io/linuxserver/nextcloud:latest
     security_opt:
       - no-new-privileges:true
     depends_on:
