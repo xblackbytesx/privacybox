@@ -1,139 +1,13 @@
-# version: "3.3"
-
-# networks:
-#   proxy:
-#     external:
-#       name: proxy
-#   internal:
-#     internal: true
-
-# volumes:
-#   spotweb-database:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ${STORAGE_ROOT}/docker/spotweb/database
-#   spotweb-config:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ${STORAGE_ROOT}/docker/spotweb/config/
-
-# services:
-#   # spotweb-vpn:
-#   #   container_name: spotweb-vpn
-#   #   image: xblackbytesx/expressvpn:latest
-#   #   security_opt:
-#   #     - no-new-privileges:true
-#   #   environment:
-#   #     - ACTIVATION_CODE=${VPN_ACTIVATION_CODE}
-#   #     - SERVER=${VPN_SERVER}
-#   #   cap_add:
-#   #     - NET_ADMIN
-#   #   devices: 
-#   #     - /dev/net/tun
-#   #   stdin_open: true
-#   #   tty: true
-#   #   command: /bin/bash
-#   #   privileged: true
-#   #   networks:
-#   #     - proxy
-#   #     - internal
-#   #   labels:
-#   #     - "traefik.enable=true"
-#   #     - "traefik.http.routers.spotweb-vpn.entrypoints=http"
-#   #     - "traefik.http.routers.spotweb-vpn.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#   #     - "traefik.http.routers.spotweb-vpn.middlewares=secured@file"
-#   #     - "traefik.http.routers.spotweb-vpn-secure.entrypoints=https"
-#   #     - "traefik.http.routers.spotweb-vpn-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#   #     - "traefik.http.routers.spotweb-vpn-secure.tls=true"
-#   #     - "traefik.http.routers.spotweb-vpn-secure.tls.certresolver=le-dns"
-#   #     - "traefik.http.routers.spotweb-vpn-secure.service=spotweb-vpn"
-#   #     - "traefik.http.services.spotweb-vpn.loadbalancer.server.port=80"
-#   #   restart: unless-stopped
-
-#   spotweb-mariadb:
-#     container_name: spotweb-mariadb
-#     image: mariadb:latest
-#     security_opt:
-#       - no-new-privileges:true
-#     networks:
-#       - internal
-#     environment:
-#       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-#       - MYSQL_DATABASE=spotweb
-#       - MYSQL_USER=spotweb
-#       - MYSQL_PASSWORD=${DB_USER_PASS}
-#     volumes:
-#       - spotweb-database:/var/lib/mysql
-#       - /etc/localtime:/etc/localtime:ro
-#     labels:
-#       - "traefik.enable=false"
-#     healthcheck:
-#       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-#       timeout: 20s
-#       interval: 15s
-#       retries: 30
-#     restart: unless-stopped
-
-#   spotweb-app:
-#     container_name: "spotweb-app"
-#     image: "jgeusebroek/spotweb:latest"
-#     security_opt:
-#       - no-new-privileges:true
-#     # command: sed -i 's+= $$nwsetting+= "https://spotweb.privacy.box"+g' /var/www/spotweb/settings.php >/dev/null 2>&1
-#     # comand: sed -i '1s/^/ServerName spotweb.privacy.box\n/' /etc/apache2/apache2.conf
-#     volumes:
-#       - spotweb-config:/config
-#       - /etc/localtime:/etc/localtime:ro
-#     environment:
-#       - TZ=Europe/Amsterdam
-#       - SPOTWEB_DB_TYPE=pdo_mysql
-#       - SPOTWEB_DB_HOST=spotweb-mariadb
-#       - SPOTWEB_DB_NAME=spotweb
-#       - SPOTWEB_DB_USER=spotweb
-#       - SPOTWEB_DB_PASS=${DB_USER_PASS}
-#       - SPOTWEB_CRON_RETRIEVE=*/15 * * * *
-#       - SPOTWEB_CRON_CACHE_CHECK=10 */1 * * *
-#     # If NOT using the above VPN service uncomment the section below:
-#     labels:
-#       - "traefik.enable=true"
-#       - "traefik.http.routers.spotweb.entrypoints=http"
-#       - "traefik.http.routers.spotweb.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       - "traefik.http.routers.spotweb.middlewares=secured@file"
-#       - "traefik.http.routers.spotweb-secure.entrypoints=https"
-#       - "traefik.http.routers.spotweb-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       - "traefik.http.routers.spotweb-secure.tls=true"
-#       - "traefik.http.routers.spotweb-secure.tls.certresolver=le-dns"
-#       - "traefik.http.routers.spotweb-secure.service=spotweb"
-#       - "traefik.http.services.spotweb.loadbalancer.server.port=80"
-#     networks:
-#       - proxy
-#       - internal
-#     # network_mode: service:spotweb-vpn
-#     depends_on:
-#       # - spotweb-vpn
-#       - spotweb-mariadb
-#     restart: unless-stopped
-
 version: '3'
 
 networks:
-  proxy:
-    external: 
-      name: proxy
+  # proxy:
+  #   external: 
+  #     name: proxy
   internal:
     internal: true
 
 volumes:
-  # spotweb-config:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${STORAGE_ROOT}/docker/spotweb/config
   spotweb-database:
     driver: local
     driver_opts:
@@ -180,22 +54,24 @@ services:
       - DB_USER=spotweb
       - DB_PASS=${DB_USER_PASS}
     volumes:
-      # - spotweb-config:/config
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.spotweb-app.entrypoints=http"
-      - "traefik.http.routers.spotweb-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.spotweb-app.middlewares=secured@file"
-      - "traefik.http.routers.spotweb-app-secure.entrypoints=https"
-      - "traefik.http.routers.spotweb-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.spotweb-app-secure.tls=true"
-      - "traefik.http.routers.spotweb-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.spotweb-app-secure.service=spotweb-app"
-      - "traefik.http.services.spotweb-app.loadbalancer.server.port=80"
+      - "traefik.enable=false"
+      # - "traefik.enable=true"
+      # - "traefik.http.routers.spotweb-app.entrypoints=http"
+      # - "traefik.http.routers.spotweb-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      # - "traefik.http.routers.spotweb-app.middlewares=secured@file"
+      # - "traefik.http.routers.spotweb-app-secure.entrypoints=https"
+      # - "traefik.http.routers.spotweb-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      # - "traefik.http.routers.spotweb-app-secure.tls=true"
+      # - "traefik.http.routers.spotweb-app-secure.tls.certresolver=le-dns"
+      # - "traefik.http.routers.spotweb-app-secure.service=spotweb-app"
+      # - "traefik.http.services.spotweb-app.loadbalancer.server.port=8080"
     depends_on:
       - spotweb-db
     networks: 
       - internal
-      - proxy
+      # - proxy
+    ports:
+      - 2354:8080
     restart: unless-stopped
