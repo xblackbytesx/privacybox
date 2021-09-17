@@ -16,7 +16,7 @@ volumes:
 services:
   pwndrop-app:
     container_name: pwndrop-app
-    image: linuxserver/pwndrop:latest
+    image: ghcr.io/linuxserver/pwndrop:latest
     security_opt:
       - no-new-privileges:true
     environment:

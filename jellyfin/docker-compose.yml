@@ -120,7 +120,7 @@ volumes:
 services:
   jellyfin-app:
     container_name: jellyfin-app
-    image: linuxserver/jellyfin:latest
+    image: ghcr.io/linuxserver/jellyfin:latest
     security_opt:
       - no-new-privileges:true
     environment:

@@ -49,7 +49,7 @@ services:
 
   librespeed-app:
     container_name: librespeed-app
-    image: linuxserver/librespeed:latest
+    image: ghcr.io/linuxserver/librespeed:latest
     security_opt:
       - no-new-privileges:true
     environment:

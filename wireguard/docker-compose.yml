@@ -16,7 +16,7 @@ volumes:
 
 services:
   wireguard:
-    image: linuxserver/wireguard:latest
+    image: ghcr.io/linuxserver/wireguard:latest
     container_name: wireguard
     security_opt:
       - no-new-privileges:true

@@ -22,7 +22,7 @@ volumes:
 services:
   syncthing-app:
     container_name: syncthing-app
-    image: linuxserver/syncthing:latest
+    image: ghcr.io/linuxserver/syncthing:latest
     security_opt:
       - no-new-privileges:true
     environment:

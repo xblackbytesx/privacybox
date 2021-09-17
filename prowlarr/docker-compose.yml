@@ -11,7 +11,7 @@ volumes:
 services:
   prowlarr:
     container_name: prowlarr
-    image: linuxserver/prowlarr:develop
+    image: ghcr.io/linuxserver/prowlarr:develop
     security_opt:
       - no-new-privileges:true
     environment:

@@ -16,7 +16,7 @@ volumes:
 services:
   dillinger:
     container_name: dillinger
-    image: linuxserver/dillinger:latest
+    image: ghcr.io/linuxserver/dillinger:latest
     security_opt:
       - no-new-privileges:true
     environment:

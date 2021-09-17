@@ -16,7 +16,7 @@ volumes:
 services:
   thelounge:
     container_name: thelounge
-    image: linuxserver/thelounge:latest
+    image: ghcr.io/linuxserver/thelounge:latest
     security_opt:
       - no-new-privileges:true
     environment:

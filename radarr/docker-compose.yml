@@ -28,7 +28,7 @@ volumes:
 services:
   radarr:
     container_name: radarr
-    image: linuxserver/radarr:latest
+    image: ghcr.io/linuxserver/radarr:latest
     security_opt:
       - no-new-privileges:true
     environment:

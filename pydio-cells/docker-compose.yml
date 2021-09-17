@@ -136,7 +136,7 @@ services:
 
   pydio-cells-app:
     container_name: pydio-cells-app
-    image: linuxserver/pydio-cells:latest
+    image: ghcr.io/linuxserver/pydio-cells:latest
     security_opt:
       - no-new-privileges:true
     environment:
