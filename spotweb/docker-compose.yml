@@ -1,9 +1,9 @@
 version: '3'
 
 networks:
-  # proxy:
-  #   external: 
-  #     name: proxy
+  proxy:
+    external: 
+      name: proxy
   internal:
     internal: true
 
@@ -71,7 +71,7 @@ services:
       - spotweb-db
     networks: 
       - internal
-      # - proxy
+      - proxy
     ports:
       - 2354:80
     restart: unless-stopped
