@@ -135,7 +135,7 @@ http:
   #       - https
   #     rule: Host(`spotweb.privacy.box`)
   #     middlewares: 
-  #       - secureds
+  #       - secured
   #     service: service-spotweb
   #     tls:
   #       certResolver: le-dns
