@@ -26,6 +26,8 @@ if [ "$1" == "--vpncheck" ]; then
         ${COMPOSEPATH} up -d
         cd ${WORKDIR}/nzbget
         ${COMPOSEPATH} up -d
+        cd ${WORKDIR}/spotweb
+        ${COMPOSEPATH} up -d
         cd ${WORKDIR}/prowlarr
         ${COMPOSEPATH} up -d
         cd ${WORKDIR}/sonarr
@@ -43,6 +45,8 @@ if [ "$1" == "--vpncheck" ]; then
         cd ${WORKDIR}/transmission
         ${COMPOSEPATH} down -v
         cd ${WORKDIR}/nzbget
+        ${COMPOSEPATH} down -v
+        cd ${WORKDIR}/spotweb
         ${COMPOSEPATH} down -v
         cd ${WORKDIR}/prowlarr
         ${COMPOSEPATH} down -v
@@ -68,6 +72,8 @@ elif [ "$1" == "--stop" ]; then
     ${COMPOSEPATH} down -v
     cd ${WORKDIR}/nzbget
     ${COMPOSEPATH} down -v
+    cd ${WORKDIR}/spotweb
+    ${COMPOSEPATH} down -v
     cd ${WORKDIR}/prowlarr
     ${COMPOSEPATH} down -v
     cd ${WORKDIR}/sonarr
@@ -90,6 +96,8 @@ elif [ "$1" == "--start" ]; then
     cd ${WORKDIR}/transmission
     ${COMPOSEPATH} up -d
     cd ${WORKDIR}/nzbget
+    ${COMPOSEPATH} up -d
+    cd ${WORKDIR}/spotweb
     ${COMPOSEPATH} up -d
     cd ${WORKDIR}/prowlarr
     ${COMPOSEPATH} up -d
