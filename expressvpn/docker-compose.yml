@@ -40,4 +40,7 @@ services:
             - 8787:8787
             # Lidarr
             - 8686:8686
+            # Spotweb
+            - 2354:80
+            - 2355:3306
         restart: unless-stopped
