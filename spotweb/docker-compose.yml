@@ -1,11 +1,11 @@
 version: '3'
 
-networks:
-  proxy:
-    external: 
-      name: proxy
-  internal:
-    internal: true
+# networks:
+#   proxy:
+#     external: 
+#       name: proxy
+#   internal:
+#     internal: true
 
 volumes:
   spotweb-database:
@@ -21,8 +21,7 @@ services:
     image: mariadb:latest
     security_opt:
       - no-new-privileges:true
-    networks:
-      - internal
+    network_mode: container:expressvpn
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
@@ -48,8 +47,8 @@ services:
       - no-new-privileges:true
     environment:
       - DB_ENGINE=pdo_mysql
-      - DB_HOST=spotweb-db
-      - DB_PORT=3306
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
       - DB_NAME=spotweb
       - DB_USER=spotweb
       - DB_PASS=${DB_USER_PASS}
@@ -69,9 +68,7 @@ services:
       # - "traefik.http.services.spotweb-app.loadbalancer.server.port=80"
     depends_on:
       - spotweb-db
-    networks: 
-      - internal
-      - proxy
-    ports:
-      - 2354:80
+    network_mode: container:expressvpn
+    # ports:
+    #   - 2354:80
     restart: unless-stopped

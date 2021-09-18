@@ -130,6 +130,15 @@ http:
   #     service: service-lidarr
   #     tls:
   #       certResolver: le-dns
+  #   router-spotweb:
+  #     entryPoints:
+  #       - https
+  #     rule: Host(`spotweb.privacy.box`)
+  #     middlewares: 
+  #       - secureds
+  #     service: service-spotweb
+  #     tls:
+  #       certResolver: le-dns
 
   # services:
   #   service-homeassistant:
@@ -172,3 +181,7 @@ http:
   #     loadBalancer:
   #       servers:
   #       - url: "http://10.0.200.5:8686"
+  #   service-spotweb:
+  #     loadBalancer:
+  #       servers:
+  #       - url: "http://10.0.200.5:2354"
