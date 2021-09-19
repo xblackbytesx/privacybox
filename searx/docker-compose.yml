@@ -1,0 +1,42 @@
+version: '3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+volumes:
+  searx-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/searx/config
+
+services:
+  searx-app:
+    container_name: searx-app
+    image: searx/searx
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - BASE_URL=https://${SUBDOMAIN}.${DOMAIN}
+    volumes:
+      - searx-config:/etc/searx
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.searx-app.entrypoints=http"
+      - "traefik.http.routers.searx-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.searx-app.middlewares=secured@file"
+      - "traefik.http.routers.searx-app-secure.entrypoints=https"
+      - "traefik.http.routers.searx-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.searx-app-secure.tls=true"
+      - "traefik.http.routers.searx-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.searx-app-secure.service=searx-app"
+      - "traefik.http.services.searx-app.loadbalancer.server.port=8080"
+    networks:
+      - proxy
+    restart: unless-stopped
+
+docker run --rm -d -v ${PWD}/searx:/etc/searx -p $PORT:8080 -e BASE_URL=http://localhost:$PORT/ searx/searx
