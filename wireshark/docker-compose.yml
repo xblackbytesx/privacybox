@@ -1,0 +1,36 @@
+version: '3'
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+
+volumes:
+  wireshark-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/wireshark/config
+
+services:
+  wireshark-app:
+    container_name: wireshark-app
+    image: ghcr.io/linuxserver/wireshark:latest
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - NET_ADMIN
+    network_mode: host
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Amsterdam
+    volumes:
+      - wireshark-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    depends_on:
+      - wireshark-db
+    restart: unless-stopped
