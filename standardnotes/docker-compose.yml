@@ -413,6 +413,7 @@ services:
     restart: unless-stopped
 
   standardnotes-db:
+    container_name: standardnotes-db
     image: mysql:5.6
     security_opt:
       - no-new-privileges:true
