@@ -446,13 +446,13 @@ services:
     restart: unless-stopped
 
   standardnotes-web:
-    container_name: standardnotes-redis
+    container_name: standardnotes-web
     image: standardnotes/web:latest
     security_opt:
       - no-new-privileges:true
     env_file: docker/web.env
     ports:
-      - ${PORT}:3001
+      - 3001:3001
     networks:
       - internal
       - proxy
