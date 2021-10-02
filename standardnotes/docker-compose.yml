@@ -1,3 +1,244 @@
+# version: '3.8'
+
+# networks:
+#   proxy:
+#     external: 
+#       name: proxy
+#   internal:
+#     internal: true
+
+# volumes:
+#   standardnotes-data:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ${STORAGE_ROOT}/docker/standardnotes/data
+
+# services:
+#   standardnotes-syncing-server-js:
+#     container_name: standardnotes-syncing-server-js
+#     image: standardnotes/syncing-server-js:1.35.2
+#     security_opt:
+#       - no-new-privileges:true
+#     depends_on:
+#       - standardnotes-db
+#       - standardnotes-redis
+#     entrypoint: [
+#       "./wait-for.sh", "standardnotes-db", "3306",
+#       "./wait-for.sh", "standardnotes-redis", "6379",
+#       "./docker/entrypoint.sh", "start-web"
+#     ]
+#     env_file: .env
+#     environment:
+#       PORT: 3000
+#       DB_HOST: 'standardnotes-db'
+#       DB_REPLICA_HOST: 'standardnotes-db'
+#       DB_PORT: '3306'
+#       DB_DATABASE: 'standardnotes'
+#       DB_USERNAME: 'standardnotes'
+#       DB_PASSWORD: '${DB_USER_PASS}'
+#       DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
+#       DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
+#       REDIS_URL: '${REDIS_URL}'
+#       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
+#     volumes:
+#       - /etc/localtime:/etc/localtime:ro
+#     networks:
+#       - internal
+#     restart: unless-stopped
+      
+#   standardnotes-syncing-server-js-worker:
+#     container_name: standardnotes-syncing-server-js-worker
+#     image: standardnotes/syncing-server-js:1.35.2
+#     security_opt:
+#       - no-new-privileges:true
+#     depends_on:
+#       - standardnotes-db
+#       - standardnotes-redis
+#       - standardnotes-syncing-server-js
+#     entrypoint: [
+#       "./wait-for.sh", "standardnotes-db", "3306",
+#       "./wait-for.sh", "standardnotes-redis", "6379",
+#       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
+#        "./docker/entrypoint.sh", "start-worker"
+#     ]
+#     env_file: .env
+#     environment:
+#       PORT: 3000
+#       DB_HOST: 'standardnotes-db'
+#       DB_REPLICA_HOST: 'standardnotes-db'
+#       DB_PORT: '3306'
+#       DB_DATABASE: 'standardnotes'
+#       DB_USERNAME: 'standardnotes'
+#       DB_PASSWORD: '${DB_USER_PASS}'
+#       DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
+#       DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
+#       REDIS_URL: '${REDIS_URL}'
+#       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
+#     volumes:
+#       - /etc/localtime:/etc/localtime:ro
+#     networks:
+#       - internal
+#     restart: unless-stopped
+
+#   standardnotes-api-gateway:
+#     container_name: standardnotes-api-gateway
+#     image: standardnotes/api-gateway:1.20.0
+#     security_opt:
+#       - no-new-privileges:true
+#     depends_on:
+#       - standardnotes-auth
+#       - standardnotes-syncing-server-js
+#     env_file: docker/api-gateway.env
+#     ports:
+#       - ${EXPOSED_PORT}:3000
+#     environment:
+#       PORT: 3000
+#       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
+#       DB_HOST: 'standardnotes-db'
+#       DB_REPLICA_HOST: 'standardnotes-db'
+#       DB_PORT: '3306'
+#       DB_DATABASE: 'standardnotes'
+#       DB_USERNAME: 'standardnotes'
+#       DB_PASSWORD: '${DB_USER_PASS}'
+#       DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
+#       DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
+#       REDIS_URL: '${REDIS_URL}'
+#       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
+#     volumes:
+#       - /etc/localtime:/etc/localtime:ro
+#     entrypoint: [
+#       "./wait-for.sh", "standardnotes-auth", "3000",
+#       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
+#       "./docker/entrypoint.sh", "start-web"
+#     ]
+#     networks:
+#       - internal
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.standardnotes.entrypoints=http"
+#       - "traefik.http.routers.standardnotes.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+#       - "traefik.http.routers.standardnotes.middlewares=secured@file"
+#       - "traefik.http.routers.standardnotes-secure.entrypoints=https"
+#       - "traefik.http.routers.standardnotes-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+#       - "traefik.http.routers.standardnotes-secure.tls=true"
+#       - "traefik.http.routers.standardnotes-secure.tls.certresolver=le-dns"
+#       - "traefik.http.routers.standardnotes-secure.service=standardnotes"
+#       - "traefik.http.services.standardnotes.loadbalancer.server.port=3000"
+#     restart: unless-stopped
+
+#   standardnotes-auth:
+#     container_name: standardnotes-auth
+#     image: standardnotes/auth:1.11.0
+#     security_opt:
+#       - no-new-privileges:true
+#     depends_on:
+#       - standardnotes-db
+#       - standardnotes-redis
+#       - standardnotes-syncing-server-js
+#     entrypoint: [
+#       "./wait-for.sh", "standardnotes-db", "3306",
+#       "./wait-for.sh", "standardnotes-redis", "6379",
+#       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
+#       "./docker/entrypoint.sh", "start-web"
+#     ]
+#     env_file: docker/auth.env
+#     environment:
+#       PORT: 3000
+#       DB_HOST: 'standardnotes-db'
+#       DB_REPLICA_HOST: 'standardnotes-db'
+#       DB_PORT: '3306'
+#       DB_DATABASE: 'standardnotes'
+#       DB_USERNAME: 'standardnotes'
+#       DB_PASSWORD: '${DB_USER_PASS}'
+#       DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
+#       DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
+#       REDIS_URL: '${REDIS_URL}'
+#       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
+#     volumes:
+#       - /etc/localtime:/etc/localtime:ro
+#     networks:
+#       - internal
+#     restart: unless-stopped
+
+#   standardnotes-auth-worker:
+#     container_name: standardnotes-auth-worker
+#     image: standardnotes/auth:1.11.0
+#     security_opt:
+#       - no-new-privileges:true
+#     depends_on:
+#       - standardnotes-db
+#       - standardnotes-redis
+#       - standardnotes-auth
+#     entrypoint: [
+#       "./wait-for.sh", "standardnotes-db", "3306",
+#       "./wait-for.sh", "standardnotes-redis", "6379",
+#       "./wait-for.sh", "standardnotes-auth", "3000",
+#       "./docker/entrypoint.sh", "start-worker"
+#     ]
+#     env_file: docker/auth.env
+#     environment:
+#       PORT: 3000
+#       DB_HOST: 'standardnotes-db'
+#       DB_REPLICA_HOST: 'standardnotes-db'
+#       DB_PORT: '3306'
+#       DB_DATABASE: 'standardnotes'
+#       DB_USERNAME: 'standardnotes'
+#       DB_PASSWORD: '${DB_USER_PASS}'
+#       DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
+#       DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
+#       REDIS_URL: '${REDIS_URL}'
+#       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
+#     volumes:
+#       - /etc/localtime:/etc/localtime:ro
+#     networks:
+#       - internal
+#     restart: unless-stopped
+
+#   standardnotes-db:
+#     container_name: standardnotes-db
+#     image: mariadb:latest
+#     security_opt:
+#       - no-new-privileges:true
+#     networks:
+#       - internal
+#     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
+#     environment:
+#       MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASS}'
+#       MYSQL_DATABASE: 'standardnotes'
+#       MYSQL_USER: 'standardnotes'
+#       MYSQL_PASSWORD: '${DB_USER_PASS}'
+#     volumes:
+#       - standardnotes-data:/var/lib/mysql
+#       - ./data/import:/docker-entrypoint-initdb.d
+#       - /etc/localtime:/etc/localtime:ro
+#     labels:
+#       - "traefik.enable=false"
+#     healthcheck:
+#       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+#       timeout: 20s
+#       interval: 15s
+#       retries: 30
+#     restart: unless-stopped
+
+#   standardnotes-redis:
+#     container_name: standardnotes-redis
+#     image: redis:alpine
+#     security_opt:
+#       - no-new-privileges:true
+#     networks: 
+#       - internal
+#     volumes:
+#       - ./data/redis/:/data
+#       - /etc/localtime:/etc/localtime:ro
+#     labels:
+#       - "traefik.enable=false"
+#     restart: unless-stopped
+
+
+
+
 version: '3.8'
 
 networks:
@@ -8,17 +249,23 @@ networks:
     internal: true
 
 volumes:
-  standardnotes-data:
+  standardnotes-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/standardnotes/data
+      device: ${STORAGE_ROOT}/docker/standardnotes/database
+    standardnotes-import:
+      driver: local
+      driver_opts:
+        type: none
+        o: bind
+        device: ${STORAGE_ROOT}/docker/standardnotes/import
 
 services:
   standardnotes-syncing-server-js:
     container_name: standardnotes-syncing-server-js
-    image: standardnotes/syncing-server-js:1.35.2
+    image: standardnotes/syncing-server-js:latest
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -32,25 +279,15 @@ services:
     env_file: .env
     environment:
       PORT: 3000
-      DB_HOST: 'standardnotes-db'
-      DB_REPLICA_HOST: 'standardnotes-db'
-      DB_PORT: '3306'
-      DB_DATABASE: 'standardnotes'
-      DB_USERNAME: 'standardnotes'
-      DB_PASSWORD: '${DB_USER_PASS}'
-      DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
-      DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
-      REDIS_URL: '${REDIS_URL}'
-      AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
-      
+
   standardnotes-syncing-server-js-worker:
-    container_name: standardnotes-syncing-server-js-worker
-    image: standardnotes/syncing-server-js:1.35.2
+    container_name: standardnotes-synching-server-js-worker
+    image: standardnotes/syncing-server-js:latest
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -61,53 +298,29 @@ services:
       "./wait-for.sh", "standardnotes-db", "3306",
       "./wait-for.sh", "standardnotes-redis", "6379",
       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
-       "./docker/entrypoint.sh", "start-worker"
+        "./docker/entrypoint.sh", "start-worker"
     ]
     env_file: .env
     environment:
       PORT: 3000
-      DB_HOST: 'standardnotes-db'
-      DB_REPLICA_HOST: 'standardnotes-db'
-      DB_PORT: '3306'
-      DB_DATABASE: 'standardnotes'
-      DB_USERNAME: 'standardnotes'
-      DB_PASSWORD: '${DB_USER_PASS}'
-      DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
-      DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
-      REDIS_URL: '${REDIS_URL}'
-      AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
   standardnotes-api-gateway:
     container_name: standardnotes-api-gateway
-    image: standardnotes/api-gateway:1.20.0
+    image: standardnotes/api-gateway:latest
     security_opt:
       - no-new-privileges:true
     depends_on:
       - standardnotes-auth
       - standardnotes-syncing-server-js
     env_file: docker/api-gateway.env
-    ports:
-      - ${EXPOSED_PORT}:3000
     environment:
       PORT: 3000
       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
-      DB_HOST: 'standardnotes-db'
-      DB_REPLICA_HOST: 'standardnotes-db'
-      DB_PORT: '3306'
-      DB_DATABASE: 'standardnotes'
-      DB_USERNAME: 'standardnotes'
-      DB_PASSWORD: '${DB_USER_PASS}'
-      DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
-      DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
-      REDIS_URL: '${REDIS_URL}'
-      AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
     entrypoint: [
       "./wait-for.sh", "standardnotes-auth", "3000",
       "./wait-for.sh", "standardnotes-syncing-server-js", "3000",
@@ -115,22 +328,25 @@ services:
     ]
     networks:
       - internal
+      - proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.standardnotes.entrypoints=http"
-      - "traefik.http.routers.standardnotes.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.standardnotes.middlewares=secured@file"
-      - "traefik.http.routers.standardnotes-secure.entrypoints=https"
-      - "traefik.http.routers.standardnotes-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.standardnotes-secure.tls=true"
-      - "traefik.http.routers.standardnotes-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.standardnotes-secure.service=standardnotes"
-      - "traefik.http.services.standardnotes.loadbalancer.server.port=3000"
+      - "traefik.http.routers.standardnotes-api-gateway.entrypoints=http"
+      - "traefik.http.routers.standardnotes-api-gateway.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)"
+      - "traefik.http.routers.standardnotes-api-gateway.middlewares=secured@file"
+      - "traefik.http.routers.standardnotes-api-gateway-secure.entrypoints=https"
+      - "traefik.http.routers.standardnotes-api-gateway-secure.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)"
+      - "traefik.http.routers.standardnotes-api-gateway-secure.tls=true"
+      - "traefik.http.routers.standardnotes-api-gateway-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.standardnotes-api-gateway-secure.service=standardnotes-api-gateway"
+      - "traefik.http.services.standardnotes-api-gateway.loadbalancer.server.port=3000"
     restart: unless-stopped
 
   standardnotes-auth:
     container_name: standardnotes-auth
-    image: standardnotes/auth:1.11.0
+    image: standardnotes/auth:latest
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -146,25 +362,25 @@ services:
     env_file: docker/auth.env
     environment:
       PORT: 3000
-      DB_HOST: 'standardnotes-db'
-      DB_REPLICA_HOST: 'standardnotes-db'
-      DB_PORT: '3306'
-      DB_DATABASE: 'standardnotes'
-      DB_USERNAME: 'standardnotes'
-      DB_PASSWORD: '${DB_USER_PASS}'
+      DB_HOST: '${DB_HOST}'
+      DB_REPLICA_HOST: '${DB_REPLICA_HOST}'
+      DB_PORT: '${DB_PORT}'
+      DB_DATABASE: '${DB_DATABASE}'
+      DB_USERNAME: '${DB_USERNAME}'
+      DB_PASSWORD: '${DB_PASSWORD}'
       DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
       DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
       REDIS_URL: '${REDIS_URL}'
       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
   standardnotes-auth-worker:
     container_name: standardnotes-auth-worker
-    image: standardnotes/auth:1.11.0
+    image: standardnotes/auth:latest
     security_opt:
       - no-new-privileges:true
     depends_on:
@@ -180,58 +396,77 @@ services:
     env_file: docker/auth.env
     environment:
       PORT: 3000
-      DB_HOST: 'standardnotes-db'
-      DB_REPLICA_HOST: 'standardnotes-db'
-      DB_PORT: '3306'
-      DB_DATABASE: 'standardnotes'
-      DB_USERNAME: 'standardnotes'
-      DB_PASSWORD: '${DB_USER_PASS}'
+      DB_HOST: '${DB_HOST}'
+      DB_REPLICA_HOST: '${DB_REPLICA_HOST}'
+      DB_PORT: '${DB_PORT}'
+      DB_DATABASE: '${DB_DATABASE}'
+      DB_USERNAME: '${DB_USERNAME}'
+      DB_PASSWORD: '${DB_PASSWORD}'
       DB_DEBUG_LEVEL: '${DB_DEBUG_LEVEL}'
       DB_MIGRATIONS_PATH: '${DB_MIGRATIONS_PATH}'
       REDIS_URL: '${REDIS_URL}'
       AUTH_JWT_SECRET: '${AUTH_JWT_SECRET}'
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
   standardnotes-db:
-    container_name: standardnotes-db
-    image: mariadb:latest
+    image: mysql:5.6
     security_opt:
       - no-new-privileges:true
+    environment:
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+    ports:
+      - 3306
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
+    volumes:
+      - standardnotes-database:/var/lib/mysql
+      - standardnotes-import:/docker-entrypoint-initdb.d
     networks:
       - internal
-    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
-    environment:
-      MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASS}'
-      MYSQL_DATABASE: 'standardnotes'
-      MYSQL_USER: 'standardnotes'
-      MYSQL_PASSWORD: '${DB_USER_PASS}'
-    volumes:
-      - standardnotes-data:/var/lib/mysql
-      - ./data/import:/docker-entrypoint-initdb.d
-      - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=false"
-    healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      timeout: 20s
-      interval: 15s
-      retries: 30
-    restart: unless-stopped
 
   standardnotes-redis:
     container_name: standardnotes-redis
-    image: redis:alpine
+    image: redis:latest
     security_opt:
       - no-new-privileges:true
-    networks: 
-      - internal
     volumes:
       - ./data/redis/:/data
       - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 6379
+    networks:
+      - internal
+    restart: unless-stopped
+
+  standardnotes-web:
+    container_name: standardnotes-redis
+    image: standardnotes/web:latest
+    security_opt:
+      - no-new-privileges:true
+    env_file: docker/web.env
+    ports:
+      - ${PORT}:3001
+    networks:
+      - internal
+      - proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=false"
+      - "traefik.enable=true"
+      - "traefik.http.routers.standardnotes-web.entrypoints=http"
+      - "traefik.http.routers.standardnotes-web.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.standardnotes-web.middlewares=secured@file"
+      - "traefik.http.routers.standardnotes-web-secure.entrypoints=https"
+      - "traefik.http.routers.standardnotes-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.standardnotes-web-secure.tls=true"
+      - "traefik.http.routers.standardnotes-web-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.standardnotes-web-secure.service=standardnotes-web"
+      - "traefik.http.services.standardnotes-web.loadbalancer.server.port=3001"
     restart: unless-stopped
