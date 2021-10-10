@@ -31,8 +31,7 @@ services:
       - TZ=Europe/Amsterdam
       - WEBPASSWORD=${ADMIN_PASS}
       - VIRTUAL_HOST=https://${SUBDOMAIN}.${DOMAIN}
-      - DNS1=1.1.1.1
-      - DNS2=1.0.0.1
+      - PIHOLE_DNS_=127.0.0.1;1.1.1.1;1.0.0.1
     volumes:
       - 'pihole-config:/etc/pihole/'
       - 'pihole-dnsmasq:/etc/dnsmasq.d/'
