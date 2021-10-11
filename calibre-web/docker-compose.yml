@@ -1,0 +1,51 @@
+version: '3'
+
+networks:
+  proxy:
+    external:
+      name: proxy
+
+volumes:
+  calibre-web-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/docker/calibre-web/config
+  calibre-web-books-dir:
+    driver: local
+    driver_opts:
+      type: ${BOOKS_DRIVER_OPT_TYPE}
+      o: ${BOOKS_DRIVER_OPT_O}
+      device: ${BOOKS_PATH}
+
+services:
+  calibre-web:
+    container_name: calibre-web
+    image: ghcr.io/linuxserver/calibre-web:lastest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Amsterdam
+      - DOCKER_MODS=linuxserver/calibre-web:calibre #optional
+      # - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
+    volumes:
+      - calibre-web-config:/config
+      - calibre-web-books-dir:/books
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.calibre-web.entrypoints=http"
+      - "traefik.http.routers.calibre-web.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.calibre-web.middlewares=secured@file"
+      - "traefik.http.routers.calibre-web-secure.entrypoints=https"
+      - "traefik.http.routers.calibre-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.calibre-web-secure.tls=true"
+      - "traefik.http.routers.calibre-web-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.calibre-web-secure.service=calibre-web"
+      - "traefik.http.services.calibre-web.loadbalancer.server.port=8083"
+    networks:
+      - proxy
+    restart: unless-stopped
