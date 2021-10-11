@@ -22,7 +22,7 @@ volumes:
 services:
   calibre-web:
     container_name: calibre-web
-    image: ghcr.io/linuxserver/calibre-web:lastest
+    image: ghcr.io/linuxserver/calibre-web:latest
     security_opt:
       - no-new-privileges:true
     environment:
