@@ -17,7 +17,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/syncthing
+      device: ${STORAGE_ROOT}/syncthing
 
 services:
   syncthing-app:

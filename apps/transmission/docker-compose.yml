@@ -12,13 +12,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/downloads
+      device: ${STORAGE_ROOT}/downloads
   transmission-watchdir:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/transmission/watch
+      device: ${STORAGE_ROOT}/transmission/watch
 
 services:
   transmission:
