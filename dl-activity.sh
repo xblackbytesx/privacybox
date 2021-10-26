@@ -15,101 +15,101 @@ if [ "$1" == "--vpncheck" ]; then
     VPNIP=$("${DOCKERPATH}" run --rm --network=container:expressvpn alpine /usr/bin/wget -qO - ifconfig.me)
 
     # # Additional debugging information
-    # echo "BASEIP = ${BASEIP}" >> ${WORKDIR}/vpnlog.txt
-    # echo "VPNIP = ${VPNIP}" >> ${WORKDIR}/vpnlog.txt
+    # echo "BASEIP = ${BASEIP}" >> ${WORKDIR}/logs/vpnlog.txt
+    # echo "VPNIP = ${VPNIP}" >> ${WORKDIR}/logs/vpnlog.txt
 
     if [ "${VPNIP}" != "${BASEIP}" ]; then
-        echo "${TIMESTAMP} VPN Up" >> ${WORKDIR}/vpnlog.txt
+        echo "${TIMESTAMP} VPN Up" >> ${WORKDIR}/logs/vpnlog.txt
 
-        echo "${TIMESTAMP} Keeping services running" >> ${WORKDIR}/vpnlog.txt
-        cd ${WORKDIR}/transmission
+        echo "${TIMESTAMP} Keeping services running" >> ${WORKDIR}/logs/vpnlog.txt
+        cd ${WORKDIR}/apps/transmission
         ${COMPOSEPATH} up -d
-        cd ${WORKDIR}/nzbget
+        cd ${WORKDIR}/apps/nzbget
         ${COMPOSEPATH} up -d
-        cd ${WORKDIR}/spotweb
+        cd ${WORKDIR}/apps/spotweb
         ${COMPOSEPATH} up -d
-        cd ${WORKDIR}/prowlarr
+        cd ${WORKDIR}/apps/prowlarr
         ${COMPOSEPATH} up -d
-        cd ${WORKDIR}/sonarr
+        cd ${WORKDIR}/apps/sonarr
         ${COMPOSEPATH} up -d
-        cd ${WORKDIR}/radarr
+        cd ${WORKDIR}/apps/radarr
         ${COMPOSEPATH} up -d
-        cd ${WORKDIR}/readarr
+        cd ${WORKDIR}/apps/readarr
         ${COMPOSEPATH} up -d
-        cd ${WORKDIR}/lidarr
+        cd ${WORKDIR}/apps/lidarr
         ${COMPOSEPATH} up -d
     elif [ "${VPNIP}" == "${BASEIP}" ]; then
-        echo "${TIMESTAMP} VPN Down" >> ${WORKDIR}/vpnlog.txt
+        echo "${TIMESTAMP} VPN Down" >> ${WORKDIR}/logs/vpnlog.txt
         
-        echo "${TIMESTAMP} Engaging killswitch" >> ${WORKDIR}/vpnlog.txt
-        cd ${WORKDIR}/transmission
+        echo "${TIMESTAMP} Engaging killswitch" >> ${WORKDIR}/logs/vpnlog.txt
+        cd ${WORKDIR}/apps/transmission
         ${COMPOSEPATH} down -v
-        cd ${WORKDIR}/nzbget
+        cd ${WORKDIR}/apps/nzbget
         ${COMPOSEPATH} down -v
-        cd ${WORKDIR}/spotweb
+        cd ${WORKDIR}/apps/spotweb
         ${COMPOSEPATH} down -v
-        cd ${WORKDIR}/prowlarr
+        cd ${WORKDIR}/apps/prowlarr
         ${COMPOSEPATH} down -v
-        cd ${WORKDIR}/sonarr
+        cd ${WORKDIR}/apps/sonarr
         ${COMPOSEPATH} down -v
-        cd ${WORKDIR}/radarr
+        cd ${WORKDIR}/apps/radarr
         ${COMPOSEPATH} down -v
-        cd ${WORKDIR}/readarr
+        cd ${WORKDIR}/apps/readarr
         ${COMPOSEPATH} down -v
-        cd ${WORKDIR}/lidarr
+        cd ${WORKDIR}/apps/lidarr
         ${COMPOSEPATH} down -v
 
-        echo "${TIMESTAMP} Issuing VPN restart" >> ${WORKDIR}/vpnlog.txt
-        cd ${WORKDIR}/expressvpn
+        echo "${TIMESTAMP} Issuing VPN restart" >> ${WORKDIR}/logs/vpnlog.txt
+        cd ${WORKDIR}/apps/expressvpn
         ${COMPOSEPATH} down -v
         ${COMPOSEPATH} up -d
     else
-        echo "Unable to determine VPN status" >> ${WORKDIR}/vpnlog.txt
+        echo "Unable to determine VPN status" >> ${WORKDIR}/logs/vpnlog.txt
     fi
 
 elif [ "$1" == "--stop" ]; then
-    cd ${WORKDIR}/transmission
+    cd ${WORKDIR}/apps/transmission
     ${COMPOSEPATH} down -v
-    cd ${WORKDIR}/nzbget
+    cd ${WORKDIR}/apps/nzbget
     ${COMPOSEPATH} down -v
-    cd ${WORKDIR}/spotweb
+    cd ${WORKDIR}/apps/spotweb
     ${COMPOSEPATH} down -v
-    cd ${WORKDIR}/prowlarr
+    cd ${WORKDIR}/apps/prowlarr
     ${COMPOSEPATH} down -v
-    cd ${WORKDIR}/sonarr
+    cd ${WORKDIR}/apps/sonarr
     ${COMPOSEPATH} down -v
-    cd ${WORKDIR}/radarr
+    cd ${WORKDIR}/apps/radarr
     ${COMPOSEPATH} down -v
-    cd ${WORKDIR}/readarr
+    cd ${WORKDIR}/apps/readarr
     ${COMPOSEPATH} down -v
-    cd ${WORKDIR}/lidarr
+    cd ${WORKDIR}/apps/lidarr
     ${COMPOSEPATH} down -v
 
-    echo "${TIMESTAMP} Services stopped manually" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} Services stopped manually" >> ${WORKDIR}/logs/vpnlog.txt
 
 elif [ "$1" == "--start" ]; then
-    cd ${WORKDIR}/expressvpn
+    cd ${WORKDIR}/apps/expressvpn
     ${COMPOSEPATH} down -v
     ${COMPOSEPATH} up -d
     sleep 15
 
-    cd ${WORKDIR}/transmission
+    cd ${WORKDIR}/apps/transmission
     ${COMPOSEPATH} up -d
-    cd ${WORKDIR}/nzbget
+    cd ${WORKDIR}/apps/nzbget
     ${COMPOSEPATH} up -d
-    cd ${WORKDIR}/spotweb
+    cd ${WORKDIR}/apps/spotweb
     ${COMPOSEPATH} up -d
-    cd ${WORKDIR}/prowlarr
+    cd ${WORKDIR}/apps/prowlarr
     ${COMPOSEPATH} up -d
-    cd ${WORKDIR}/sonarr
+    cd ${WORKDIR}/apps/sonarr
     ${COMPOSEPATH} up -d
-    cd ${WORKDIR}/radarr
+    cd ${WORKDIR}/apps/radarr
     ${COMPOSEPATH} up -d
-    cd ${WORKDIR}/readarr
+    cd ${WORKDIR}/apps/readarr
     ${COMPOSEPATH} up -d
-    cd ${WORKDIR}/lidarr
+    cd ${WORKDIR}/apps/lidarr
     ${COMPOSEPATH} up -d
 
-    echo "${TIMESTAMP} Services resumed manually" >> ${WORKDIR}/vpnlog.txt
+    echo "${TIMESTAMP} Services resumed manually" >> ${WORKDIR}/logs/vpnlog.txt
 fi
 
