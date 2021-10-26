@@ -122,7 +122,7 @@ elif [ "$1" == "--vpncheck" ]; then
         done
 
         echo "${TIMESTAMP} Issuing VPN restart" >> ${WORKDIR}/logs/vpnlog.txt
-        cd ${WORKDIR}/expressvpn
+        cd ${WORKDIR}/apps/expressvpn
         ${COMPOSEPATH} down -v
         ${COMPOSEPATH} up -d
     else
