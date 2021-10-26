@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/wallabag/data
+      device: ${DOCKER_ROOT}/wallabag/data
   wallabag-media:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/wallabag/media
+      device: ${DOCKER_ROOT}/wallabag/media
 
 services:
   wallabag-db:

@@ -13,19 +13,19 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/fireflyiii/database
+      device: ${DOCKER_ROOT}/fireflyiii/database
   fireflyiii-export:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/fireflyiii/export
+      device: ${DOCKER_ROOT}/fireflyiii/export
   fireflyiii-upload:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/fireflyiii/upload
+      device: ${DOCKER_ROOT}/fireflyiii/upload
 
 services:
   fireflyiii-db:

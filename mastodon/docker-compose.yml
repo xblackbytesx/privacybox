@@ -13,7 +13,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/mastodon/database
+      device: ${DOCKER_ROOT}/mastodon/database
 
 services:
 

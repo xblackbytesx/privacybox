@@ -13,19 +13,19 @@
 #     driver_opts:
 #       type: none
 #       o: bind
-#       device: ${STORAGE_ROOT}/docker/pydio-cells/database
+#       device: ${DOCKER_ROOT}/pydio-cells/database
 #   pydio-cells-data:
 #     driver: local
 #     driver_opts:
 #       type: none
 #       o: bind
-#       device: ${STORAGE_ROOT}/data
+#       device: ${DOCKER_ROOT}/data
 #   pydio-cells-cells:
 #     driver: local
 #     driver_opts:
 #       type: none
 #       o: bind
-#       device: ${STORAGE_ROOT}/docker/pydio-cells/cells
+#       device: ${DOCKER_ROOT}/pydio-cells/cells
 
 # services:
 #   pydio-cells-db:
@@ -100,13 +100,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/pydio-cells/config
+      device: ${DOCKER_ROOT}/pydio-cells/config
   pydio-cells-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/pydio-cells/database/
+      device: ${DOCKER_ROOT}/pydio-cells/database/
 
 services:
   pydio-cells-db:

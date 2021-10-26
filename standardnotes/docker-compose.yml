@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/standardnotes/database
+      device: ${DOCKER_ROOT}/standardnotes/database
   standardnotes-import:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/standardnotes/import
+      device: ${DOCKER_ROOT}/standardnotes/import
 
 services:
   standardnotes-syncing-server-js:

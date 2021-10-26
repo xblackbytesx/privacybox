@@ -1,88 +1,3 @@
-# version: "3.8"
-
-# # Use the below if not using network_mode: host
-# # networks:
-# #   proxy:
-# #     external:
-# #       name: proxy
-
-# volumes:
-#   jellyfin-config:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ${STORAGE_ROOT}/docker/jellyfin/config
-#   jellyfin-cache:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ${STORAGE_ROOT}/docker/jellyfin/cache
-#   jellyfin-series-dir:
-#     driver: local
-#     driver_opts:
-#       type: ${MEDIA_DRIVER_OPT_TYPE}
-#       o: ${MEDIA_DRIVER_OPT_O}
-#       device: ${SERIES_PATH}
-#   jellyfin-movies-dir:
-#     driver: local
-#     driver_opts:
-#       type: ${MEDIA_DRIVER_OPT_TYPE}
-#       o: ${MEDIA_DRIVER_OPT_O}
-#       device: ${MOVIES_PATH}
-#   jellyfin-music-dir:
-#     driver: local
-#     driver_opts:
-#       type: ${MEDIA_DRIVER_OPT_TYPE}
-#       o: ${MEDIA_DRIVER_OPT_O}
-#       device: ${MUSIC_PATH}
-#   jellyfin-books-dir:
-#     driver: local
-#     driver_opts:
-#       type: ${MEDIA_DRIVER_OPT_TYPE}
-#       o: ${MEDIA_DRIVER_OPT_O}
-#       device: ${BOOKS_PATH}
-
-# services:
-#   jellyfin:
-#     container_name: jellyfin
-#     image: jellyfin/jellyfin:latest
-#     security_opt:
-#       - no-new-privileges:true
-#     # user: 1000:1000
-#     # Use the below if not using network_mode: host
-#     # ports:
-#     #   - 7359:7359/udp #optional
-#     #   - 1900:1900/udp #optional
-#     volumes:
-#       - jellyfin-config:/config
-#       - jellyfin-cache:/cache
-#       - jellyfin-series-dir:/tvshows
-#       - jellyfin-movies-dir:/movies
-#       - jellyfin-music-dir:/music
-#       - jellyfin-books-dir:/books
-#       - /etc/localtime:/etc/localtime:ro
-#     environment:
-#       - JELLYFIN_PublishedServerUrl=https://${SUBDOMAIN}.${DOMAIN}
-#     labels:
-#       - "traefik.enable=false"
-#       # Use the below if not using network_mode: host
-#       # - "traefik.enable=true"
-#       # - "traefik.http.routers.jellyfin.entrypoints=http"
-#       # - "traefik.http.routers.jellyfin.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       # - "traefik.http.routers.jellyfin.middlewares=secured@file"
-#       # - "traefik.http.routers.jellyfin-secure.entrypoints=https"
-#       # - "traefik.http.routers.jellyfin-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       # - "traefik.http.routers.jellyfin-secure.tls=true"
-#       # - "traefik.http.routers.jellyfin-secure.tls.certresolver=le-dns"
-#       # - "traefik.http.routers.jellyfin-secure.service=jellyfin"
-#       # - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
-#     # networks:
-#     #   - proxy
-#     network_mode: host
-#     restart: unless-stopped
-
 version: '3'
 
 volumes:
@@ -91,7 +6,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/jellyfin/config
+      device: ${DOCKER_ROOT}/jellyfin/config
   jellyfin-series-dir:
     driver: local
     driver_opts:

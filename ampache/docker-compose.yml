@@ -11,13 +11,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/ampache/config
+      device: ${DOCKER_ROOT}/ampache/config
   ampache-log:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/ampache/log
+      device: ${DOCKER_ROOT}/ampache/log
   ampache-media:
     driver: local
     driver_opts:
@@ -29,13 +29,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/ampache/database
+      device: ${DOCKER_ROOT}/ampache/database
   ampache-sites-enabled:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/ampache/sites-enabled
+      device: ${DOCKER_ROOT}/ampache/sites-enabled
 
 services:
   ampache:

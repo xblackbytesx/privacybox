@@ -11,7 +11,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/thelounge/config
+      device: ${DOCKER_ROOT}/thelounge/config
 
 services:
   thelounge:

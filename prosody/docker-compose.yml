@@ -11,19 +11,19 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/prosody/config
+      device: ${DOCKER_ROOT}/prosody/config
   prosody-logs:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/prosody/logs
+      device: ${DOCKER_ROOT}/prosody/logs
   prosody-modules:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/prosody/modules
+      device: ${DOCKER_ROOT}/prosody/modules
 
 services:
   prosody-app:

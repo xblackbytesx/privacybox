@@ -1,0 +1,2 @@
+# Example of deployment configuration
+DEPLOYED_APPS=( baikal bitwarden cryptofolio drawio flame freshrss ghost gitea glances homeassistant invidious matrix-synapse pihole portainer searx standardnotes statping syncthing traefik wallabag wireguard )

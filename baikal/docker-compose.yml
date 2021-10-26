@@ -11,15 +11,42 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/baikal/config
+      device: ${DOCKER_ROOT}/baikal/config
   baikal-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/baikal/data
+      device: ${DOCKER_ROOT}/baikal/data
+  baikal-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/baikal/database
 
 services:
+  # baikal-db:
+  #     container_name: baikal-db
+  #     image: mariadb:latest
+  #     security_opt:
+  #         - no-new-privileges:true
+  #     environment:
+  #         - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+  #     volumes:
+  #         - baikal-database:/var/lib/mysql
+  #         - /etc/localtime:/etc/localtime:ro
+  #     labels:
+  #         - "traefik.enable=false"
+  #     networks:
+  #         - internal
+  #     healthcheck:
+  #         test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+  #         timeout: 20s
+  #         interval: 15s
+  #         retries: 30
+  #     restart: unless-stopped
+
   baikal:
     container_name: baikal
     image: ckulka/baikal:nginx

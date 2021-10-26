@@ -13,7 +13,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/invidious/data  
+      device: ${DOCKER_ROOT}/invidious/data  
 
 services:
   invidious-db:

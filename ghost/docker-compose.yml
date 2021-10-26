@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/ghost/${COMPOSE_PROJECT_NAME}/content
+      device: ${DOCKER_ROOT}/ghost/${COMPOSE_PROJECT_NAME}/content
   ghost-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/ghost/${COMPOSE_PROJECT_NAME}/database/
+      device: ${DOCKER_ROOT}/ghost/${COMPOSE_PROJECT_NAME}/database/
 
 services:
   ghost-db:

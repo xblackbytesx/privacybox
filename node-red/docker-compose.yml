@@ -11,13 +11,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/node-red/data
+      device: ${DOCKER_ROOT}/node-red/data
   # nodered-download-dir:
   #   driver: local
   #   driver_opts:
   #     type: none
   #     o: bind
-  #     device: ${STORAGE_ROOT}/downloads/complete
+  #     device: ${DOCKER_ROOT}/downloads/complete
       
 
 services:

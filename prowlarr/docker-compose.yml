@@ -6,7 +6,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/prowlarr/config
+      device: ${DOCKER_ROOT}/prowlarr/config
 
 services:
   prowlarr:

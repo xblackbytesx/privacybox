@@ -15,7 +15,7 @@ services:
       - no-new-privileges:true
     command: --max-allowed-packet=64MB
     volumes:
-      - ${STORAGE_ROOT}/docker/matomo/matomo-db:/var/lib/mysql
+      - ${DOCKER_ROOT}/matomo/matomo-db:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -41,7 +41,7 @@ services:
     depends_on:
       - matomo-db
     volumes:
-      - ${STORAGE_ROOT}/docker/matomo/config:/var/www/html/config:rw
+      - ${DOCKER_ROOT}/matomo/config:/var/www/html/config:rw
       # - ./logs:/var/www/html/logs
       - matomo-app:/var/www/html
       - /etc/localtime:/etc/localtime:ro

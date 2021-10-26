@@ -6,35 +6,35 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/homeassistant/config
+      device: ${DOCKER_ROOT}/homeassistant/config
 
   ha-mariadb:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/homeassistant/database      
+      device: ${DOCKER_ROOT}/homeassistant/database      
 
   ha-zigbee2mqtt-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/homeassistant/zigbee2mqtt/data
+      device: ${DOCKER_ROOT}/homeassistant/zigbee2mqtt/data
 
   ha-mosquitto-config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/homeassistant/mosquitto/config
+      device: ${DOCKER_ROOT}/homeassistant/mosquitto/config
 
   ha-mosquitto-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/homeassistant/mosquitto/data
+      device: ${DOCKER_ROOT}/homeassistant/mosquitto/data
 
 services:
   ha-mariadb:
