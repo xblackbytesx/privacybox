@@ -19,20 +19,8 @@ COMPOSEPATH=$(which docker-compose)
 # Establishing privacybox dir location
 WORKDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
-if [ "$1" == "" ]; then
-    echo "Please append one of the following flags to this command:"
-    echo "--provision"
-    echo "--start --all"
-    echo "--start --killswitch"
-    echo "--stop --all"
-    echo "--stop --killswitch"
-    echo "--update --all"
-    echo "--update --killswitch"
-    echo "--vpncheck"
-    echo "--backup"
 
-
-elif [ "$1" == "--provision" ]; then
+if [ "$1" == "--provision" ]; then
     source scripts/provision.sh
 
 
@@ -144,4 +132,16 @@ elif [ "$1" == "--vpncheck" ]; then
 
 elif [ "$1" == "--backup" ]; then
     source scripts/backup-data.sh
+
+else
+    echo "Please append one of the following flags to this command:"
+    echo "--provision"
+    echo "--start --all"
+    echo "--start --killswitch"
+    echo "--stop --all"
+    echo "--stop --killswitch"
+    echo "--update --all"
+    echo "--update --killswitch"
+    echo "--vpncheck"
+    echo "--backup"
 fi
