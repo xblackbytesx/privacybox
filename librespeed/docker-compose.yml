@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/librespeed/config
+      device: ${DOCKER_ROOT}/librespeed/config
   librespeed-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/librespeed/database/
+      device: ${DOCKER_ROOT}/librespeed/database/
 
 services:
   librespeed-db:

@@ -13,7 +13,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/librephotos/database
+      device: ${DOCKER_ROOT}/librephotos/database
   librephotos-photos:
     driver: local
     driver_opts:
@@ -31,13 +31,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/librephotos/logs
+      device: ${DOCKER_ROOT}/librephotos/logs
   librephotos-cache:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/librephotos/cache
+      device: ${DOCKER_ROOT}/librephotos/cache
 
 services:
   librephotos-proxy:

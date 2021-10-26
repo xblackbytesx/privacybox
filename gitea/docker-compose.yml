@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/gitea/database/
+      device: ${DOCKER_ROOT}/gitea/database/
   gitea-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/gitea/data
+      device: ${DOCKER_ROOT}/gitea/data
 
 services:
   gitea-db:

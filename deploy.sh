@@ -57,7 +57,7 @@ for app in ${appsToInstall[@]}; do
     fi
 
     if [ "$globalStorageRoot" ]; then
-        sed -i 's/STORAGE_ROOT=\/media\/storage/STORAGE_ROOT='$globalStorageRoot'/g' .env
+        sed -i 's/DOCKER_ROOT=\/media\/storage/DOCKER_ROOT='$globalStorageRoot'/g' .env
     fi
 
     _initialConfig='true'

@@ -21,7 +21,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${STORAGE_ROOT}/docker/portainer/data:/data
+      - ${DOCKER_ROOT}/portainer/data:/data
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.portainer.entrypoints=http"

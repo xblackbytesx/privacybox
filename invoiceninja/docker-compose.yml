@@ -15,21 +15,21 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/invoiceninja/public
+      device: ${DOCKER_ROOT}/invoiceninja/public
 
   invoiceninja-storage:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/invoiceninja/storage
+      device: ${DOCKER_ROOT}/invoiceninja/storage
 
   invoiceninja-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/invoiceninja/database
+      device: ${DOCKER_ROOT}/invoiceninja/database
 
 services:
   invoiceninja-db:

@@ -6,13 +6,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/jackett/config
+      device: ${DOCKER_ROOT}/jackett/config
   jackett-downloads:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/jackett/downloads
+      device: ${DOCKER_ROOT}/jackett/downloads
 
 services:
   jackett:

@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/anonaddy/data
+      device: ${DOCKER_ROOT}/anonaddy/data
   anonaddy-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/anonaddy/database/
+      device: ${DOCKER_ROOT}/anonaddy/database/
 
 services:
   anonaddy-db:

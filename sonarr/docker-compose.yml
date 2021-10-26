@@ -11,13 +11,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/sonarr/config
+      device: ${DOCKER_ROOT}/sonarr/config
   sonarr-series-dir:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/video/series
+      device: ${DOCKER_ROOT}/video/series
   sonarr-downloads-dir:
     driver: local
     driver_opts:

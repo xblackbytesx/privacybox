@@ -13,13 +13,13 @@ networks:
 #     driver_opts:
 #       type: none
 #       o: bind
-#       device: ${STORAGE_ROOT}/docker/huginn/database/
+#       device: ${DOCKER_ROOT}/huginn/database/
 #   huginn-data:
 #     driver: local
 #     driver_opts:
 #       type: none
 #       o: bind
-#       device: ${STORAGE_ROOT}/docker/huginn/data
+#       device: ${DOCKER_ROOT}/huginn/data
 
 services:
   huginn-dbdata:

@@ -11,7 +11,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/wireshark/config
+      device: ${DOCKER_ROOT}/wireshark/config
 
 services:
   wireshark-app:
@@ -31,6 +31,4 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    depends_on:
-      - wireshark-db
     restart: unless-stopped

@@ -11,13 +11,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/gpodder/config
+      device: ${DOCKER_ROOT}/gpodder/config
   gpodder-downloads:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/gpodder/downloads/
+      device: ${DOCKER_ROOT}/gpodder/downloads/
 
 services:
   gpodder-app:

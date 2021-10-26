@@ -14,7 +14,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/database:/var/lib/mysql
+      - ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -45,9 +45,9 @@ services:
       - WORDPRESS_DB_PASSWORD=${DB_USER_PASS}
     volumes:
       - wordpress:/var/www/html
-      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/plugins:/var/www/html/wp-content/plugins/
-      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/themes:/var/www/html/wp-content/themes/
-      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/uploads:/var/www/html/wp-content/uploads/
+      - ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/plugins:/var/www/html/wp-content/plugins/
+      - ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/themes:/var/www/html/wp-content/themes/
+      - ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/uploads:/var/www/html/wp-content/uploads/
       - ./php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini 
       - /etc/localtime:/etc/localtime:ro
     labels:
@@ -70,9 +70,9 @@ services:
       - proxy
     volumes:
       - wordpress:/var/www/html:ro
-      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/plugins:/var/www/html/wp-content/plugins/:ro
-      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/themes:/var/www/html/wp-content/themes/:ro
-      - ${STORAGE_ROOT}/docker/wordpress/${COMPOSE_PROJECT_NAME}/uploads:/var/www/html/wp-content/uploads/:ro
+      - ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/plugins:/var/www/html/wp-content/plugins/:ro
+      - ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/themes:/var/www/html/wp-content/themes/:ro
+      - ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/uploads:/var/www/html/wp-content/uploads/:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
       - ./logs/nginx:/var/log/nginx
       - /etc/localtime:/etc/localtime:ro

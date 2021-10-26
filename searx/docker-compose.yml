@@ -11,7 +11,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/searx/config
+      device: ${DOCKER_ROOT}/searx/config
 
 services:
   searx-app:

@@ -19,13 +19,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/irssi/database/
+      device: ${DOCKER_ROOT}/irssi/database/
   irssi-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/irssi/data
+      device: ${DOCKER_ROOT}/irssi/data
 
   irssi-app:
     container_name: irssi-app

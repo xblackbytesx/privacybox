@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/photoprism/database
+      device: ${DOCKER_ROOT}/photoprism/database
   photoprism-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/photoprism/data
+      device: ${DOCKER_ROOT}/photoprism/data
   photoprism-stories:
     driver: local
     driver_opts:

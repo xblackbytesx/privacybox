@@ -11,13 +11,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/radarr/config
+      device: ${DOCKER_ROOT}/radarr/config
   radarr-movies-dir:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/video/movies
+      device: ${DOCKER_ROOT}/video/movies
   radarr-downloads-dir:
     driver: local
     driver_opts:

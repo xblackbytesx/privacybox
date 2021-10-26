@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/freshrss/config
+      device: ${DOCKER_ROOT}/freshrss/config
   freshrss-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/freshrss/database/
+      device: ${DOCKER_ROOT}/freshrss/database/
 
 services:
   freshrss-db:

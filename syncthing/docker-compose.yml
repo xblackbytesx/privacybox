@@ -11,13 +11,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/syncthing/config
+      device: ${DOCKER_ROOT}/syncthing/config
   syncthing-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/syncthing
+      device: ${DOCKER_ROOT}/syncthing
 
 services:
   syncthing-app:

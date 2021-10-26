@@ -13,13 +13,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/statping/database/
+      device: ${DOCKER_ROOT}/statping/database/
   statping-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/statping/data
+      device: ${DOCKER_ROOT}/statping/data
 
 services:
   statping-db:

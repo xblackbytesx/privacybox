@@ -12,7 +12,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/docker/wireguard/config
+      device: ${DOCKER_ROOT}/wireguard/config
 
 services:
   wireguard:
