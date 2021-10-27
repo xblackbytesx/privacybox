@@ -18,7 +18,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${STORAGE_ROOT}/transmission/watch
+      device: ${DOCKER_ROOT}/transmission/watch
 
 services:
   transmission:
