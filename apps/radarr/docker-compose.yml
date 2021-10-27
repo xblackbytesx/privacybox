@@ -17,7 +17,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/video/movies
+      device: ${STORAGE_ROOT}/video/movies
   radarr-downloads-dir:
     driver: local
     driver_opts:
