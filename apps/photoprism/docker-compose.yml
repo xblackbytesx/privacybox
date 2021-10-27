@@ -73,7 +73,7 @@ services:
       - PHOTOPRISM_PUBLIC=${PUBLIC_ACCESS}
       - PHOTOPRISM_READONLY=true # Don't modify originals directory (reduced functionality)
       - PHOTOPRISM_EXPERIMENTAL=false
-      - PHOTOPRISM_DISABLE_WEBDAV=false
+      - PHOTOPRISM_DISABLE_WEBDAV=true
       - PHOTOPRISM_DISABLE_SETTINGS=false
       - PHOTOPRISM_DISABLE_TENSORFLOW=false
       - PHOTOPRISM_DARKTABLE_PRESETS=false
