@@ -25,6 +25,12 @@ volumes:
       type: ${MEDIA_DRIVER_OPT_TYPE}
       o: ${MEDIA_DRIVER_OPT_O}
       device: ${MUSIC_PATH}
+  jellyfin-stories-dir:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${STORIES_PATH}
   jellyfin-books-dir:
     driver: local
     driver_opts:
@@ -48,6 +54,7 @@ services:
       - jellyfin-series-dir:/data/tvshows
       - jellyfin-movies-dir:/data/movies
       - jellyfin-music-dir:/data/music
+      - jellyfin-stories-dir:/data/stories:${STORIES_DIR_PERMISSION}
       - jellyfin-books-dir:/data/books
       - /etc/localtime:/etc/localtime:ro
     labels:
