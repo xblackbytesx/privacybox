@@ -1,23 +1,65 @@
 version: "3.1"
+
+networks:
+  proxy:
+    external: 
+      name: proxy
+  internal:
+    internal: true
+
+volumes:
+  mealie-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/mealie/database
+  mealie-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/mealie/data
+
 services:
-  mealie:
-    container_name: mealie
-    image: hkotel/mealie:latest
-    restart: always
-    ports:
-      - 9090:80
-    depends_on:
-      - postgres
+  mealie-db:
+    container_name: mealie-db
+    image: postgres:12-alpine
+    security_opt:
+      - no-new-privileges:true
     environment:
-      PUID: 1000
-      PGID: 1000
-      TZ: America/Anchorage
+      - POSTGRES_DB=mealie
+      - POSTGRES_USER=mealie
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - mealie-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+    restart: unless-stopped
+
+  mealie-app:
+    container_name: mealie-app
+    image: hkotel/mealie:latest
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - mealie-db
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: Europe/Amsterdam
 
       # Database Settings
-      DB_ENGINE: postgres # Optional: 'sqlite', 'postgres'
+      DB_ENGINE: postgres
       POSTGRES_USER: mealie
-      POSTGRES_PASSWORD: mealie
-      POSTGRES_SERVER: postgres
+      POSTGRES_PASSWORD: ${DB_USER_PASS}
+      POSTGRES_SERVER: mealie-db
       POSTGRES_PORT: 5432
       POSTGRES_DB: mealie
 
@@ -34,11 +76,19 @@ services:
       # WORKERS_PER_CORE: 0.5
       # MAX_WORKERS: 8
     volumes:
-      - ./mealie/data/:/app/data
-  postgres:
-    container_name: postgres
-    image: postgres
-    restart: always
-    environment:
-      POSTGRES_PASSWORD: mealie
-      POSTGRES_USER: mealie
+      - mealie-data:/app/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mealie-app.entrypoints=http"
+      - "traefik.http.routers.mealie-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.mealie-app.middlewares=secured@file"
+      - "traefik.http.routers.mealie-app-secure.entrypoints=https"
+      - "traefik.http.routers.mealie-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.mealie-app-secure.tls=true"
+      - "traefik.http.routers.mealie-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.mealie-app-secure.service=mealie-app"
+      - "traefik.http.services.mealie-app.loadbalancer.server.port=80"
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped
