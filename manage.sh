@@ -7,7 +7,6 @@ TIMESTAMP=$(date +"%Y%m%d-%H:%M")
 
 # Defaults
 DEPLOYED_APPS=( traefik portainer )
-KILLSWITCH_APPS=( transmission nzbget spotweb )
 
 # Read config
 . ./privacybox.config
@@ -35,28 +34,36 @@ elif [ "$1" == "--start" ]; then
 
         echo "${TIMESTAMP} All services started manually" >> ${WORKDIR}/logs/vpnlog.txt
 
-    elif [ "$2" == "--killswitch" ]; then
-        for APP in "${KILLSWITCH_APPS[@]}"
-        do
-        : 
-            cd ${WORKDIR}/apps/$APP
-            ${COMPOSEPATH} up -d
-        done
+    elif [ "$2" == "--killswitch-apps" ]; then
+        if [ -z ${KILLSWITCH_APPS} ]; then 
+            echo "No Killswitch apps are configured. Please check your privacybox.config file.";
+        else
+            for APP in "${KILLSWITCH_APPS[@]}"
+            do
+            : 
+                cd ${WORKDIR}/apps/$APP
+                ${COMPOSEPATH} up -d
+            done
 
-        echo "${TIMESTAMP} Killswitch services started manually" >> ${WORKDIR}/logs/vpnlog.txt  
+            echo "${TIMESTAMP} Killswitch services started manually" >> ${WORKDIR}/logs/vpnlog.txt  
+        fi
     fi
 
 elif [ "$1" == "--stop" ]; then
     if [ "$2" == "--all" ]; then
-        for APP in "${DEPLOYED_APPS[@]}"
-        do
-        : 
-            cd ${WORKDIR}/apps/$APP
-            ${COMPOSEPATH} down -v
-        done
+        if [ -z ${DEPLOYED_APPS} ]; then 
+            echo "No deployed apps are configured. Please check your privacybox.config file.";
+        else
+            for APP in "${DEPLOYED_APPS[@]}"
+            do
+            : 
+                cd ${WORKDIR}/apps/$APP
+                ${COMPOSEPATH} down -v
+            done
 
-        echo "${TIMESTAMP} All services stopped manually" >> ${WORKDIR}/logs/vpnlog.txt
-    
+            echo "${TIMESTAMP} All services stopped manually" >> ${WORKDIR}/logs/vpnlog.txt
+        fi
+
     elif [ "$2" == "--killswitch-apps" ]; then
         for APP in "${KILLSWITCH_APPS[@]}"
         do
@@ -71,24 +78,32 @@ elif [ "$1" == "--stop" ]; then
 
 elif [ "$1" == "--update" ]; then
     if [ "$2" == "--all" ]; then
-        for APP in "${DEPLOYED_APPS[@]}"
-        do
-        : 
-            cd ${WORKDIR}/apps/$APP
-            ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
-        done
+        if [ -z ${DEPLOYED_APPS} ]; then 
+            echo "No deployed apps are configured. Please check your privacybox.config file.";
+        else
+            for APP in "${DEPLOYED_APPS[@]}"
+            do
+            : 
+                cd ${WORKDIR}/apps/$APP
+                ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
+            done
 
-        echo "${TIMESTAMP} Updated all services" >> ${WORKDIR}/logs/vpnlog.txt
+            echo "${TIMESTAMP} Updated all services" >> ${WORKDIR}/logs/vpnlog.txt
+        fi
 
     elif [ "$2" == "--killswitch-apps" ]; then
-        for APP in "${KILLSWITCH_APPS[@]}"
-        do
-        : 
-            cd ${WORKDIR}/apps/$APP
-            ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
-        done
+        if [ -z ${KILLSWITCH_APPS} ]; then 
+            echo "No Killswitch apps are configured. Please check your privacybox.config file.";
+        else
+            for APP in "${KILLSWITCH_APPS[@]}"
+            do
+            : 
+                cd ${WORKDIR}/apps/$APP
+                ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
+            done
 
-        echo "${TIMESTAMP} Updated killswitch services" >> ${WORKDIR}/logs/vpnlog.txt
+            echo "${TIMESTAMP} Updated killswitch services" >> ${WORKDIR}/logs/vpnlog.txt
+        fi
     fi
 
 elif [ "$1" == "--vpncheck" ]; then
@@ -103,23 +118,31 @@ elif [ "$1" == "--vpncheck" ]; then
         echo "${TIMESTAMP} VPN Up" >> ${WORKDIR}/logs/vpnlog.txt
         echo "${TIMESTAMP} Keeping services running" >> ${WORKDIR}/logs/vpnlog.txt
 
-        for APP in "${KILLSWITCH_APPS[@]}"
-        do
-        : 
-            cd ${WORKDIR}/apps/$APP
-            ${COMPOSEPATH} up -d
-        done
+        if [ -z ${KILLSWITCH_APPS} ]; then 
+            echo "No Killswitch apps are configured. Please check your privacybox.config file.";
+        else
+            for APP in "${KILLSWITCH_APPS[@]}"
+            do
+            : 
+                cd ${WORKDIR}/apps/$APP
+                ${COMPOSEPATH} up -d
+            done
+        fi
 
     elif [ "${VPNIP}" == "${BASEIP}" ]; then
         echo "${TIMESTAMP} VPN Down" >> ${WORKDIR}/logs/vpnlog.txt
         echo "${TIMESTAMP} Engaging killswitch" >> ${WORKDIR}/logs/vpnlog.txt
 
-        for APP in "${KILLSWITCH_APPS[@]}"
-        do
-        : 
-            cd ${WORKDIR}/apps/$APP
-            ${COMPOSEPATH} down -v
-        done
+        if [ -z ${KILLSWITCH_APPS} ]; then 
+            echo "No Killswitch apps are configured. Please check your privacybox.config file.";
+        else
+            for APP in "${KILLSWITCH_APPS[@]}"
+            do
+            : 
+                cd ${WORKDIR}/apps/$APP
+                ${COMPOSEPATH} down -v
+            done
+        fi
 
         echo "${TIMESTAMP} Issuing VPN restart" >> ${WORKDIR}/logs/vpnlog.txt
         cd ${WORKDIR}/apps/expressvpn
@@ -137,11 +160,11 @@ else
     echo "Please append one of the following flags to this command:"
     echo "--provision"
     echo "--start --all"
-    echo "--start --killswitch"
+    echo "--start --killswitch-apps"
     echo "--stop --all"
-    echo "--stop --killswitch"
+    echo "--stop --killswitch-apps"
     echo "--update --all"
-    echo "--update --killswitch"
+    echo "--update --killswitch-apps"
     echo "--vpncheck"
     echo "--backup"
 fi
