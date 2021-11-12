@@ -150,6 +150,13 @@ elif [ "$1" == "--vpncheck" ]; then
 elif [ "$1" == "--backup" ]; then
     source scripts/backup-data.sh
 
+elif [ "$1" == "--getcompose" ]; then
+    echo "Installing latest docker-compose"
+    sudo mv /usr/local/bin/docker-compose /usr/local/bin/docker-composeBAK${TIMESTAMP}
+	sudo curl -L "https://github.com/docker/compose/releases/download/v2.1.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+	sudo chmod +x /usr/local/bin/docker-compose
+	echo "Succesfully installed $(docker-compose --version)"
+
 else
     echo "Please append one of the following flags to this command:"
     echo "--provision"
@@ -160,5 +167,6 @@ else
     echo "--update --all"
     echo "--update --killswitch-apps"
     echo "--vpncheck"
+    echo "--getcompose"
     echo "--backup"
 fi
