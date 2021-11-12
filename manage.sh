@@ -152,10 +152,10 @@ elif [ "$1" == "--backup" ]; then
 
 elif [ "$1" == "--getcompose" ]; then
     echo "Installing latest docker-compose"
-    sudo mv /usr/local/bin/docker-compose /usr/local/bin/docker-composeBAK${TIMESTAMP}
-	sudo curl -L "https://github.com/docker/compose/releases/download/v2.1.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-	sudo chmod +x /usr/local/bin/docker-compose
-	echo "Succesfully installed $(docker-compose --version)"
+    sudo mv ${COMPOSEPATH} ${COMPOSEPATH}BAK${TIMESTAMP}
+	sudo curl -L "https://github.com/docker/compose/releases/download/v2.1.1/docker-compose-$(uname -s)-$(uname -m)" -o ${COMPOSEPATH}
+	sudo chmod +x ${COMPOSEPATH}
+	echo "Succesfully installed $(${COMPOSEPATH} --version)"
 
 else
     echo "Please append one of the following flags to this command:"
