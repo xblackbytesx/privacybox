@@ -2,8 +2,8 @@ version: '2'
 
 networks:
   proxy:
-    external: 
-      name: proxy
+    name: proxy
+    external: true
   internal:
     internal: true
 
