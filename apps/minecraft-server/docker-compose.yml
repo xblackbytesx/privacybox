@@ -2,8 +2,8 @@ version: "3.3"
 
 networks:
   proxy:
-    external: 
-      name: proxy
+    name: proxy
+    external: true
 
 volumes:
   minecraft-data:
