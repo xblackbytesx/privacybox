@@ -2,8 +2,8 @@
 *.key
 *.bak
 acme.json
-traefik/data/traefik.yml
-traefik/data/config.yml
+apps/traefik/data/traefik.yml
+apps/traefik/data/config.yml
 **/update-jellyfin.sh
 **/redis
 vpnlog.txt
