@@ -1,26 +1,60 @@
 #!/bin/bash
 
 # Example crontab user entry: 
-# * * * * * . $HOME/.profile $HOME/privacybox-docker/dl-activity.sh --vpncheck >/dev/null 2>&1
-
-TIMESTAMP=$(date +"%Y%m%d-%H:%M")
-
-# Defaults
-DEPLOYED_APPS=( traefik portainer )
+# * * * * * . $HOME/.profile $HOME/privacybox-docker/manage.sh --vpncheck >/dev/null 2>&1
 
 # Read config
 . ./privacybox.config
+
+###################################
+## Compose environment variables ##
+###################################
+TIMESTAMP_MINUTE=$(date +"%Y%m%d-%H:%M")
+TIMESTAMP_HOUR=$(date +"%Y%m%d-%H")
+
+SERVER_NAME=$(cat /proc/sys/kernel/hostname)
+
+# Defaults
+DEPLOYED_APPS=( traefik portainer )
 
 # Finding Docker binary
 DOCKERPATH=$(which docker)
 COMPOSEPATH=$(which docker-compose)
 
-# Establishing privacybox dir location
-WORKDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+# Establishing privacybox dir locations
+PRIVACYBOX_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+DOCKER_DATA_DIR=$DOCKER_ROOT
+BACKUP_DIR=$STORAGE_ROOT/backups
 
 
+###############
+## Bootstrap ##
+###############
+if ! [[ -f "./logs/privacybox.log" ]]
+then
+    mkdir logs
+    touch logs/privacybox.log
+fi
+
+# Make scripts in scripts folder executable
+chmod +x ./scripts/*.sh
+
+
+###################
+## Command flags ##
+###################
 if [ "$1" == "--provision" ]; then
     source scripts/provision.sh
+
+elif [ "$1" == "--getcompose" ]; then
+    echo "Installing latest docker-compose"
+    sudo mv ${COMPOSEPATH} ${COMPOSEPATH}BAK${TIMESTAMP_MINUTE}
+	sudo curl -L "https://github.com/docker/compose/releases/download/v2.1.1/docker-compose-$(uname -s)-$(uname -m)" -o ${COMPOSEPATH}
+	sudo chmod +x ${COMPOSEPATH}
+	echo "Succesfully installed $(${COMPOSEPATH} --version)"
+
+elif [ "$1" == "--free-dsm-ports" ]; then
+    source scripts/free-dsm-ports.sh
 
 elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ]; then
     if [ "$2" == "--all" ]; then
@@ -32,31 +66,31 @@ elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ]; th
                 for APP in "${DEPLOYED_APPS[@]}"
                 do
                 : 
-                    cd ${WORKDIR}/apps/$APP
+                    cd ${PRIVACYBOX_DIR}/apps/$APP
                     ${COMPOSEPATH} up -d
                 done
 
-                echo "${TIMESTAMP} All services started manually" >> ${WORKDIR}/logs/vpnlog.txt
+                echo "${TIMESTAMP_MINUTE} All services started manually" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
             elif [ "$1" == "--stop" ]; then
                 for APP in "${DEPLOYED_APPS[@]}"
                 do
                 : 
-                    cd ${WORKDIR}/apps/$APP
+                    cd ${PRIVACYBOX_DIR}/apps/$APP
                     ${COMPOSEPATH} down -v
                 done
 
-                echo "${TIMESTAMP} All services stopped manually" >> ${WORKDIR}/logs/vpnlog.txt
+                echo "${TIMESTAMP_MINUTE} All services stopped manually" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
             elif [ "$1" == "--update" ]; then
                 for APP in "${DEPLOYED_APPS[@]}"
                 do
                 : 
-                    cd ${WORKDIR}/apps/$APP
+                    cd ${PRIVACYBOX_DIR}/apps/$APP
                     ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
                 done
 
-                echo "${TIMESTAMP} Updated all services" >> ${WORKDIR}/logs/vpnlog.txt
+                echo "${TIMESTAMP_MINUTE} Updated all services" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
             fi
 
         fi
@@ -69,31 +103,31 @@ elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ]; th
                 for APP in "${KILLSWITCH_APPS[@]}"
                 do
                 : 
-                    cd ${WORKDIR}/apps/$APP
+                    cd ${PRIVACYBOX_DIR}/apps/$APP
                     ${COMPOSEPATH} up -d
                 done
 
-                echo "${TIMESTAMP} Killswitch services started manually" >> ${WORKDIR}/logs/vpnlog.txt
+                echo "${TIMESTAMP_MINUTE} Killswitch services started manually" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
             elif [ "$1" == "--stop" ]; then
                 for APP in "${KILLSWITCH_APPS[@]}"
                 do
                 : 
-                    cd ${WORKDIR}/apps/$APP
+                    cd ${PRIVACYBOX_DIR}/apps/$APP
                     ${COMPOSEPATH} down -v
                 done
 
-                echo "${TIMESTAMP} Killswitch services stopped manually" >> ${WORKDIR}/logs/vpnlog.txt
+                echo "${TIMESTAMP_MINUTE} Killswitch services stopped manually" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
             elif [ "$1" == "--update" ]; then
                 for APP in "${KILLSWITCH_APPS[@]}"
                 do
                 : 
-                    cd ${WORKDIR}/apps/$APP
+                    cd ${PRIVACYBOX_DIR}/apps/$APP
                     ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
                 done
 
-                echo "${TIMESTAMP} Updated killswitch services" >> ${WORKDIR}/logs/vpnlog.txt
+                echo "${TIMESTAMP_MINUTE} Updated killswitch services" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
             fi
 
         fi
@@ -105,12 +139,12 @@ elif [ "$1" == "--vpncheck" ]; then
     VPNIP=$("${DOCKERPATH}" run --rm --network=container:expressvpn alpine /usr/bin/wget -qO - ifconfig.me)
 
     # # Additional debugging information
-    # echo "BASEIP = ${BASEIP}" >> ${WORKDIR}/logs/vpnlog.txt
-    # echo "VPNIP = ${VPNIP}" >> ${WORKDIR}/logs/vpnlog.txt
+    # echo "BASEIP = ${BASEIP}" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+    # echo "VPNIP = ${VPNIP}" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
     if [ "${VPNIP}" != "${BASEIP}" ]; then
-        echo "${TIMESTAMP} VPN Up" >> ${WORKDIR}/logs/vpnlog.txt
-        echo "${TIMESTAMP} Keeping services running" >> ${WORKDIR}/logs/vpnlog.txt
+        echo "${TIMESTAMP_MINUTE} VPN Up" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+        echo "${TIMESTAMP_MINUTE} Keeping services running" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
         if [ -z ${KILLSWITCH_APPS} ]; then 
             echo "No Killswitch apps are configured. Please check your privacybox.config file.";
@@ -118,14 +152,14 @@ elif [ "$1" == "--vpncheck" ]; then
             for APP in "${KILLSWITCH_APPS[@]}"
             do
             : 
-                cd ${WORKDIR}/apps/$APP
+                cd ${PRIVACYBOX_DIR}/apps/$APP
                 ${COMPOSEPATH} up -d
             done
         fi
 
     elif [ "${VPNIP}" == "${BASEIP}" ]; then
-        echo "${TIMESTAMP} VPN Down" >> ${WORKDIR}/logs/vpnlog.txt
-        echo "${TIMESTAMP} Engaging killswitch" >> ${WORKDIR}/logs/vpnlog.txt
+        echo "${TIMESTAMP_MINUTE} VPN Down" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+        echo "${TIMESTAMP_MINUTE} Engaging killswitch" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
         if [ -z ${KILLSWITCH_APPS} ]; then 
             echo "No Killswitch apps are configured. Please check your privacybox.config file.";
@@ -133,33 +167,29 @@ elif [ "$1" == "--vpncheck" ]; then
             for APP in "${KILLSWITCH_APPS[@]}"
             do
             : 
-                cd ${WORKDIR}/apps/$APP
+                cd ${PRIVACYBOX_DIR}/apps/$APP
                 ${COMPOSEPATH} down -v
             done
         fi
 
-        echo "${TIMESTAMP} Issuing VPN restart" >> ${WORKDIR}/logs/vpnlog.txt
-        cd ${WORKDIR}/apps/expressvpn
+        echo "${TIMESTAMP_MINUTE} Issuing VPN restart" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+        cd ${PRIVACYBOX_DIR}/apps/expressvpn
         ${COMPOSEPATH} down -v
         ${COMPOSEPATH} up -d
     else
-        echo "Unable to determine VPN status" >> ${WORKDIR}/logs/vpnlog.txt
+        echo "Unable to determine VPN status" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
     fi
 
 
 elif [ "$1" == "--backup" ]; then
-    source scripts/backup-data.sh
-
-elif [ "$1" == "--getcompose" ]; then
-    echo "Installing latest docker-compose"
-    sudo mv ${COMPOSEPATH} ${COMPOSEPATH}BAK${TIMESTAMP}
-	sudo curl -L "https://github.com/docker/compose/releases/download/v2.1.1/docker-compose-$(uname -s)-$(uname -m)" -o ${COMPOSEPATH}
-	sudo chmod +x ${COMPOSEPATH}
-	echo "Succesfully installed $(${COMPOSEPATH} --version)"
+    mkdir -p $BACKUP_DIR
+    sudo tar -zcvpf $BACKUP_DIR/$TIMESTAMP_HOUR-$SERVER_NAME.tar.gz $PRIVACYBOX_DIR $DOCKER_DATA_DIR
 
 else
     echo "Please append one of the following flags to this command:"
     echo "--provision"
+    echo "--getcompose"
+    echo "--free-dsm-ports"
     echo "--start --all"
     echo "--start --killswitch-apps"
     echo "--stop --all"
@@ -167,6 +197,5 @@ else
     echo "--update --all"
     echo "--update --killswitch-apps"
     echo "--vpncheck"
-    echo "--getcompose"
     echo "--backup"
 fi

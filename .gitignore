@@ -6,5 +6,7 @@ apps/traefik/data/traefik.yml
 apps/traefik/data/config.yml
 **/update-jellyfin.sh
 **/redis
+logs
+logs/privacybox.log
 vpnlog.txt
 privacybox.config
