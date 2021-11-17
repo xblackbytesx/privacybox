@@ -1,5 +1,14 @@
 # Example of deployment configuration
 
+#######################
+## STORAGE LOCATIONS ##
+#######################
+DOCKER_ROOT=/media/storage/docker
+STORAGE_ROOT=/media/storage
+
+##################################
+## APPS DEPLOYED ON THIS SYSTEM ##
+##################################
 # Array of all apps running on this system
 DEPLOYED_APPS=( baikal bitwarden cryptofolio drawio flame freshrss ghost gitea glances homeassistant invidious matrix-synapse pihole portainer searx standardnotes statping syncthing traefik wallabag wireguard )
 
