@@ -8,12 +8,12 @@ networks:
     internal: true
 
 volumes:
-  invidious-data:
+  invidious-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/invidious/data  
+      device: ${DOCKER_ROOT}/invidious/database
 
 services:
   invidious-db:
@@ -21,44 +21,29 @@ services:
     image: postgres:12-alpine
     security_opt:
       - no-new-privileges:true
+    environment:
+      - POSTGRES_DB=invidious
+      - POSTGRES_USER=kemal
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
-      - invidious-data:/var/lib/postgresql/data
+      - invidious-database:/var/lib/postgresql/data
       - ./config/sql:/config/sql
       - ./docker/init-invidious-db.sh:/docker-entrypoint-initdb.d/init-invidious-db.sh
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=false"
     networks:
       - internal
-    environment:
-      POSTGRES_DB: invidious
-      POSTGRES_USER: kemal
-      POSTGRES_PASSWORD: ${DB_USER_PASS}
+    labels:
+      - "traefik.enable=false"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
     restart: unless-stopped
 
   invidious-app:
     container_name: invidious-app
-    image: omarroth/invidious:latest
-    security_opt:
-      - no-new-privileges:true
+    image: quay.io/invidious/invidious:latest
     volumes:
       - /etc/localtime:/etc/localtime:ro
-    environment:
-      INVIDIOUS_CONFIG: |
-        channel_threads: 1
-        check_tables: true
-        feed_threads: 1
-        db:
-          user: kemal
-          password: ${DB_USER_PASS}
-          host: invidious-db
-          port: 5432
-          dbname: invidious
-        full_refresh: false
-        https_only: true
-        domain: ${SUBDOMAIN}.${DOMAIN}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.invidious-app.entrypoints=http"
@@ -71,11 +56,33 @@ services:
       - "traefik.http.routers.invidious-app-secure.service=invidious-app"
       - "traefik.http.services.invidious-app.loadbalancer.server.port=3000"
     networks:
-      - proxy
       - internal
-    # Used for SSH remoteForward
-    ports:
-      - 4001:3000
+      - proxy
+    mem_limit: 1024M
+    cpus: 0.5
+    environment:
+      INVIDIOUS_CONFIG: |
+        channel_threads: 1
+        check_tables: true
+        feed_threads: 1
+        db:
+          dbname: invidious
+          user: kemal
+          password: ${DB_USER_PASS}
+          host: invidious-db
+          port: 5432
+        full_refresh: false
+        https_only: true
+        domain: ${SUBDOMAIN}.${DOMAIN}
     depends_on:
       - invidious-db
     restart: unless-stopped
+
+  # invidious-autoheal:
+  #   container_name: invidious-autoheal
+  #   image: willfarrell/autoheal
+  #   environment:
+  #     - AUTOHEAL_CONTAINER_LABEL=all
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   restart: always
