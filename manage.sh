@@ -14,9 +14,6 @@ TIMESTAMP_HOUR=$(date +"%Y%m%d-%H")
 
 SERVER_NAME=$(cat /proc/sys/kernel/hostname)
 
-# Defaults
-DEPLOYED_APPS=( traefik portainer )
-
 # Finding Docker binary
 DOCKERPATH=$(which docker)
 COMPOSEPATH=$(which docker-compose)
