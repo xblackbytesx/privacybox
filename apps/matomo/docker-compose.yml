@@ -24,22 +24,23 @@ volumes:
 
 services:
   matomo-db:
-    container_name: "matomo-db"
-    image: "mariadb:latest"
+    container_name: matomo-db
+    image: mariadb:latest
     security_opt:
       - no-new-privileges:true
-    command: --max-allowed-packet=64MB
+    networks:
+      - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=matomo
+      - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
       - matomo-database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    networks:
-      - internal
-    environment:
-      - MYSQL_PASSWORD=${DB_USER_PASS}
-      - MYSQL_DATABASE=matomo
-      - MYSQL_USER=matomo
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
       timeout: 20s
