@@ -5,7 +5,7 @@ acme.json
 apps/traefik/data/traefik.yml
 apps/traefik/data/config.yml
 apps/ghost/deployments
-apps/hugo/deployments
+apps/nginx-static/deployments
 apps/wordpress/deployments
 **/update-jellyfin.sh
 **/redis
