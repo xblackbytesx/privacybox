@@ -35,23 +35,24 @@ volumes:
       device: ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/uploads
 
 services:
-  wp-db:
-    container_name: "wp-${COMPOSE_PROJECT_NAME}-db"
-    image: "mariadb"
+  wordpress-db:
+    container_name: wordpress-${COMPOSE_PROJECT_NAME}-db
+    image: mariadb:latest
     security_opt:
       - no-new-privileges:true
+    networks:
+      - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
       - wordpress-database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    networks:
-      - internal
-    environment:
-      - DB_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=wordpress
-      - MYSQL_USER=wordpress
-      - MYSQL_PASSWORD=${DB_USER_PASS}
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
       timeout: 20s
