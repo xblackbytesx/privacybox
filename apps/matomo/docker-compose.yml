@@ -10,7 +10,7 @@ networks:
 services:
   matomo-db:
     container_name: "matomo-db"
-    image: "mariadb"
+    image: "mariadb:latest"
     security_opt:
       - no-new-privileges:true
     command: --max-allowed-packet=64MB
