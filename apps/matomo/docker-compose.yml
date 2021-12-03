@@ -33,7 +33,7 @@ services:
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_DATABASE=matomo
       - MYSQL_USER=matomo
       - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
