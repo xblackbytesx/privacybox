@@ -19,7 +19,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/${NEXTCLOUD_DIRNAME}
+      device: ${STORAGE_ROOT}/${NEXTCLOUD_DIRNAME}
   nextcloud-db:
     driver: local
     driver_opts:
