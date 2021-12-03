@@ -35,8 +35,8 @@ volumes:
       device: ${DOCKER_ROOT}/wordpress/${COMPOSE_PROJECT_NAME}/uploads
 
 services:
-  wordpress-db:
-    container_name: wordpress-${COMPOSE_PROJECT_NAME}-db
+  wp-db:
+    container_name: wp-${COMPOSE_PROJECT_NAME}-db
     image: mariadb:latest
     security_opt:
       - no-new-privileges:true
