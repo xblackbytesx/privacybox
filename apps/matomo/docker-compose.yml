@@ -7,6 +7,21 @@ networks:
   internal:
     internal: true
 
+volumes:
+  matamo-app:
+  matomo-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/matomo/database
+  matomo-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/matomo/config
+
 services:
   matomo-db:
     container_name: "matomo-db"
@@ -15,7 +30,7 @@ services:
       - no-new-privileges:true
     command: --max-allowed-packet=64MB
     volumes:
-      - ${DOCKER_ROOT}/matomo/matomo-db:/var/lib/mysql
+      - matomo-database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -37,11 +52,10 @@ services:
     image: "matomo:fpm-alpine"
     security_opt:
       - no-new-privileges:true
-    restart: unless-stopped
     depends_on:
       - matomo-db
     volumes:
-      - ${DOCKER_ROOT}/matomo/config:/var/www/html/config:rw
+      - matomo-config:/var/www/html/config:rw
       # - ./logs:/var/www/html/logs
       - matomo-app:/var/www/html
       - /etc/localtime:/etc/localtime:ro
@@ -56,11 +70,14 @@ services:
       - MATOMO_DATABASE_USERNAME=matomo
       - MATOMO_DATABASE_PASSWORD=${DB_USER_PASS}
       - MATOMO_DATABASE_DBNAME=matomo
+    restart: unless-stopped
+
 
   matomo-nginx:
     container_name: "matomo-nginx"
     image: "nginx:alpine"
-    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - matomo-app:/var/www/html:ro
       - ./matomo.conf:/etc/nginx/conf.d/default.conf:ro
@@ -79,7 +96,4 @@ services:
     networks:
       - proxy
       - internal
-
-volumes:
-  matomo-db:
-  matomo-app:
+    restart: unless-stopped
