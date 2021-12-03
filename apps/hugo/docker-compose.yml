@@ -6,12 +6,12 @@ networks:
     external: true
 
 volumes:
-  hugo-output:
+  hugo-public:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/hugo/${COMPOSE_PROJECT_NAME}/output
+      device: ${DOCKER_ROOT}/hugo/${COMPOSE_PROJECT_NAME}/public
 
 services:
 
@@ -21,7 +21,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - hugo-output:/static
+      - hugo-public:/static
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
