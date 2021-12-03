@@ -61,7 +61,7 @@ services:
 
   wp-app:
     container_name: "wp-${COMPOSE_PROJECT_NAME}-app"
-    image: "wordpress:php8.1-fpm-alpine"
+    image: "wordpress:php8.0-fpm-alpine"
     security_opt:
       - no-new-privileges:true
     depends_on:
