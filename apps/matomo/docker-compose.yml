@@ -8,7 +8,7 @@ networks:
     internal: true
 
 volumes:
-  matamo-app:
+  matomo-app:
   matomo-database:
     driver: local
     driver_opts:
