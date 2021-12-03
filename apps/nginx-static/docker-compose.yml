@@ -1,0 +1,39 @@
+version: '3.3'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  nginx-static-public:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/nginx-static/${COMPOSE_PROJECT_NAME}/public
+
+services:
+
+  nginx-static-app:
+    container_name: "nginx-static-${COMPOSE_PROJECT_NAME}"
+    image: "flashspys/nginx-static"
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - nginx-static-public:/static
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}.entrypoints=http"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}.rule=Host(`${SITE_URL}`)"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}.middlewares=secured@file"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.entrypoints=https"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.rule=Host(`${SITE_URL}`)"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls=true"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.service=nginx-static-${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.nginx-static-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+    networks:
+      - proxy
+    restart: unless-stopped
