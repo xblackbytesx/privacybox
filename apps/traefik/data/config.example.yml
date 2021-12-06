@@ -4,12 +4,13 @@ http:
       chain:
         middlewares:
           - https-only
-          - known-ips
+          # - known-ips
           - secure-headers
 
     https-only:
       redirectScheme:
         scheme: https
+        permanent: true
 
     known-ips:
       ipWhiteList:

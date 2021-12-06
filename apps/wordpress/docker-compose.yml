@@ -108,13 +108,29 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.entrypoints=http"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${BLOG_URL}`)"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.middlewares=secured@file"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.middlewares=nc-rep,nc-header"
+      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)"
+      - "traefik.http.middlewares.redirect-www.redirectregex.regex=^https?://www.`${BLOG_URL}`"
+      - "traefik.http.middlewares.redirect-www.redirectregex.replacement=https://`${BLOG_URL}`"
+      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.middlewares=secured@file,redirect-www"
       - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=https"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${BLOG_URL}`)"
+      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)"
       - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls=true"
       - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.service=wp-${COMPOSE_PROJECT_NAME}-nginx"
       - "traefik.http.services.wp-${COMPOSE_PROJECT_NAME}-nginx.loadbalancer.server.port=80"
     restart: unless-stopped
+
+  # wp-redis:
+  #   container_name: wp-${COMPOSE_PROJECT_NAME}-redis
+  #   image: redis:alpine
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   networks: 
+  #     - internal
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #   labels:
+  #     - "traefik.enable=false"
+  #   restart: unless-stopped
