@@ -22,7 +22,7 @@ providers:
     exposedByDefault: false
     network: proxy
   file:
-    filename: /config.yml
+    filename: ./config.yml
 
 certificatesResolvers:
   # le-http:

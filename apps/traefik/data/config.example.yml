@@ -4,7 +4,6 @@ http:
       chain:
         middlewares:
           - https-only
-          # - known-ips
           - secure-headers
 
     https-only:
@@ -12,20 +11,19 @@ http:
         scheme: https
         permanent: true
 
-    known-ips:
-      ipWhiteList:
-        sourceRange:
-          - "192.168.1.7"
-          - "127.0.0.1/32"
-          - "10.0.221.0/24"
+    # known-ips:
+    #   ipWhiteList:
+    #     sourceRange:
+    #       - "192.168.1.7"
+    #       - "127.0.0.1/32"
+    #       - "10.0.221.0/24"
 
     secure-headers:
       headers:
-        browserXssFilter: true
         contentTypeNosniff: true
         frameDeny: true
+        browserxssfilter: true
         forceSTSHeader: true
-        sslRedirect: true
         stsIncludeSubdomains: true
         stsPreload: true
         stsSeconds: 31536000
