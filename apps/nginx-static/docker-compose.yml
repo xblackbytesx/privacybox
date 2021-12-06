@@ -25,17 +25,17 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.entrypoints=http"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${SITE_URL}`, `www.${SITE_URL}`)"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}.entrypoints=http"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}.rule=Host(`${SITE_URL}`, `www.${SITE_URL}`)"
       - "traefik.http.middlewares.redirect-www.redirectregex.regex=^https?://www.`${SITE_URL}`"
       - "traefik.http.middlewares.redirect-www.redirectregex.replacement=https://`${SITE_URL}`"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.middlewares=secured@file,redirect-www"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=https"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${SITE_URL}`, `www.${SITE_URL}`)"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls=true"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.service=wp-${COMPOSE_PROJECT_NAME}-nginx"
-      - "traefik.http.services.wp-${COMPOSE_PROJECT_NAME}-nginx.loadbalancer.server.port=80"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}.middlewares=secured@file,redirect-www"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.entrypoints=https"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.rule=Host(`${SITE_URL}`, `www.${SITE_URL}`)"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls=true"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.service=nginx-static-${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.nginx-static-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
     networks:
       - proxy
     restart: unless-stopped
