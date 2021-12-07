@@ -29,6 +29,11 @@ http:
         stsSeconds: 31536000
         customFrameOptionsValue: "SAMEORIGIN"
 
+    basic-auth:
+      basicAuth:
+        users:
+          - "traefik:$2y$10$nR04m05URGiA5ZeJOtjMU.BnjKL9YTza02XAtIZORAtUyJxT9JxLe"
+
     # # Middleware for redirecting Nextcloud's Cal & Cardav URLS
     # nextcloud-dav:
     #   redirectRegex:
