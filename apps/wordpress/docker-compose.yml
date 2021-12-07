@@ -111,7 +111,7 @@ services:
       - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-      - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://www.`${BLOG_URL}`"
+      - "traefik.http.middlewares.strip-www.redirectregex.regex=^http?://www.`${BLOG_URL}`"
       - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://`${BLOG_URL}`"
       - "traefik.http.middlewares.sec-headers.headers.framedeny=true"
       - "traefik.http.middlewares.sec-headers.headers.browserxssfilter=true"
