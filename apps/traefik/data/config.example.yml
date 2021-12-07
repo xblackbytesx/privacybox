@@ -5,18 +5,17 @@ http:
         middlewares:
           - https-only
           - secure-headers
+          - gzip-compress
 
     https-only:
       redirectScheme:
         scheme: https
         permanent: true
 
-    # known-ips:
-    #   ipWhiteList:
-    #     sourceRange:
-    #       - "192.168.1.7"
-    #       - "127.0.0.1/32"
-    #       - "10.0.221.0/24"
+    strip-www:
+      redirectRegex:
+        regex: "^https://www.(.*)"
+        replacement: "https://${1}"
 
     secure-headers:
       headers:
@@ -28,6 +27,16 @@ http:
         stsPreload: true
         stsSeconds: 31536000
         customFrameOptionsValue: "SAMEORIGIN"
+
+    gzip-compress:
+      compress: {}
+
+    known-ips:
+      ipWhiteList:
+        sourceRange:
+          - "192.168.1.7"
+          - "127.0.0.1/32"
+          - "10.0.221.0/24"
 
     basic-auth:
       basicAuth:
