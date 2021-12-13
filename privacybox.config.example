@@ -5,6 +5,7 @@
 #######################
 DOCKER_ROOT=/media/storage/docker
 STORAGE_ROOT=/media/storage
+BACKUP_ROOT=/media/storage/backups
 
 ##################################
 ## APPS DEPLOYED ON THIS SYSTEM ##

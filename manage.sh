@@ -21,7 +21,7 @@ COMPOSEPATH=$(which docker-compose)
 # Establishing privacybox dir locations
 PRIVACYBOX_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 DOCKER_DATA_DIR=$DOCKER_ROOT
-BACKUP_DIR=$STORAGE_ROOT/backups
+BACKUP_DIR=$BACKUP_ROOT
 
 
 ###############
