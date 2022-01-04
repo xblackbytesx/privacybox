@@ -11,7 +11,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/minecraft-bedrock-server/data
+      device: ${DOCKER_ROOT}/minecraft-server/bedrock/data
 
 services:
   minecraft-bedrock-server:
