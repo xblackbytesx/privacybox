@@ -24,8 +24,8 @@ services:
     ports:
       - 19132:19132/udp
     environment:
-      UID: ${PUID}
-      GID: ${PGID}
+      # UID: ${PUID}
+      # GID: ${PGID}
       EULA: "TRUE"
       SERVER_NAME: ${SERVER_NAME}
       GAMEMODE: ${GAME_MODE}
