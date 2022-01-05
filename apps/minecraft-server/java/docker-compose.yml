@@ -31,7 +31,7 @@ services:
       GAMEMODE: ${GAME_MODE}
       DIFFICULTY: ${DIFFICULTY}
       WHITELIST_FILE: "./whitelist.json"
-      ONLINE_MODE: ${ONLINE_MODE}
+      # ONLINE_MODE: ${ONLINE_MODE}
     volumes:
       - minecraft-data:/data
       - /etc/localtime:/etc/localtime:ro
