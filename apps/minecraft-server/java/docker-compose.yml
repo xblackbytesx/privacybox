@@ -1,9 +1,9 @@
 version: "3.3"
 
-networks:
-  proxy:
-    name: proxy
-    external: true
+# networks:
+#   proxy:
+#     name: proxy
+#     external: true
 
 volumes:
   minecraft-data:
@@ -11,34 +11,39 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/minecraft-server/java/data
+      device: ${DOCKER_ROOT}/minecraft-server/bedrock/data
 
 services:
   minecraft-java-server:
     container_name: minecraft-java-server
-    image: itzg/minecraft-java-server:latest
+    image: itzg/minecraft-server:latest
     security_opt:
       - no-new-privileges:true
-    networks:
-      - proxy
+    # networks:
+    #   - proxy
+    ports:
+      - 25565:25565/udp
     environment:
-      - UID=${PUID}
-      - GID=${PGID}
-      - EULA=TRUE
-      - SERVER_NAME=${SERVER_NAME}
-      - ONLINE_MODE=${ONLINE_MODE}
+      UID: ${PUID}
+      GID: ${PGID}
+      EULA: "TRUE"
+      SERVER_NAME: ${SERVER_NAME}
+      GAMEMODE: ${GAME_MODE}
+      DIFFICULTY: ${DIFFICULTY}
+      WHITELIST_FILE: "./whitelist.json"
+      ONLINE_MODE: ${ONLINE_MODE}
     volumes:
       - minecraft-data:/data
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.minecraft-java-server.entrypoints=http"
-      - "traefik.http.routers.minecraft-java-server.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.minecraft-java-server.middlewares=secured@file"
-      - "traefik.http.routers.minecraft-java-server-secure.entrypoints=https"
-      - "traefik.http.routers.minecraft-java-server-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.minecraft-java-server-secure.tls=true"
-      - "traefik.http.routers.minecraft-java-server-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.minecraft-java-server-secure.service=minecraft-java-server"
-      - "traefik.http.services.minecraft-java-server.loadbalancer.server.port=25565"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.minecraft-java-server.entrypoints=http"
+    #   - "traefik.http.routers.minecraft-java-server.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.minecraft-java-server.middlewares=secured@file"
+    #   - "traefik.http.routers.minecraft-java-server-secure.entrypoints=https"
+    #   - "traefik.http.routers.minecraft-java-server-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+    #   - "traefik.http.routers.minecraft-java-server-secure.tls=true"
+    #   - "traefik.http.routers.minecraft-java-server-secure.tls.certresolver=le-dns"
+    #   - "traefik.http.routers.minecraft-java-server-secure.service=minecraft-java-server"
+    #   - "traefik.http.services.minecraft-java-server.loadbalancer.server.port=25565"
     restart: unless-stopped
