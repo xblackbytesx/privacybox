@@ -46,7 +46,7 @@ services:
     volumes:
       - ampache-config:/var/www/config
       - ampache-log:/var/log/ampache
-      - ampache-media:/media
+      - ampache-media:/media:ro
       - ampache-database:/var/lib/mysql
       - ampache-sites-enabled:/etc/apache2/sites-enabled
       - /etc/localtime:/etc/localtime:ro
