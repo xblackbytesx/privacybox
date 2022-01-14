@@ -1,0 +1,127 @@
+version: "3"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  funkwhale-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/funkwhale/config
+  funkwhale-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/funkwhale/database/
+
+services:
+  postgres:
+    restart: unless-stopped
+    networks:
+      - default
+    env_file: .env
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+    image: postgres:11
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  redis:
+    restart: unless-stopped
+    networks:
+      - default
+    env_file: .env
+    image: redis:5
+    volumes:
+      - ./data/redis:/data
+
+  celeryworker:
+    restart: unless-stopped
+    image: funkwhale/funkwhale:latest
+    networks:
+      - default
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+    # Celery workers handle background tasks (such file imports or federation
+    # messaging). The more processes a worker gets, the more tasks
+    # can be processed in parallel. However, more processes also means
+    # a bigger memory footprint.
+    # By default, a worker will span a number of process equal to your number
+    # of CPUs. You can adjust this, by explicitly setting the --concurrency
+    # flag:
+    #   celery -A funkwhale_api.taskapp worker -l INFO --concurrency=4
+    command: celery -A funkwhale_api.taskapp worker -l INFO --concurrency=${CELERYD_CONCURRENCY-0}
+    environment:
+      - C_FORCE_ROOT=true
+    volumes:
+      - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
+      - "${MEDIA_ROOT}:${MEDIA_ROOT}"
+
+  celerybeat:
+    restart: unless-stopped
+    image: funkwhale/funkwhale:latest
+    networks:
+      - default
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+    command: celery -A funkwhale_api.taskapp beat --pidfile= -l INFO
+
+  api:
+    restart: unless-stopped
+    image: funkwhale/funkwhale:latest
+    networks:
+      - default
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+    volumes:
+      - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
+      - "${MEDIA_ROOT}:${MEDIA_ROOT}"
+      - "${STATIC_ROOT}:${STATIC_ROOT}"
+      - "${FUNKWHALE_FRONTEND_PATH}:/frontend"
+    ports:
+      - "5000"
+
+  nginx:
+    restart: unless-stopped
+    image: nginx
+    networks:
+      - default
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      # Override those variables in your .env file if needed
+      - "NGINX_MAX_BODY_SIZE=${NGINX_MAX_BODY_SIZE-100M}"
+    volumes:
+      - "./nginx/funkwhale.template:/etc/nginx/conf.d/funkwhale.template:ro"
+      - "./nginx/funkwhale_proxy.conf:/etc/nginx/funkwhale_proxy.conf:ro"
+      - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
+      - "${MEDIA_ROOT}:${MEDIA_ROOT}:ro"
+      - "${STATIC_ROOT}:${STATIC_ROOT}:ro"
+      - "${FUNKWHALE_FRONTEND_PATH}:/frontend:ro"
+    ports:
+      # override those variables in your .env file if needed
+      - "${FUNKWHALE_API_IP}:${FUNKWHALE_API_PORT}:80"
+    command: >
+        sh -c "envsubst \"`env | awk -F = '{printf \" $$%s\", $$1}'`\"
+        < /etc/nginx/conf.d/funkwhale.template
+        > /etc/nginx/conf.d/default.conf
+        && cat /etc/nginx/conf.d/default.conf
+        && nginx -g 'daemon off;'"
+
+networks:
+  internal:
