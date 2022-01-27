@@ -30,7 +30,8 @@ services:
       SERVER_NAME: ${SERVER_NAME}
       GAMEMODE: ${GAME_MODE}
       DIFFICULTY: ${DIFFICULTY}
-      WHITELIST_FILE: "./whitelist.json"
+      ALLOW_LIST: "./allowlist.json"
+      ALLOW_CHEATS: "true"
       # ONLINE_MODE: ${ONLINE_MODE}
     volumes:
       - minecraft-data:/data
