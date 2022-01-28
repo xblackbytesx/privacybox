@@ -46,7 +46,7 @@ if [ "$1" == "--provision" ]; then
 elif [ "$1" == "--getcompose" ]; then
     echo "Installing latest docker-compose"
     sudo mv ${COMPOSEPATH} ${COMPOSEPATH}BAK${TIMESTAMP_MINUTE}
-	sudo curl -L "https://github.com/docker/compose/releases/download/v2.2.2/docker-compose-$(uname -s)-$(uname -m)" -o ${COMPOSEPATH}
+	sudo curl -L "https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m)" -o ${COMPOSEPATH}
 	sudo chmod +x ${COMPOSEPATH}
 	echo "Succesfully installed $(${COMPOSEPATH} --version)"
 
