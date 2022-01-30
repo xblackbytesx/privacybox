@@ -63,7 +63,7 @@ services:
     volumes:
       - ghost-content:/var/lib/ghost/content
     labels:
-      - traefik.enable=true"
+      - traefik.enable=true
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.entrypoints=http
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=https
