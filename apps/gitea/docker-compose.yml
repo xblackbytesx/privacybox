@@ -68,16 +68,16 @@ services:
       - DB_USER=gitea
       - DB_PASSWD=${DB_USER_PASS}
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.gitea-app.entrypoints=http"
-      - "traefik.http.routers.gitea-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.gitea-app.middlewares=secured@file"
-      - "traefik.http.routers.gitea-app-secure.entrypoints=https"
-      - "traefik.http.routers.gitea-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.gitea-app-secure.tls=true"
-      - "traefik.http.routers.gitea-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.gitea-app-secure.service=gitea-app"
-      - "traefik.http.services.gitea-app.loadbalancer.server.port=3000"
+      - traefik.enable=true
+      - traefik.http.routers.gitea-app.entrypoints=http
+      - traefik.http.routers.gitea-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.gitea-app-secure.entrypoints=https
+      - traefik.http.routers.gitea-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.gitea-app-secure.tls=true
+      - traefik.http.routers.gitea-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.gitea-app-secure.service=gitea-app
+      - traefik.http.routers.gitea-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.gitea-app.loadbalancer.server.port=3000
     networks:
       - proxy
       - internal

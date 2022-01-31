@@ -52,16 +52,16 @@ services:
     # devices:
     #   - /dev/snd:/dev/snd #optional
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.airsonic-app.entrypoints=http"
-      - "traefik.http.routers.airsonic-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.airsonic-app.middlewares=secured@file"
-      - "traefik.http.routers.airsonic-app-secure.entrypoints=https"
-      - "traefik.http.routers.airsonic-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.airsonic-app-secure.tls=true"
-      - "traefik.http.routers.airsonic-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.airsonic-app-secure.service=airsonic-app"
-      - "traefik.http.services.airsonic-app.loadbalancer.server.port=4040"
+      - traefik.enable=true
+      - traefik.http.routers.airsonic.entrypoints=http
+      - traefik.http.routers.airsonic.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.airsonic-secure.entrypoints=https
+      - traefik.http.routers.airsonic-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.airsonic-secure.tls=true
+      - traefik.http.routers.airsonic-secure.tls.certresolver=le-dns
+      - traefik.http.routers.airsonic-secure.service=airsonic
+      - traefik.http.routers.airsonic-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.airsonic.loadbalancer.server.port=4040
     networks:
       - proxy
     restart: unless-stopped

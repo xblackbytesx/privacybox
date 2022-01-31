@@ -68,16 +68,16 @@ services:
     depends_on:
       - huginn-db
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.huginn.entrypoints=http"
-      - "traefik.http.routers.huginn.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.huginn.middlewares=secured@file"
-      - "traefik.http.routers.huginn-secure.entrypoints=https"
-      - "traefik.http.routers.huginn-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.huginn-secure.tls=true"
-      - "traefik.http.routers.huginn-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.huginn-secure.service=huginn"
-      - "traefik.http.services.huginn.loadbalancer.server.port=3000"
+      - traefik.enable=true
+      - traefik.http.routers.hugin.entrypoints=http
+      - traefik.http.routers.hugin.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.hugin-secure.entrypoints=https
+      - traefik.http.routers.hugin-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.hugin-secure.tls=true
+      - traefik.http.routers.hugin-secure.tls.certresolver=le-dns
+      - traefik.http.routers.hugin-secure.service=hugin
+      - traefik.http.routers.hugin-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.hugin.loadbalancer.server.port=3000
     networks:
       - internal
       - proxy

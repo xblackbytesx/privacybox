@@ -8,120 +8,164 @@ networks:
     internal: true
 
 volumes:
-  funkwhale-config:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DOCKER_ROOT}/funkwhale/config
   funkwhale-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/funkwhale/database/
+      device: ${DOCKER_ROOT}/funkwhale/database
+  funkwhale-frontend:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/funkwhale/frontend
+  funkwhale-music:
+    driver: local
+    driver_opts:
+      type: none
+      o: bindf
+      device: ${STORAGE_ROOT}/funkwhale/data/music
+  funkwhale-statics:
+    driver: local
+    driver_opts:
+      type: none
+      o: bindf
+      device: ${STORAGE_ROOT}/funkwhale/data/statics
+  funkwhale-media:
+    driver: local
+    driver_opts:
+      type: none
+      o: bindf
+      device: ${STORAGE_ROOT}/funkwhale/data/music
 
 services:
-  postgres:
-    restart: unless-stopped
-    networks:
-      - default
-    env_file: .env
+  funkwhale-db:
+    container_name: funkwhale-db
+    image: postgres:12-alpine
+    security_opt:
+      - no-new-privileges:true
     environment:
+      # - POSTGRES_DB=funkwhale
+      # - POSTGRES_USER=funkwhale
+      # - POSTGRES_PASSWORD=${DB_USER_PASS}
+      # - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
       - "POSTGRES_HOST_AUTH_METHOD=trust"
-    image: postgres:11
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-
-  redis:
-    restart: unless-stopped
+      - funkwhale-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
     networks:
-      - default
-    env_file: .env
-    image: redis:5
-    volumes:
-      - ./data/redis:/data
-
-  celeryworker:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
     restart: unless-stopped
+
+  funkwhale-celeryworker:
+    container_name: funkwhale-celeryworker
     image: funkwhale/funkwhale:latest
+    security_opt:
+      - no-new-privileges:true
     networks:
-      - default
+      - internal
     depends_on:
-      - postgres
-      - redis
-    env_file: .env
-    # Celery workers handle background tasks (such file imports or federation
-    # messaging). The more processes a worker gets, the more tasks
-    # can be processed in parallel. However, more processes also means
-    # a bigger memory footprint.
-    # By default, a worker will span a number of process equal to your number
-    # of CPUs. You can adjust this, by explicitly setting the --concurrency
-    # flag:
-    #   celery -A funkwhale_api.taskapp worker -l INFO --concurrency=4
-    command: celery -A funkwhale_api.taskapp worker -l INFO --concurrency=${CELERYD_CONCURRENCY-0}
+      - funkwhale-db
+      - funkwhale-redis
+    command: celery -A funkwhale_api.taskapp worker -l INFO --concurrency=0
     environment:
       - C_FORCE_ROOT=true
     volumes:
-      - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
-      - "${MEDIA_ROOT}:${MEDIA_ROOT}"
-
-  celerybeat:
+      - "funkwhale-music:/music}:ro"
+      - "funkwhale-media:funkwhale-media"
     restart: unless-stopped
+
+  funkwhale-celerybeat:
+    container_name: funkwhale-celerybeat
     image: funkwhale/funkwhale:latest
+    security_opt:
+      - no-new-privileges:true
     networks:
-      - default
+      - internal
     depends_on:
-      - postgres
-      - redis
-    env_file: .env
+      - funkwhale-db
+      - funkwhale-redis
     command: celery -A funkwhale_api.taskapp beat --pidfile= -l INFO
-
-  api:
     restart: unless-stopped
+
+  funkwhale-api:
+    container_name: funkwhale-api
     image: funkwhale/funkwhale:latest
+    security_opt:
+      - no-new-privileges:true
     networks:
-      - default
+      - internal
     depends_on:
-      - postgres
-      - redis
+      - funkwhale-db
+      - funkwhale-redis
     env_file: .env
     volumes:
-      - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
-      - "${MEDIA_ROOT}:${MEDIA_ROOT}"
-      - "${STATIC_ROOT}:${STATIC_ROOT}"
-      - "${FUNKWHALE_FRONTEND_PATH}:/frontend"
+      - "funkwhale-music:/music}:ro"
+      - "funkwhale-media:funkwhale-media"
+      - "funkwhale-static:funkwhale-static"
+      - "funkwhale-frontend:/frontend"
     ports:
       - "5000"
-
-  nginx:
     restart: unless-stopped
-    image: nginx
+
+  funkwhale-nginx:
+    container_name: funkwhale-nginx
+    image: nginx:alpine
+    security_opt:
+      - no-new-privileges:true
     networks:
-      - default
+      - internal
+      - proxy
     depends_on:
-      - api
-    env_file:
-      - .env
+      - funkwhale-api
     environment:
       # Override those variables in your .env file if needed
-      - "NGINX_MAX_BODY_SIZE=${NGINX_MAX_BODY_SIZE-100M}"
+      - "NGINX_MAX_BODY_SIZE=100M"
     volumes:
       - "./nginx/funkwhale.template:/etc/nginx/conf.d/funkwhale.template:ro"
       - "./nginx/funkwhale_proxy.conf:/etc/nginx/funkwhale_proxy.conf:ro"
-      - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
-      - "${MEDIA_ROOT}:${MEDIA_ROOT}:ro"
-      - "${STATIC_ROOT}:${STATIC_ROOT}:ro"
-      - "${FUNKWHALE_FRONTEND_PATH}:/frontend:ro"
+      - "funkwhale-music:/music:ro"
+      - "funkwhale-media:funkwhale-media:ro"
+      - "funkwhale-static:funkwhale-static:ro"
+      - "funkwhale-frontend:/frontend:ro"
     ports:
       # override those variables in your .env file if needed
       - "${FUNKWHALE_API_IP}:${FUNKWHALE_API_PORT}:80"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.funkwhale-app.entrypoints=http
+      - traefik.http.routers.funkwhale-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.funkwhale-app-secure.entrypoints=https
+      - traefik.http.routers.funkwhale-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.funkwhale-app-secure.tls=true
+      - traefik.http.routers.funkwhale-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.funkwhale-app-secure.service=funkwhale-app
+      - traefik.http.routers.funkwhale-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.funkwhale-app.loadbalancer.server.port=80
     command: >
         sh -c "envsubst \"`env | awk -F = '{printf \" $$%s\", $$1}'`\"
         < /etc/nginx/conf.d/funkwhale.template
         > /etc/nginx/conf.d/default.conf
         && cat /etc/nginx/conf.d/default.conf
         && nginx -g 'daemon off;'"
+    restart: unless-stopped
 
-networks:
-  internal:
+  funkwhale-redis:
+    container_name: funkwhale-redis
+    image: redis:alpine
+    security_opt:
+      - no-new-privileges:true
+    networks: 
+      - internal
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped

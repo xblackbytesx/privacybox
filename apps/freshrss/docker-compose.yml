@@ -60,16 +60,16 @@ services:
       - freshrss-config:/config
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.freshrss-app.entrypoints=http"
-      - "traefik.http.routers.freshrss-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.freshrss-app.middlewares=secured@file"
-      - "traefik.http.routers.freshrss-app-secure.entrypoints=https"
-      - "traefik.http.routers.freshrss-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.freshrss-app-secure.tls=true"
-      - "traefik.http.routers.freshrss-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.freshrss-app-secure.service=freshrss-app"
-      - "traefik.http.services.freshrss-app.loadbalancer.server.port=80"
+      - traefik.enable=true
+      - traefik.http.routers.freshrss-app.entrypoints=http
+      - traefik.http.routers.freshrss-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.freshrss-app-secure.entrypoints=https
+      - traefik.http.routers.freshrss-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.freshrss-app-secure.tls=true
+      - traefik.http.routers.freshrss-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.freshrss-app-secure.service=freshrss-app
+      - traefik.http.routers.freshrss-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.freshrss-app.loadbalancer.server.port=80
     depends_on:
       - freshrss-db
     networks: 

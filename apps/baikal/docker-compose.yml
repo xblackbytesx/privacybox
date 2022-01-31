@@ -57,16 +57,16 @@ services:
       - baikal-data:/var/www/baikal/Specific
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.baikal.entrypoints=http"
-      - "traefik.http.routers.baikal.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.baikal.middlewares=secured@file"
-      - "traefik.http.routers.baikal-secure.entrypoints=https"
-      - "traefik.http.routers.baikal-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.baikal-secure.tls=true"
-      - "traefik.http.routers.baikal-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.baikal-secure.service=baikal"
-      - "traefik.http.services.baikal.loadbalancer.server.port=80"
+      - traefik.enable=true
+      - traefik.http.routers.baikal.entrypoints=http
+      - traefik.http.routers.baikal.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.baikal-secure.entrypoints=https
+      - traefik.http.routers.baikal-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.baikal-secure.tls=true
+      - traefik.http.routers.baikal-secure.tls.certresolver=le-dns
+      - traefik.http.routers.baikal-secure.service=baikal
+      - traefik.http.routers.baikal-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.baikal.loadbalancer.server.port=80
     networks:
       - proxy
     restart: unless-stopped
