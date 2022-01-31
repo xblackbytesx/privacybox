@@ -7,7 +7,10 @@ http:
   #       - https
   #     rule: Host(`hass.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-homeassistant
   #     tls:
   #       certResolver: le-dns
@@ -16,7 +19,10 @@ http:
   #       - https
   #     rule: Host(`jellyfin.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-jellyfin
   #     tls:
   #       certResolver: le-dns
@@ -25,7 +31,10 @@ http:
   #       - https
   #     rule: Host(`transmission.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-transmission
   #     tls:
   #       certResolver: le-dns
@@ -34,7 +43,10 @@ http:
   #       - https
   #     rule: Host(`nzbget.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-nzbget
   #     tls:
   #       certResolver: le-dns
@@ -43,7 +55,10 @@ http:
   #       - https
   #     rule: Host(`jackett.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-jackett
   #     tls:
   #       certResolver: le-dns
@@ -52,7 +67,10 @@ http:
   #       - https
   #     rule: Host(`prowlarr.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-prowlarr
   #     tls:
   #       certResolver: le-dns
@@ -61,7 +79,10 @@ http:
   #       - https
   #     rule: Host(`sonarr.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-sonarr
   #     tls:
   #       certResolver: le-dns
@@ -70,7 +91,10 @@ http:
   #       - https
   #     rule: Host(`radarr.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-radarr
   #     tls:
   #       certResolver: le-dns
@@ -79,7 +103,10 @@ http:
   #       - https
   #     rule: Host(`readarr.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-readarr
   #     tls:
   #       certResolver: le-dns
@@ -88,7 +115,10 @@ http:
   #       - https
   #     rule: Host(`lidarr.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-lidarr
   #     tls:
   #       certResolver: le-dns
@@ -97,7 +127,10 @@ http:
   #       - https
   #     rule: Host(`spotweb.privacy.box`)
   #     middlewares: 
-  #       - secured
+  #       - https_redirect@docker
+  #       - non_www@docker
+  #       - sec_headers@docker
+  #       - gzip_compress@docker
   #     service: service-spotweb
   #     tls:
   #       certResolver: le-dns
