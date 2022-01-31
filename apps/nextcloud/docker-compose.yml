@@ -2,8 +2,8 @@ version: "3.3"
 
 networks:
   proxy:
-    external: 
-      name: proxy
+    name: proxy
+    external: true
   internal:
     internal: true
 
@@ -104,16 +104,22 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro 
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.nextcloud-nginx.entrypoints=http"
-      - "traefik.http.routers.nextcloud-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.nextcloud-nginx.middlewares=nextcloud-dav@file,secured@file"
-      - "traefik.http.routers.nextcloud-nginx-secure.entrypoints=https"
-      - "traefik.http.routers.nextcloud-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.nextcloud-nginx-secure.tls=true"
-      - "traefik.http.routers.nextcloud-nginx-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.nextcloud-nginx-secure.service=nextcloud-nginx"
-      - "traefik.http.services.nextcloud-nginx.loadbalancer.server.port=80"
+      - traefik.enable=true
+      - traefik.http.routers.nextcloud-nginx.entrypoints=http
+      - traefik.http.routers.nextcloud-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.nextcloud-nginx-secure.entrypoints=https
+      - traefik.http.routers.nextcloud-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.nextcloud-nginx-secure.tls=true
+      - traefik.http.routers.nextcloud-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.nextcloud-nginx-secure.service=nextcloud-nginx
+      - traefik.http.routers.nextcloud-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker,well_known_dav@docker,well_known_finger@docker
+      - traefik.http.services.nextcloud-nginx.loadbalancer.server.port=80
+
+      - traefik.http.middlewares.well_known_dav.redirectregex.regex=^(http|https)?://(.*)/.well-known/(card|cal)dav
+      - traefik.http.middlewares.well_known_dav.redirectregex.replacement=https://$${1}/remote.php/dav/
+
+      - traefik.http.middlewares.well_known_finger.redirectregex.regex=^(http|https)?://.well-known/(webfinger|nodeinfo)
+      - traefik.http.middlewares.well_known_finger.redirectregex.replacement=https://$${1}/index.php$${2}
     restart: unless-stopped
 
   nextcloud-redis:
@@ -149,89 +155,3 @@ services:
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
-
-# version: '3'
-
-# networks:
-#   proxy:
-#     name: proxy
-#     external: true
-#   internal:
-#     internal: true
-
-# volumes:
-#   nextcloud-config:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ${DOCKER_ROOT}/nextcloud/config
-#   nextcloud-data:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ${STORAGE_ROOT}/${NEXTCLOUD_DIRNAME}
-#   nextcloud-db:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: ${DOCKER_ROOT}/nextcloud/database/
-
-# services:
-#   nextcloud-db:
-#     container_name: nextcloud-db
-#     image: mariadb:latest
-#     security_opt:
-#       - no-new-privileges:true
-#     networks:
-#       - internal
-#     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --skip-innodb-read-only-compressed
-#     environment:
-#       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-#       - MYSQL_DATABASE=nextcloud
-#       - MYSQL_USER=nextcloud
-#       - MYSQL_PASSWORD=${DB_USER_PASS}
-#     volumes:
-#       - nextcloud-db:/var/lib/mysql
-#       - /etc/localtime:/etc/localtime:ro
-#     labels:
-#       - "traefik.enable=false"
-#     healthcheck:
-#       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-#       timeout: 20s
-#       interval: 15s
-#       retries: 30
-#     restart: unless-stopped
-
-#   nextcloud-app:
-#     container_name: nextcloud-app
-#     image: ghcr.io/linuxserver/nextcloud:latest
-#     security_opt:
-#       - no-new-privileges:true
-#     depends_on:
-#       - nextcloud-db
-#     environment:
-#       - PUID=${PUID}
-#       - PGID=${PGID}
-#       - TZ=Europe/Amsterdam
-#     volumes:
-#       - nextcloud-config:/config
-#       - nextcloud-data:/data
-#       - /etc/localtime:/etc/localtime:ro
-#     labels:
-#       - "traefik.enable=true"
-#       - "traefik.http.routers.nextcloud-app.entrypoints=http"
-#       - "traefik.http.routers.nextcloud-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       - "traefik.http.routers.nextcloud-app.middlewares=secured@file"
-#       - "traefik.http.routers.nextcloud-app-secure.entrypoints=https"
-#       - "traefik.http.routers.nextcloud-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-#       - "traefik.http.routers.nextcloud-app-secure.tls=true"
-#       - "traefik.http.routers.nextcloud-app-secure.tls.certresolver=le-dns"
-#       - "traefik.http.routers.nextcloud-app-secure.service=nextcloud-app"
-#       - "traefik.http.services.nextcloud-app.loadbalancer.server.port=80"
-#     networks: 
-#       - internal
-#       - proxy
-#     restart: unless-stopped

@@ -106,28 +106,15 @@ services:
       - ./logs/nginx:/var/log/nginx
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.entrypoints=http"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-      - "traefik.http.middlewares.strip-www.redirectregex.regex=^http?://www.`${BLOG_URL}`"
-      - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://`${BLOG_URL}`"
-      - "traefik.http.middlewares.sec-headers.headers.framedeny=true"
-      - "traefik.http.middlewares.sec-headers.headers.browserxssfilter=true"
-      - "traefik.http.middlewares.sec-headers.headers.stsincludesubdomains=true"
-      - "traefik.http.middlewares.sec-headers.headers.stsseconds=31536000"
-      - "traefik.http.middlewares.sec-headers.headers.stspreload=true"
-      - "traefik.http.middlewares.sec-headers.headers.forcestsheader=true"
-      - "traefik.http.middlewares.sec-headers.headers.customframeoptionsvalue=`SAMEORIGIN`"
-      - "traefik.http.middlewares.gzip-compress.compress=true"
-      - "traefik.http.middlewares.middleware-chain.chain.middlewares=redirect-to-https,strip-www,sec-headers,gzip-compress"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=https"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls=true"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.middlewares=middleware-chain"
-      - "traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.service=wp-${COMPOSE_PROJECT_NAME}-nginx"
+      - traefik.enable=true
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.entrypoints=http
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=https
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls=true
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.service=wp-${COMPOSE_PROJECT_NAME}-nginx
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
       - "traefik.http.services.wp-${COMPOSE_PROJECT_NAME}-nginx.loadbalancer.server.port=80"
     restart: unless-stopped
 
