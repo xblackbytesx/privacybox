@@ -72,16 +72,16 @@ services:
       - APP_ENV=production
       - MAIL_MAILER=sendmail
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.fireflyiii-app.entrypoints=http"
-      - "traefik.http.routers.fireflyiii-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.fireflyiii-app.middlewares=secured@file"
-      - "traefik.http.routers.fireflyiii-app-secure.entrypoints=https"
-      - "traefik.http.routers.fireflyiii-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.fireflyiii-app-secure.tls=true"
-      - "traefik.http.routers.fireflyiii-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.fireflyiii-app-secure.service=fireflyiii-app"
-      - "traefik.http.services.fireflyiii-app.loadbalancer.server.port=8080"
+      - traefik.enable=true
+      - traefik.http.routers.fireflyiii-app.entrypoints=http
+      - traefik.http.routers.fireflyiii-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.fireflyiii-app-secure.entrypoints=https
+      - traefik.http.routers.fireflyiii-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.fireflyiii-app-secure.tls=true
+      - traefik.http.routers.fireflyiii-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.fireflyiii-app-secure.service=fireflyiii-app
+      - traefik.http.routers.fireflyiii-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.fireflyiii-app.loadbalancer.server.port=8080
     networks:
       - internal
       - proxy

@@ -16,16 +16,16 @@ services:
     environment:
       PUBLIC_DNS: ${SUBDOMAIN}.${DOMAIN}
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.drawio-app.entrypoints=http"
-      - "traefik.http.routers.drawio-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.drawio-app.middlewares=secured@file"
-      - "traefik.http.routers.drawio-app-secure.entrypoints=https"
-      - "traefik.http.routers.drawio-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.drawio-app-secure.tls=true"
-      - "traefik.http.routers.drawio-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.drawio-app-secure.service=drawio-app"
-      - "traefik.http.services.drawio-app.loadbalancer.server.port=8080"
+      - traefik.enable=true
+      - traefik.http.routers.drawio-app.entrypoints=http
+      - traefik.http.routers.drawio-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.drawio-app-secure.entrypoints=https
+      - traefik.http.routers.drawio-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.drawio-app-secure.tls=true
+      - traefik.http.routers.drawio-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.drawio-app-secure.service=drawio-app
+      - traefik.http.routers.drawio-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.drawio-app.loadbalancer.server.port=8080
     volumes:
       - /etc/localtime:/etc/localtime:ro
     networks: 

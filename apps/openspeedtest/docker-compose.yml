@@ -15,14 +15,14 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.openspeedtest.entrypoints=http"
-      - "traefik.http.routers.openspeedtest.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.openspeedtest.middlewares=secured@file"
-      - "traefik.http.routers.openspeedtest-secure.entrypoints=https"
-      - "traefik.http.routers.openspeedtest-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.openspeedtest-secure.tls=true"
-      - "traefik.http.routers.openspeedtest-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.openspeedtest-secure.service=openspeedtest"
-      - "traefik.http.services.openspeedtest.loadbalancer.server.port=8080"
+      - traefik.enable=true
+      - traefik.http.routers.openspeedtest.entrypoints=http
+      - traefik.http.routers.openspeedtest.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.openspeedtest-secure.entrypoints=https
+      - traefik.http.routers.openspeedtest-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.openspeedtest-secure.tls=true
+      - traefik.http.routers.openspeedtest-secure.tls.certresolver=le-dns
+      - traefik.http.routers.openspeedtest-secure.service=openspeedtest
+      - traefik.http.routers.openspeedtest-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.openspeedtest.loadbalancer.server.port=8080
     restart: unless-stopped

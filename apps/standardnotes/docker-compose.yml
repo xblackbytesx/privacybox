@@ -91,16 +91,16 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.standardnotes-api-gateway.entrypoints=http"
-      - "traefik.http.routers.standardnotes-api-gateway.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)"
-      - "traefik.http.routers.standardnotes-api-gateway.middlewares=secured@file"
-      - "traefik.http.routers.standardnotes-api-gateway-secure.entrypoints=https"
-      - "traefik.http.routers.standardnotes-api-gateway-secure.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)"
-      - "traefik.http.routers.standardnotes-api-gateway-secure.tls=true"
-      - "traefik.http.routers.standardnotes-api-gateway-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.standardnotes-api-gateway-secure.service=standardnotes-api-gateway"
-      - "traefik.http.services.standardnotes-api-gateway.loadbalancer.server.port=3000"
+      - traefik.enable=true
+      - traefik.http.routers.standardnotes-api-gateway.entrypoints=http
+      - traefik.http.routers.standardnotes-api-gateway.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)
+      - traefik.http.routers.standardnotes-api-gateway-secure.entrypoints=https
+      - traefik.http.routers.standardnotes-api-gateway-secure.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)
+      - traefik.http.routers.standardnotes-api-gateway-secure.tls=true
+      - traefik.http.routers.standardnotes-api-gateway-secure.tls.certresolver=le-dns
+      - traefik.http.routers.standardnotes-api-gateway-secure.service=standardnotes-api-gateway
+      - traefik.http.routers.standardnotes-api-gateway-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.standardnotes-api-gateway.loadbalancer.server.port=3000
     restart: unless-stopped
 
   standardnotes-auth:
@@ -226,14 +226,14 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.standardnotes-web.entrypoints=http"
-      - "traefik.http.routers.standardnotes-web.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.standardnotes-web.middlewares=secured@file"
-      - "traefik.http.routers.standardnotes-web-secure.entrypoints=https"
-      - "traefik.http.routers.standardnotes-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.standardnotes-web-secure.tls=true"
-      - "traefik.http.routers.standardnotes-web-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.standardnotes-web-secure.service=standardnotes-web"
-      - "traefik.http.services.standardnotes-web.loadbalancer.server.port=3001"
+      - traefik.enable=true
+      - traefik.http.routers.standardnotes-web.entrypoints=http
+      - traefik.http.routers.standardnotes-web.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.standardnotes-web-secure.entrypoints=https
+      - traefik.http.routers.standardnotes-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.standardnotes-web-secure.tls=true
+      - traefik.http.routers.standardnotes-web-secure.tls.certresolver=le-dns
+      - traefik.http.routers.standardnotes-web-secure.service=standardnotes-web
+      - traefik.http.routers.standardnotes-web-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.standardnotes-web.loadbalancer.server.port=3001
     restart: unless-stopped

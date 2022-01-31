@@ -51,16 +51,16 @@ services:
       - ampache-sites-enabled:/etc/apache2/sites-enabled
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ampache-app.entrypoints=http"
-      - "traefik.http.routers.ampache-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.ampache-app.middlewares=secured@file"
-      - "traefik.http.routers.ampache-app-secure.entrypoints=https"
-      - "traefik.http.routers.ampache-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.ampache-app-secure.tls=true"
-      - "traefik.http.routers.ampache-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.ampache-app-secure.service=ampache-app"
-      - "traefik.http.services.ampache-app.loadbalancer.server.port=80"
+      - traefik.enable=true
+      - traefik.http.routers.ampache-app.entrypoints=http
+      - traefik.http.routers.ampache-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ampache-app-secure.entrypoints=https
+      - traefik.http.routers.ampache-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ampache-app-secure.tls=true
+      - traefik.http.routers.ampache-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.ampache-app-secure.service=ampache-app
+      - traefik.http.routers.ampache-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.ampache-app.loadbalancer.server.port=80
     networks:
       - proxy
     restart: unless-stopped

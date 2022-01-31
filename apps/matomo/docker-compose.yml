@@ -84,16 +84,16 @@ services:
       - ./matomo.conf:/etc/nginx/conf.d/default.conf:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.matomo-nginx.entrypoints=http"
-      - "traefik.http.routers.matomo-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.matomo-nginx.middlewares=secured@file"
-      - "traefik.http.routers.matomo-nginx-secure.entrypoints=https"
-      - "traefik.http.routers.matomo-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.matomo-nginx-secure.tls=true"
-      - "traefik.http.routers.matomo-nginx-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.matomo-nginx-secure.service=matomo-nginx"
-      - "traefik.http.services.matomo-nginx.loadbalancer.server.port=80"
+      - traefik.enable=true
+      - traefik.http.routers.matomo-nginx.entrypoints=http
+      - traefik.http.routers.matomo-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.matomo-nginx-secure.entrypoints=https
+      - traefik.http.routers.matomo-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.matomo-nginx-secure.tls=true
+      - traefik.http.routers.matomo-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.matomo-nginx-secure.service=matomo-nginx
+      - traefik.http.routers.matomo-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.matomo-nginx.loadbalancer.server.port=80
     networks:
       - proxy
       - internal

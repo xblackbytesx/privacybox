@@ -23,16 +23,16 @@ services:
       - flame-data:/app/data
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.flame.entrypoints=http"
-      - "traefik.http.routers.flame.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.flame.middlewares=secured@file"
-      - "traefik.http.routers.flame-secure.entrypoints=https"
-      - "traefik.http.routers.flame-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.flame-secure.tls=true"
-      - "traefik.http.routers.flame-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.flame-secure.service=flame"
-      - "traefik.http.services.flame.loadbalancer.server.port=5005"
+      - traefik.enable=true
+      - traefik.http.routers.flame.entrypoints=http
+      - traefik.http.routers.flame.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.flame-secure.entrypoints=https
+      - traefik.http.routers.flame-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.flame-secure.tls=true
+      - traefik.http.routers.flame-secure.tls.certresolver=le-dns
+      - traefik.http.routers.flame-secure.service=flame
+      - traefik.http.routers.flame-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.flame.loadbalancer.server.port=5005
     networks:
       - proxy
     restart: unless-stopped
