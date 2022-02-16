@@ -1,0 +1,68 @@
+version: '3'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  joplin-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/joplin/database
+
+services:
+  joplin-db:
+    container_name: joplin-db
+    image: postgres:13-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - POSTGRES_DB=joplin
+      - POSTGRES_USER=joplin
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - joplin-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+    restart: unless-stopped
+
+  joplin-app:
+    image: joplin/server:latest
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - joplin-db
+    environment:
+      - APP_PORT=22300
+      - APP_BASE_URL=https://${SUBDOMAIN}.${DOMAIN}
+      - DB_CLIENT=pg
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_DATABASE=joplin
+      - POSTGRES_USER=joplin
+      - POSTGRES_PORT=5432
+      - POSTGRES_HOST=joplin-db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.joplin-app.entrypoints=http
+      - traefik.http.routers.joplin-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.joplin-app-secure.entrypoints=https
+      - traefik.http.routers.joplin-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.joplin-app-secure.tls=true
+      - traefik.http.routers.joplin-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.joplin-app-secure.service=joplin-app
+      - traefik.http.routers.joplin-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.joplin-app.loadbalancer.server.port=22300
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped
