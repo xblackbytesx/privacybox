@@ -20,12 +20,6 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/matrix/synapse/data
-  element-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DOCKER_ROOT}/matrix/element/data
 
 services:
   matrix-synapse-db:
@@ -65,8 +59,8 @@ services:
     restart: unless-stopped
 
   matrix-synapse:
-    image: matrixdotorg/synapse:latest
     container_name: matrix-synapse
+    image: matrixdotorg/synapse:latest
     security_opt:
       - no-new-privileges:true
     environment:
@@ -99,35 +93,37 @@ services:
       - traefik.http.services.matrix-synapse.loadbalancer.server.port=8008 
     restart: unless-stopped
 
-  # # Enable this to enable federation
-  # matrix-nginx:
-  #   image: "nginx:latest"
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   volumes:
-  #     - ./data/matrix/nginx/matrix.conf:/etc/nginx/conf.d/matrix.conf
-  #     - ./data/matrix/nginx/www:/var/www/
-  #     - /etc/localtime:/etc/localtime:ro
-  #   networks:
-  #     - proxy
-  #     - internal
-  #   labels:
-  #     - traefik.enable=true
-  #     - traefik.http.routers.matrix-nginx.entrypoints=http
-  #     - traefik.http.routers.matrix-nginx.rule=Host(`matrix.${DOMAIN}`)
-  #     - traefik.http.routers.matrix-nginx-secure.entrypoints=https
-  #     - traefik.http.routers.matrix-nginx-secure.rule=Host(`element.${DOMAIN}`)
-  #     - traefik.http.routers.matrix-nginx-secure.tls=true
-  #     - traefik.http.routers.matrix-nginx-secure.tls.certresolver=le-dns
-  #     - traefik.http.routers.matrix-nginx-secure.service=matrix-nginx
-  #     - traefik.http.routers.matrix-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-  #     - traefik.http.services.matrix-nginx.loadbalancer.server.port=80
-  #   restart: "unless-stopped"
+  # Enable this to enable federation
+  matrix-nginx:
+    container_name: matrix-nginx
+    image: "nginx:latest"
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ${DOCKER_ROOT}/matrix/nginx/matrix.conf:/etc/nginx/conf.d/matrix.conf
+      - ${DOCKER_ROOT}/matrix/nginx/www:/var/www/
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.matrix-nginx.entrypoints=http
+      - traefik.http.routers.matrix-nginx.rule=Host(`matrix.${DOMAIN}`)
+      - traefik.http.routers.matrix-nginx-secure.entrypoints=https
+      - traefik.http.routers.matrix-nginx-secure.rule=Host(`matrix.${DOMAIN}`)
+      - traefik.http.routers.matrix-nginx-secure.tls=true
+      - traefik.http.routers.matrix-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.matrix-nginx-secure.service=matrix-nginx
+      - traefik.http.routers.matrix-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.matrix-nginx.loadbalancer.server.port=80
+    restart: "unless-stopped"
 
   matrix-element:
+    container_name: matrix-element
     image: "vectorim/element-web:latest"
     volumes:
-      - "element-data/config.json:/app/config.json:ro"
+      - "${DOCKER_ROOT}/matrix/element/data/config.json:/app/config.json:ro"
     labels:
       - traefik.enable=true
       - traefik.http.routers.matrix-element.entrypoints=http

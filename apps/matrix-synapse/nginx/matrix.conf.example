@@ -1,9 +1,10 @@
 server {
   listen         80 default_server;
-  server_name    matrix-federation.privacy.box;
+  server_name    matrix.privacy.box;
 
+ # Traefik -> nginx -> synapse
  location /_matrix {
-    proxy_pass http://synapse-app:8008;
+    proxy_pass http://matrix-synapse:8008;
     proxy_set_header X-Forwarded-For $remote_addr;
     client_max_body_size 128m;
   }
