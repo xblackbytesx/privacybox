@@ -70,10 +70,10 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - SYNAPSE_CONFIG_DIR="/data"
-      - SYNAPSE_CONFIG_PATH="/data/homeserver.yaml"
-      - SYNAPSE_SERVER_NAME=matrix.${DOMAIN}
-      - SYNAPSE_REPORT_STATS=no
+      # - SYNAPSE_CONFIG_DIR="/data"
+      # - SYNAPSE_CONFIG_PATH="/data/homeserver.yaml"
+      # - SYNAPSE_SERVER_NAME=matrix.${DOMAIN}
+      # - SYNAPSE_REPORT_STATS=no
       - UID=1000
       - GID=1000
       - TZ="Europe/Amsterdam"
@@ -124,18 +124,18 @@ services:
   #     - traefik.http.services.matrix-nginx.loadbalancer.server.port=80
   #   restart: "unless-stopped"
 
-  # matrix-element:
-  #   image: "vectorim/element-web:latest"
-  #   volumes:
-  #     - "element-data/config.json:/app/config.json:ro"
-  #   labels:
-  #     - traefik.enable=true
-  #     - traefik.http.routers.matrix-element.entrypoints=http
-  #     - traefik.http.routers.matrix-element.rule=Host(`element.${DOMAIN}`)
-  #     - traefik.http.routers.matrix-element-secure.entrypoints=https
-  #     - traefik.http.routers.matrix-element-secure.rule=Host(`element.${DOMAIN}`)
-  #     - traefik.http.routers.matrix-element-secure.tls=true
-  #     - traefik.http.routers.matrix-element-secure.tls.certresolver=le-dns
-  #     - traefik.http.routers.matrix-element-secure.service=matrix-element
-  #     - traefik.http.routers.matrix-element-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-  #     - traefik.http.services.matrix-element.loadbalancer.server.port=80
+  matrix-element:
+    image: "vectorim/element-web:latest"
+    volumes:
+      - "element-data/config.json:/app/config.json:ro"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.matrix-element.entrypoints=http
+      - traefik.http.routers.matrix-element.rule=Host(`element.${DOMAIN}`)
+      - traefik.http.routers.matrix-element-secure.entrypoints=https
+      - traefik.http.routers.matrix-element-secure.rule=Host(`element.${DOMAIN}`)
+      - traefik.http.routers.matrix-element-secure.tls=true
+      - traefik.http.routers.matrix-element-secure.tls.certresolver=le-dns
+      - traefik.http.routers.matrix-element-secure.service=matrix-element
+      - traefik.http.routers.matrix-element-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.matrix-element.loadbalancer.server.port=80
