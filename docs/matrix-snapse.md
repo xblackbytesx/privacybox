@@ -4,7 +4,7 @@
 
 #### Generate a configuration.
 ```
-docker run -it --rm --mount type=volume,src=synapse-data,dst=/data -e SYNAPSE_SERVER_NAME=matrix.privacy.box -e SYNAPSE_REPORT_STATS=yes matrixdotorg/synapse:latest generate
+docker run -it --rm -v /media/storage/docker/matrix/synapse/data:/data -e SYNAPSE_SERVER_NAME=matrix.privacy.box -e SYNAPSE_REPORT_STATS=no -e UID="1000" -e GID="1000" -e TZ="Europe/Amsterdam" matrixdotorg/synapse:latest generate
 ```
 
 #### Copy the generated configuration to your permanent volume
