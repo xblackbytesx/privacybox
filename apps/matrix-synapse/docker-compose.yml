@@ -122,8 +122,14 @@ services:
   matrix-element:
     container_name: matrix-element
     image: "vectorim/element-web:latest"
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - "${DOCKER_ROOT}/matrix/element/data/config.json:/app/config.json:ro"
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+      - internal
     labels:
       - traefik.enable=true
       - traefik.http.routers.matrix-element.entrypoints=http
@@ -135,3 +141,4 @@ services:
       - traefik.http.routers.matrix-element-secure.service=matrix-element
       - traefik.http.routers.matrix-element-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
       - traefik.http.services.matrix-element.loadbalancer.server.port=80
+    restart: "unless-stopped"
