@@ -72,7 +72,7 @@ services:
     environment:
       - SYNAPSE_CONFIG_DIR="/data"
       - SYNAPSE_CONFIG_PATH="/data/homeserver.yaml"
-      - SYNAPSE_SERVER_NAME=synapse.${DOMAIN}
+      - SYNAPSE_SERVER_NAME=matrix.${DOMAIN}
       - SYNAPSE_REPORT_STATS=no
       - UID=1000
       - GID=1000
