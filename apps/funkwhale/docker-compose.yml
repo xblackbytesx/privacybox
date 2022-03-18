@@ -14,16 +14,10 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/funkwhale/database
-  funkwhale-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DOCKER_ROOT}/funkwhale/data
 
 services:
   postgres:
-    container_name: postgres
+    container_name: funkwhale-postgres
     image: postgres:12-alpine
     security_opt:
       - no-new-privileges:true
@@ -41,7 +35,7 @@ services:
     restart: unless-stopped
 
   redis:
-    container_name: redis
+    container_name: funkwhale-redis
     image: redis:alpine
     security_opt:
       - no-new-privileges:true
@@ -57,7 +51,10 @@ services:
     restart: unless-stopped
 
   celeryworker:
+    container_name: funkwhale-celeryworker
     image: funkwhale/funkwhale:${FUNKWHALE_VERSION:-latest}
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
     depends_on:
@@ -81,7 +78,10 @@ services:
     restart: unless-stopped
 
   celerybeat:
+    container_name: funkwhale-celerybeat
     image: funkwhale/funkwhale:${FUNKWHALE_VERSION:-latest}
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
     depends_on:
@@ -92,7 +92,10 @@ services:
     restart: unless-stopped
 
   api:
+    container_name: funkwhale-api
     image: funkwhale/funkwhale:${FUNKWHALE_VERSION:-latest}
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
     depends_on:
@@ -109,7 +112,10 @@ services:
     restart: unless-stopped
 
   nginx:
+    container_name: funkwhale-nginx
     image: nginx
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
       - proxy
