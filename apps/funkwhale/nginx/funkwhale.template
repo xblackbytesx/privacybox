@@ -1,6 +1,6 @@
 upstream funkwhale-api {
     # depending on your setup, you may want to update this
-    server api:5000;
+    server api:5678;
 }
 
 

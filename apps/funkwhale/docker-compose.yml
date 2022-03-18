@@ -103,12 +103,13 @@ services:
       - redis
     env_file: .env
     volumes:
+      - "./server.sh:/app/compose/django/server.sh"
       - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
       - "${MEDIA_ROOT}:${MEDIA_ROOT}"
       - "${STATIC_ROOT}:${STATIC_ROOT}"
       - "${FUNKWHALE_FRONTEND_PATH}:/frontend"
     ports:
-      - "5000"
+      - "5678"
     restart: unless-stopped
 
   nginx:
