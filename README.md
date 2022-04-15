@@ -6,24 +6,45 @@ Installation is incredibly simple and consists of either one or two stages depen
 
 Make sure the start script is executable like this:
 ```
-chmod +x start.sh
+chmod +x manage.sh
 ```
 
 If you have a freshly installed Debian server you can opt to start the script with the `--provision` flag to install all the prerequisites neccesary to run the Docker instances.
 
-If all you need is the Docker configuration itself you simply run this to get started:
 ```
-./start.sh
+./manage.sh --provision
 ```
 
-If you have to install the prerequisites first simply run:
+If above prerequisites have been met you can set up your containers of choice:
+
+#### Step 1 | Create a config
+You might want to base your config on the included example
 ```
-./start.sh --provision
+cp -Rp privacybox.config.example privacybox.config
 ```
+Make adjustments according to your personal situation, setup and desired containers. 
+
+
+#### Step 2 | Start your stack
+If you're happy with your configration you can simply run the following command to get it all started.
+
+```
+./manage.sh --start --all
+```
+
+That's it! You should be done!
+
+#### Updating containers
+The manage script provides a way to update all containers with a single command.
+
+```
+./manage.sh --update --all
+```
+
 
 ## Monitoring & Swarm control
 This project gives you two endpoints for proxy-monitoring and controlling your containers.
-After succesfully running the `start.sh` script you should be able to visit the following subdomains:
+After succesfully running the `manage.sh --start --all` script you should be able to visit the following subdomains:
 
 traefik.YOUR_DOMAIN.TLD  
 portainer.YOUR_DOMAIN.TLD
@@ -31,36 +52,80 @@ portainer.YOUR_DOMAIN.TLD
 ## Why these services?:
 Each of these services serve a purpose of either substituting a non-free and non-privacy respecting Saas service and/or as a means to improve your overall digital independance. Most of the services are completely Open Source and peer-reviewed. A lot of the recommendations for these apps are extensively motivated at the [Prism Break](https://prism-break.org) project where security experts and community members come together to review the privacy implementations and implications of each service.
 
-| App | Use-case |
+
+| App | Use-case / alternative for |
 |---|---|
-| Nextcloud | Google Drive, Contacts, Calendar and Photos |
-| Homeassistant | Full home-automation integration suite |
-| Spotweb |  |
-| Jackett | Proxy and aggregate torrent API's |
-| Ampache | Substitutes: Spotify |
-| Ghost | Free publishing platform |
-| Wordpress | Free publishing platform |
-| Hugo | Advanced static page generator |
-| Portainer | Manage your containers, images etc. |
-| Wallabag | Substitutes: Pocket, Instapaper |
-| Matrix Synapse | Substitutes: Slack, Teams |
-| Matomo | Substitutes: Google Analytics |
-| Gitea | Substitutes: Github, Gitlab |
-| InvoiceNinja | Substitutes: e.g. Moneybird |
-| Jitsi Meet | Substitutes: Skype, Zoom |
-| Invidious | Free YouTube front-end |
-| PiHole |  |
-| Sonarr |  |
-| Radarr |  |
-| Readarr |  |
-| Lidarr |  |
-| Prowlarr |  |
-| Transmission |  |
-| Node-Red |  |
-| Wireguard |  |
-| Netdata |  |
-| Mastodon | Substitutes: Twitter |
-| FireflyIII | Substitutes: Mint, AVAST Personal etc. |
+| airsonic | Music streaming server (e.g. Spotify) |
+| ampache | Musci stream server (e.g. Spotify) |
+| anonaddy | E-mail aliassing/forwarding service |
+| baikal | Cal/Carddav server (e.g. Google Contacts) |
+| bitwarden | Password Manager (e.g. Lastpass) |
+| calibre-web | |
+| cryptofolio | |
+| diaspora | Fedrated Social Media platform |
+| dillinger | Web-based Markdown client |
+| drawio | Drawing and diagram tool |
+| expressvpn | |
+| fireflyiii | Substitutes: Mint, AFAS Personal etc. |
+| flame | |
+| freshrss | |
+| funkwhale | Music streaming server (e.g. Spotify) |
+| ghost | Free publishing platform |
+| gitea | Substitutes: Github, Gitlab |
+| glances | |
+| gpodder | |
+| handbrake | |
+| homeassistant | Full home-automation integration suite |
+| huginn | |
+| invidious | Free YouTube front-end |
+| invoiceninja | Substitutes: e.g. Moneybird |
+| irssi | |
+| jackett | Proxy and aggregate torrent API's |
+| jellyfin | |
+| jitsi-meet | Substitutes: Skype, Zoom |
+| joplin | |
+| librephotos | |
+| librespeed | |
+| lidarr | |
+| mastodon | Substitutes: Twitter |
+| matomo | Substitutes: Google Analytics |
+| matrix-synapse + Element | Substitutes: Slack, Teams |
+| mealie | |
+| minecraft-server | |
+| netdata | |
+| nextcloud | Google Drive, Contacts, Calendar and Photos |
+| nginx-static | |
+| node-red | |
+| nzbget | |
+| openspeedtest | |
+| peertube | |
+| photoprism | |
+| pihole | |
+| pixelfed | |
+| portainer | Manage your containers, images etc. |
+| prosody | |
+| prowlarr | |
+| pwndrop | |
+| pydio-cells | |
+| radarr | |
+| readarr | |
+| rocketchat | |
+| searx | |
+| sonarr | |
+| spotweb | |
+| standardnotes | |
+| statping | |
+| syncthing | |
+| thelounge | |
+| tokentracker | |
+| tpb-proxy | |
+| traefik | |
+| transmission | |
+| wallabag | Substitutes: Pocket, Instapaper |
+| wireguard | |
+| wireshark | |
+| wordpress | Free publishing platform |
+
 
 ## Implementation status:
 | App | Status | Notes |
