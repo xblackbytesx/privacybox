@@ -49,7 +49,7 @@ services:
 
   ghost-app:
     container_name: ghost-${COMPOSE_PROJECT_NAME}-app
-    image: ghost:4-alpine
+    image: ghost:5-alpine
     security_opt:
       - no-new-privileges:true
     environment:
