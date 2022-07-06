@@ -16,7 +16,7 @@ volumes:
 services:
   searx-app:
     container_name: searx-app
-    image: searx/searx
+    image: searx/searx:latest
     security_opt:
       - no-new-privileges:true
     environment:
