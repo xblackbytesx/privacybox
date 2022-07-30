@@ -188,6 +188,8 @@ elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ] || 
                 ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
                 echo "Updated $2 deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
             done
+        fi
+        
     fi
 
 elif [ "$1" == "--vpncheck" ]; then
