@@ -53,7 +53,7 @@ elif [ "$1" == "--getcompose" ]; then
 elif [ "$1" == "--free-dsm-ports" ]; then
     source scripts/free-dsm-ports.sh
 
-elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ]; then
+elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ] || [ "$1" == "--restart" ]; then
     if [ "$2" == "--all" ]; then
         if [ -z ${DEPLOYED_APPS} ]; then 
             echo "No deployed apps are configured. Please check your privacybox.config file.";
@@ -78,6 +78,17 @@ elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ]; th
                 done
 
                 echo "${TIMESTAMP_MINUTE} All services stopped manually" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+
+            elif [ "$1" == "--restart" ]; then
+                for APP in "${DEPLOYED_APPS[@]}"
+                do
+                : 
+                    cd ${PRIVACYBOX_DIR}/apps/$APP
+                    ${COMPOSEPATH} down -v
+                    ${COMPOSEPATH} up -d
+                done
+
+                echo "${TIMESTAMP_MINUTE} All services restarted manually" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
             elif [ "$1" == "--update" ]; then
                 for APP in "${DEPLOYED_APPS[@]}"
@@ -116,6 +127,17 @@ elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ]; th
 
                 echo "${TIMESTAMP_MINUTE} Killswitch services stopped manually" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
 
+            elif [ "$1" == "--restart" ]; then
+                for APP in "${KILLSWITCH_APPS[@]}"
+                do
+                : 
+                    cd ${PRIVACYBOX_DIR}/apps/$APP
+                    ${COMPOSEPATH} down -v
+                    ${COMPOSEPATH} up -d
+                done
+
+                echo "${TIMESTAMP_MINUTE} Killswitch services restarted manually" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+
             elif [ "$1" == "--update" ]; then
                 for APP in "${KILLSWITCH_APPS[@]}"
                 do
@@ -129,6 +151,43 @@ elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ]; th
 
         fi
 
+    elif [ "$2" == "--ghost" ] || [ "$2" == "--wordpress" ]; then
+        if [ "$1" == "--start" ]; then
+            for deployment in "./apps/$2/deployments/"*
+            do
+            :
+                cd ${PRIVACYBOX_DIR}/apps/$2/deployments/$deployment
+                ${COMPOSEPATH} up -d
+                echo "Started $2 deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+            done
+        
+        elif [ "$1" == "--stop" ]; then
+            for deployment in "./apps/$2/deployments/"*
+            do
+            :
+                cd ${PRIVACYBOX_DIR}/apps/$2/deployments/$deployment
+                ${COMPOSEPATH} down -v
+                echo "Stopped $2 deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+            done
+
+        elif [ "$1" == "--restart" ]; then
+            for deployment in "./apps/$2/deployments/"*
+            do
+            :
+                cd ${PRIVACYBOX_DIR}/apps/$2/deployments/$deployment
+                ${COMPOSEPATH} down -v
+                ${COMPOSEPATH} up -d
+                echo "Restarted $2 deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+            done
+
+        elif [ "$1" == "--update" ]; then
+            for deployment in "./apps/$2/deployments/"*
+            do
+            :
+                cd ${PRIVACYBOX_DIR}/apps/$2/deployments/$deployment
+                ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
+                echo "Updated $2 deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+            done
     fi
 
 elif [ "$1" == "--vpncheck" ]; then
@@ -189,10 +248,20 @@ else
     echo "--free-dsm-ports"
     echo "--start --all"
     echo "--start --killswitch-apps"
+    echo "--start --ghost"
+    echo "--start --wordpress"
     echo "--stop --all"
     echo "--stop --killswitch-apps"
+    echo "--stop --ghost"
+    echo "--stop --wordpress"
+    echo "--restart --all"
+    echo "--restart --killswitch-apps"
+    echo "--restart --ghost"
+    echo "--restart --wordpress"
     echo "--update --all"
     echo "--update --killswitch-apps"
+    echo "--update --ghost"
+    echo "--update --wordpress"
     echo "--vpncheck"
     echo "--backup"
 fi
