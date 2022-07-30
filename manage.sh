@@ -152,43 +152,43 @@ elif [ "$1" == "--start" ] || [ "$1" == "--stop" ] || [ "$1" == "--update" ] || 
         fi
 
     elif [ "$2" == "--ghost" ] || [ "$2" == "--wordpress" ]; then
-        APP_NAME="${$2:2}"
+        APP_NAME="${2:2}"
 
         if [ "$1" == "--start" ]; then
-            for deployment in "./apps/$APP_NAME/deployments/"*
+            for DEPLOYMENT in "./apps/$APP_NAME/deployments/"*
             do
             :
-                cd ${PRIVACYBOX_DIR}/apps/$APP_NAME/deployments/$deployment
+                cd ${PRIVACYBOX_DIR}/$DEPLOYMENT
                 ${COMPOSEPATH} up -d
-                echo "Started $APP_NAME deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+                echo "Started $APP_NAME DEPLOYMENT: $DEPLOYMENT" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
             done
         
         elif [ "$1" == "--stop" ]; then
-            for deployment in "./apps/$APP_NAME/deployments/"*
+            for DEPLOYMENT in "./apps/$APP_NAME/deployments/"*
             do
             :
-                cd ${PRIVACYBOX_DIR}/apps/$APP_NAME/deployments/$deployment
+                cd ${PRIVACYBOX_DIR}/$DEPLOYMENT
                 ${COMPOSEPATH} down -v
-                echo "Stopped $APP_NAME deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+                echo "Stopped $APP_NAME deployment: $DEPLOYMENT" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
             done
 
         elif [ "$1" == "--restart" ]; then
-            for deployment in "./apps/$APP_NAME/deployments/"*
+            for DEPLOYMENT in "./apps/$APP_NAME/deployments/"*
             do
             :
-                cd ${PRIVACYBOX_DIR}/apps/$APP_NAME/deployments/$deployment
+                cd ${PRIVACYBOX_DIR}/$DEPLOYMENT
                 ${COMPOSEPATH} down -v
                 ${COMPOSEPATH} up -d
-                echo "Restarted $APP_NAME deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+                echo "Restarted $APP_NAME deployment: $DEPLOYMENT" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
             done
 
         elif [ "$1" == "--update" ]; then
-            for deployment in "./apps/$APP_NAME/deployments/"*
+            for DEPLOYMENT in "./apps/$APP_NAME/deployments/"*
             do
             :
-                cd ${PRIVACYBOX_DIR}/apps/$APP_NAME/deployments/$deployment
+                cd ${PRIVACYBOX_DIR}/$DEPLOYMENT
                 ${COMPOSEPATH} pull && ${COMPOSEPATH} up -d --build
-                echo "Updated $APP_NAME deployment: $deployment" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
+                echo "Updated $APP_NAME deployment: $DEPLOYMENT" >> ${PRIVACYBOX_DIR}/logs/privacybox.log
             done
         fi
 
