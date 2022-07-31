@@ -1,0 +1,53 @@
+version: "3"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  navidrome-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/navidrome/config
+  navidrome-music:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${MUSIC_PATH}
+
+services:
+  navidrome-app:
+    container_name: navidrome-app
+    image: deluan/navidrome:latest
+    security_opt:
+      - no-new-privileges:true
+    user: ${PUID}:${PGID}
+    ports:
+      - "4533:4533"
+    # environment:
+    #   # Optional: put your config options customization here. Examples:
+    #   ND_SCANSCHEDULE: 1h
+    #   ND_LOGLEVEL: info  
+    #   ND_SESSIONTIMEOUT: 24h
+    #   ND_BASEURL: ""
+    volumes:
+      - "navidrome-config:/data"
+      - "navidrome-music:/music:ro"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.navidrome.entrypoints=http
+      - traefik.http.routers.navidrome.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.navidrome-secure.entrypoints=https
+      - traefik.http.routers.navidrome-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.navidrome-secure.tls=true
+      - traefik.http.routers.navidrome-secure.tls.certresolver=le-dns
+      - traefik.http.routers.navidrome-secure.service=navidrome
+      - traefik.http.routers.navidrome-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.navidrome.loadbalancer.server.port=4533
+    networks:
+      - proxy
+    restart: unless-stopped
