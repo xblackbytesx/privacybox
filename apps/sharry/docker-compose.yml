@@ -1,0 +1,63 @@
+version: '3.7'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  sharry-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/sharry/database
+
+services:
+  sharry-db:
+    container_name: sharry-db
+    image: postgres:14-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - POSTGRES_DB=sharry
+      - POSTGRES_USER=sharry
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - sharry-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+    restart: unless-stopped
+
+  sharry-app:
+    container_name: sharry-app
+    image: eikek0/sharry:latest
+    security_opt:
+      - no-new-privileges:true
+    command: /opt/sharry.conf
+    volumes:
+      - ${PWD}/sharry.conf:/opt/sharry.conf
+    depends_on:
+      - sharry-db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.sharry-app.entrypoints=http
+      - traefik.http.routers.sharry-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.sharry-app-secure.entrypoints=https
+      - traefik.http.routers.sharry-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.sharry-app-secure.tls=true
+      - traefik.http.routers.sharry-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.sharry-app-secure.service=sharry-app
+      - traefik.http.routers.sharry-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.sharry-app.loadbalancer.server.port=9090
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped
