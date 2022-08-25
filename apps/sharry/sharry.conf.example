@@ -1,4 +1,4 @@
-sharry.sharry-app {
+sharry.restserver {
 
   base-url = "https://upload.privacy.box"
 
