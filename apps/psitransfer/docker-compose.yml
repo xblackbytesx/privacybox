@@ -1,0 +1,37 @@
+version: '3.7'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  psitransfer-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/psitransfer/data
+
+services:
+  psitransfer-app:
+    container_name: psitransfer-app
+    image: psitrax/psitransfer:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - psitransfer-data:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.psitransfer-app.entrypoints=http
+      - traefik.http.routers.psitransfer-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.psitransfer-app-secure.entrypoints=https
+      - traefik.http.routers.psitransfer-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.psitransfer-app-secure.tls=true
+      - traefik.http.routers.psitransfer-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.psitransfer-app-secure.service=psitransfer-app
+      - traefik.http.routers.psitransfer-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.psitransfer-app.loadbalancer.server.port=3000
+    networks:
+      - proxy
+    restart: unless-stopped
