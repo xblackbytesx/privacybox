@@ -16,7 +16,7 @@ volumes:
 services:
   bitwarden:
     container_name: bitwarden
-    image: bitwardenrs/server:alpine
+    image: vaultwarden/server:alpine
     environment:
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=true
