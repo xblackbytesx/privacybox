@@ -49,16 +49,16 @@ services:
       - "pigallery-temp:/app/data/tmp"
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pigallery-app.entrypoints=http"
-      - "traefik.http.routers.pigallery-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.pigallery-app.middlewares=secured@file"
-      - "traefik.http.routers.pigallery-app-secure.entrypoints=https"
-      - "traefik.http.routers.pigallery-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.pigallery-app-secure.tls=true"
-      - "traefik.http.routers.pigallery-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.pigallery-app-secure.service=pigallery-app"
-      - "traefik.http.services.pigallery-app.loadbalancer.server.port=80"
+      - traefik.enable=true
+      - traefik.http.routers.pigallery-app.entrypoints=http
+      - traefik.http.routers.pigallery-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.pigallery-app-secure.entrypoints=https
+      - traefik.http.routers.pigallery-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.pigallery-app-secure.tls=true
+      - traefik.http.routers.pigallery-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.pigallery-app-secure.service=pigallery-app
+      - traefik.http.routers.pigallery-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.pigallery-app.loadbalancer.server.port=80
     networks:
       - proxy
     restart: unless-stopped
