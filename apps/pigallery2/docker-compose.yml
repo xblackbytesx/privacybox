@@ -1,0 +1,64 @@
+version: '3'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  pigallery-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pigallery/config
+
+  pigallery-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pigallery/database
+
+  pigallery-stories:
+    driver: local
+    driver_opts:
+      type: ${STORIES_DRIVER_OPT_TYPE}
+      o: ${STORIES_DRIVER_OPT_O}
+      device: ${STORIES_PATH}
+
+  pigallery-temp:      
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pigallery/temp
+
+services:
+  pigallery-app:
+    container_name: pigallery-app
+    image: bpatrik/pigallery2:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - "pigallery-config:/app/data/config"
+      - "pigallery-database:/app/data/db"
+      - "pigallery-stories:/app/data/images:ro"
+      - "pigallery-temp:/app/data/tmp"
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pigallery-app.entrypoints=http"
+      - "traefik.http.routers.pigallery-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pigallery-app.middlewares=secured@file"
+      - "traefik.http.routers.pigallery-app-secure.entrypoints=https"
+      - "traefik.http.routers.pigallery-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.pigallery-app-secure.tls=true"
+      - "traefik.http.routers.pigallery-app-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.pigallery-app-secure.service=pigallery-app"
+      - "traefik.http.services.pigallery-app.loadbalancer.server.port=80"
+    networks:
+      - proxy
+    restart: unless-stopped
