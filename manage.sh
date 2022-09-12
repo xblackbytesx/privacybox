@@ -243,7 +243,7 @@ elif [ "$1" == "--vpncheck" ]; then
 
 elif [ "$1" == "--backup" ]; then
     mkdir -p $BACKUP_DIR
-    sudo tar --exclude=${DOCKER_DATA_DIR}/photoprism/data/albums  --exclude=${DOCKER_DATA_DIR}/photoprism/data/cache  --exclude=${DOCKER_DATA_DIR}/photoprism/data/serial  --exclude=${DOCKER_DATA_DIR}/photoprism/data/sidecar --exclude=${DOCKER_DATA_DIR}/jellyfin --exclude=${DOCKER_DATA_DIR}/jellyfinBAK -zcvpf $BACKUP_DIR/$TIMESTAMP_HOUR-$SERVER_NAME.tar.gz $PRIVACYBOX_DIR $DOCKER_DATA_DIR
+    sudo tar --exclude=${DOCKER_DATA_DIR}/photoprism/data/albums  --exclude=${DOCKER_DATA_DIR}/photoprism/data/cache  --exclude=${DOCKER_DATA_DIR}/photoprism/data/serial --exclude=${DOCKER_DATA_DIR}/pigallery/temp --exclude=${DOCKER_DATA_DIR}/photoprism/data/sidecar --exclude=${DOCKER_DATA_DIR}/jellyfin --exclude=${DOCKER_DATA_DIR}/jellyfinBAK -zcvpf $BACKUP_DIR/$TIMESTAMP_HOUR-$SERVER_NAME.tar.gz $PRIVACYBOX_DIR $DOCKER_DATA_DIR
 
 else
     echo "Please append one of the following flags to this command:"
