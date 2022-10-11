@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  portainer:
+    container_name: "portainer-agent"
+    image: "portainer/agent:alpine"
+    security_opt:
+      - no-new-privileges:true
+    command: --no-analytics
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${DOCKER_VOLUMES_DIR}:/var/lib/docker/volumes
+    ports:
+      - "9001:9001"
+    restart: unless-stopped
