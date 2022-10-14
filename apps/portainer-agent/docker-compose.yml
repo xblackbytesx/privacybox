@@ -6,7 +6,6 @@ services:
     image: "portainer/agent:alpine"
     security_opt:
       - no-new-privileges:true
-    command: --no-analytics
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
