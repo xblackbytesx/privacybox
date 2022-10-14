@@ -1,5 +1,10 @@
 version: '3'
 
+networks:
+  proxy:
+    name: proxy
+    external: true
+
 services:
   portainer:
     container_name: "portainer-agent"
@@ -12,4 +17,17 @@ services:
       - ${DOCKER_VOLUMES_DIR}:/var/lib/docker/volumes
     ports:
       - "9001:9001"
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer.entrypoints=http
+      - traefik.http.routers.portainer.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.portainer-secure.entrypoints=https
+      - traefik.http.routers.portainer-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.portainer-secure.tls=true
+      - traefik.http.routers.portainer-secure.tls.certresolver=le-dns
+      - traefik.http.routers.portainer-secure.service=portainer
+      - traefik.http.routers.portainer-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.portainer.loadbalancer.server.port=9001 
     restart: unless-stopped

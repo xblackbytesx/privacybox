@@ -1,5 +1,10 @@
 version: '3'
 
+networks:
+  proxy:
+    name: proxy
+    external: true
+
 # volumes:
 #   dbdata:
 #     driver: local
@@ -33,7 +38,3 @@ services:
       - traefik.http.routers.portainer-secure.service=portainer
       - traefik.http.routers.portainer-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
       - traefik.http.services.portainer.loadbalancer.server.port=9000
-
-networks:
-  proxy:
-    external: true
