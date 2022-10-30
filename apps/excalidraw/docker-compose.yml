@@ -1,0 +1,27 @@
+version: "3.8"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+services:
+  excalidraw:
+    container_name: excalidraw
+    image:  excalidraw/excalidraw:latest
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.excalidraw.entrypoints=http
+      - traefik.http.routers.excalidraw.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.excalidraw-secure.entrypoints=https
+      - traefik.http.routers.excalidraw-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.excalidraw-secure.tls=true
+      - traefik.http.routers.excalidraw-secure.tls.certresolver=le-dns
+      - traefik.http.routers.excalidraw-secure.service=excalidraw
+      - traefik.http.routers.excalidraw-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.excalidraw.loadbalancer.server.port=5000
+    networks:
+      - proxy
+    restart: unless-stopped
