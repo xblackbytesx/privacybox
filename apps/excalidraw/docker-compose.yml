@@ -21,7 +21,7 @@ services:
       - traefik.http.routers.excalidraw-secure.tls.certresolver=le-dns
       - traefik.http.routers.excalidraw-secure.service=excalidraw
       - traefik.http.routers.excalidraw-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-      - traefik.http.services.excalidraw.loadbalancer.server.port=5000
+      - traefik.http.services.excalidraw.loadbalancer.server.port=80
     networks:
       - proxy
     restart: unless-stopped
