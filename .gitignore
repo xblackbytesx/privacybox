@@ -1,4 +1,5 @@
 *.env
+*.env.production
 *.key
 *.bak
 acme.json

@@ -14,190 +14,187 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/mastodon/database
+  mastodon-redis:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/mastodon/redis
+  mastodon-elasticsearch:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/mastodon/elasticsearch
+  mastodon-system:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/mastodon/public/system
 
 services:
-
   mastodon-db:
-    container_name: "mastodon-db"
-    image: "postgres:12-alpine"
+    container_name: mastodon-db
+    image: postgres:14-alpine
     security_opt:
       - no-new-privileges:true
     shm_size: 256mb
-    environment:
-      - POSTGRES_DB=mastodon
-      - POSTGRES_USER=mastodon
-      - POSTGRES_PASSWORD=${DB_USER_PASS}
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres']
     volumes:
       - mastodon-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=false"
+    environment:
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
     networks:
       - internal
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-    restart: unless-stopped  
-
-  mastodon-redis:
-    image: redis:6-alpine
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - internal
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-    volumes:
-      - ./redis:/data
-      - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=false"
     restart: unless-stopped
 
-#  mastodon-es:
-#    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
-#    security_opt:
-#      - no-new-privileges:true
-#    environment:
-#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-#      - "cluster.name=es-mastodon"
-#      - "discovery.type=single-node"
-#      - "bootstrap.memory_lock=true"
-#    networks:
-#      - internal
-#    healthcheck:
-#      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
-#    volumes:
-#      - ./elasticsearch:/usr/share/elasticsearch/data
-#      - /etc/localtime:/etc/localtime:ro
-#    ulimits:
-#      memlock:
-#        soft: -1
-#        hard: -1
-#    labels:
-#      - "traefik.enable=false"
-#    restart: unless-stopped
-
-  mastodon-app:
-    image: tootsuite/mastodon
+  mastodon-redis:
+    container_name: mastodon-redis
+    image: redis:7-alpine
     security_opt:
       - no-new-privileges:true
-    command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+    volumes:
+      - mastodon-redis:/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    restart: unless-stopped
+
+  mastodon-es:
+    container_name: mastodon-es
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.4
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m -Des.enforce.bootstrap.checks=true"
+      - "xpack.license.self_generated.type=basic"
+      - "xpack.security.enabled=false"
+      - "xpack.watcher.enabled=false"
+      - "xpack.graph.enabled=false"
+      - "xpack.ml.enabled=false"
+      - "bootstrap.memory_lock=true"
+      - "cluster.name=es-mastodon"
+      - "discovery.type=single-node"
+      - "thread_pool.write.queue_size=1000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+    volumes:
+      - mastodon-elasticsearch:/usr/share/elasticsearch/data
+      - /etc/localtime:/etc/localtime:ro
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     networks:
       - proxy
       - internal
-    # healthcheck:
-    #   test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
-    environment:
-      - DB_HOST=mastodon-db
-      - DB_PORT=5432
-      - DB_CONNECTION=pgsql
-      - DB_DATABASE=mastodon
-      - DB_USERNAME=mastodon
-      - DB_PASSWORD=${DB_USER_PASS}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mastodon-app.entrypoints=http"
-      - "traefik.http.routers.mastodon-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.mastodon-app.middlewares=secured@file"
-      - "traefik.http.routers.mastodon-app-secure.entrypoints=https"
-      - "traefik.http.routers.mastodon-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.mastodon-app-secure.tls=true"
-      - "traefik.http.routers.mastodon-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.mastodon-app-secure.service=mastodon-app"
-      - "traefik.http.services.mastodon-app.loadbalancer.server.port=3000"
+    restart: unless-stopped
+
+  mastodon-web:
+    container_name: mastodon-web
+    image: tootsuite/mastodon
+    security_opt:
+      - no-new-privileges:true
+    env_file: .env.production
+    command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
+    healthcheck:
+      # prettier-ignore
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:3000/health || exit 1']
     depends_on:
       - mastodon-db
       - mastodon-redis
-      # - mastodon-es
+      - mastodon-es
     volumes:
-      - ./public/system:/mastodon/public/system
+      - mastodon-system:/mastodon/public/system
       - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mastodon-web.entrypoints=http
+      - traefik.http.routers.mastodon-web.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.mastodon-web-secure.entrypoints=https
+      - traefik.http.routers.mastodon-web-secure.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.mastodon-web-secure.tls=true
+      - traefik.http.routers.mastodon-web-secure.tls.certresolver=le-dns
+      - traefik.http.routers.mastodon-web-secure.service=mastodon-web
+      - traefik.http.routers.mastodon-web-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.mastodon-web.loadbalancer.server.port=3000
+    networks:
+      - internal
+      - proxy
     restart: unless-stopped
 
   mastodon-streaming:
+    container_name: mastodon-streaming
     image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
+    env_file: .env.production
     command: node ./streaming
-    networks:
-      - proxy
-      - internal
-    # healthcheck:
-    #   test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"]
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mastodon-streaming.entrypoints=http"
-      - "traefik.http.routers.mastodon-streaming.rule=Host(`${SUBDOMAIN}-streaming.${DOMAIN}`)"
-      - "traefik.http.routers.mastodon-streaming.middlewares=secured@file"
-      - "traefik.http.routers.mastodon-streaming-secure.entrypoints=https"
-      - "traefik.http.routers.mastodon-streaming-secure.rule=Host(`${SUBDOMAIN}-streaming.${DOMAIN}`)"
-      - "traefik.http.routers.mastodon-streaming-secure.tls=true"
-      - "traefik.http.routers.mastodon-streaming-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.mastodon-streaming-secure.service=mastodon-streaming"
-      - "traefik.http.services.mastodon-streaming.loadbalancer.server.port=4000"
-    environment:
-      - DB_HOST=mastodon-db
-      - DB_PORT=5432
-      - DB_CONNECTION=pgsql
-      - DB_DATABASE=mastodon
-      - DB_USERNAME=mastodon
-      - DB_PASSWORD=${DB_USER_PASS}
+    healthcheck:
+      # prettier-ignore
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1']
     depends_on:
       - mastodon-db
       - mastodon-redis
     volumes:
       - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+      - internal
     restart: unless-stopped
 
   mastodon-sidekiq:
+    container_name: mastodon-sidekiq
     image: tootsuite/mastodon
     security_opt:
       - no-new-privileges:true
-    command: bundle exec mastodon-sidekiq
+    env_file: .env.production
+    command: bundle exec sidekiq
     depends_on:
       - mastodon-db
       - mastodon-redis
+    volumes:
+      - mastodon-system:/mastodon/public/system
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
     networks:
       - proxy
       - internal
-    volumes:
-      - ./public/system:/mastodon/public/system
-      - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=false"
-    environment:
-      - DB_HOST=mastodon-db
-      - DB_PORT=5432
-      - DB_CONNECTION=pgsql
-      - DB_DATABASE=mastodon
-      - DB_USERNAME=mastodon
-      - DB_PASSWORD=${DB_USER_PASS}
     restart: unless-stopped
 
-## Uncomment to enable federation with tor instances along with adding the following ENV variables
-## http_proxy=http://privoxy:8118
-## ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
-#  mastodon-tor:
-#    image: sirboops/tor
-#    security_opt:
-#      - no-new-privileges:true
-#    networks:
-#      - proxy
-#      - internal
-#    labels:
-#      - "traefik.enable=false"
-#    restart: unless-stopped
+  ## Uncomment to enable federation with tor instances along with adding the following ENV variables
+  ## http_proxy=http://privoxy:8118
+  ## ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
+  # mastodon-tor:
+  #   container_name: mastodon-tor
+  #   image: sirboops/tor
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   networks:
+  #     - proxy
+  #     - internal
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #   restart: unless-stopped
 
-#  mastodon-privoxy:
-#    image: sirboops/privoxy
-#    security_opt:
-#      - no-new-privileges:true
-#    volumes:
-#      - ./priv-config:/opt/config
-#      - /etc/localtime:/etc/localtime:ro
-#    networks:
-#      - proxy
-#      - internal
-#    labels:
-#      - "traefik.enable=false"
-#    restart: unless-stopped
+  # mastodon-privoxy:
+  #   container_name: mastodon-privoxy
+  #   image: sirboops/privoxy
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   volumes:
+  #     - ./priv-config:/opt/config
+  #     - /etc/localtime:/etc/localtime:ro
+  #   networks:
+  #     - proxy
+  #     - internal
+  #   restart: unless-stopped
