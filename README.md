@@ -52,79 +52,117 @@ portainer.YOUR_DOMAIN.TLD
 ## Why these services?:
 Each of these services serve a purpose of either substituting a non-free and non-privacy respecting Saas service and/or as a means to improve your overall digital independance. Most of the services are completely Open Source and peer-reviewed. A lot of the recommendations for these apps are extensively motivated at the [Prism Break](https://prism-break.org) project where security experts and community members come together to review the privacy implementations and implications of each service.
 
-
+**MEDIA/CONTENT CONSUMPTION**
 | App | Use-case / alternative for |
 |---|---|
+| navidrome | Music streaming server (e.g. Spotify) |
 | airsonic | Music streaming server (e.g. Spotify) |
+| funkwhale | Music streaming server (e.g. Spotify) |
 | ampache | Musci stream server (e.g. Spotify) |
-| anonaddy | E-mail aliassing/forwarding service |
-| baikal | Cal/Carddav server (e.g. Google Contacts) |
-| bitwarden | Password Manager (e.g. Lastpass) |
-| calibre-web | |
-| cryptofolio | |
+| calibre-web | E-book Management |
+| jellyfin | Plex but truly Open Source |
+| invidious | Free YouTube front-end |
+| librephotos | Open Source approach to Google Photos |
+| photoprism | Open Source approach to Google Photos |
+| peertube | Federated video service |
+| wallabag | Substitutes: Pocket, Instapaper |
+| freshrss | Substitutes: Google News/Goole Reader |
+| gpodder | Podcast Manager |
+
+**SOCIAL MEDIA / IM / VOIP**
+| App | Use-case / alternative for |
+|---|---|
+| mastodon | Substitutes: Twitter |
 | diaspora | Fedrated Social Media platform |
+| pixelfed | |
+| matrix-synapse + Element | Substitutes: Slack, Teams |
+| jitsi-meet | Substitutes: Skype, Zoom |
+| irssi | |
+| rocketchat | Substitutes: Slack, Teams |
+
+**PRODUCTIVITY**
+| App | Use-case / alternative for |
+|---|---|
 | dillinger | Web-based Markdown client |
 | drawio | Drawing and diagram tool |
-| expressvpn | |
-| fireflyiii | Substitutes: Mint, AFAS Personal etc. |
-| flame | |
-| freshrss | |
-| funkwhale | Music streaming server (e.g. Spotify) |
-| ghost | Free publishing platform |
-| gitea | Substitutes: Github, Gitlab |
-| glances | |
-| gpodder | |
-| handbrake | |
-| homeassistant | Full home-automation integration suite |
-| huginn | |
-| invidious | Free YouTube front-end |
-| invoiceninja | Substitutes: e.g. Moneybird |
-| irssi | |
-| jackett | Proxy and aggregate torrent API's |
-| jellyfin | |
-| jitsi-meet | Substitutes: Skype, Zoom |
-| joplin | |
-| librephotos | |
-| librespeed | |
-| lidarr | |
-| mastodon | Substitutes: Twitter |
-| matomo | Substitutes: Google Analytics |
-| matrix-synapse + Element | Substitutes: Slack, Teams |
-| mealie | |
-| minecraft-server | |
-| netdata | |
-| nextcloud | Google Drive, Contacts, Calendar and Photos |
-| nginx-static | |
-| node-red | |
-| nzbget | |
-| openspeedtest | |
-| peertube | |
-| photoprism | |
-| pihole | |
-| pixelfed | |
-| portainer | Manage your containers, images etc. |
-| prosody | |
+| excalidraw | Drawing and diagram tool |
+| joplin | Synchronised Note taking (e.g. Evernote) |
+| standardnotes | Synchronised Note taking (e.g. Evernote) |
+
+**PVR SYSTEMS**
+| App | Use-case / alternative for |
+|---|---|
+| radarr | PVR for Movies |
+| readarr | PVR for Books |
 | prowlarr | |
-| pwndrop | |
-| pydio-cells | |
-| radarr | |
-| readarr | |
-| rocketchat | |
+| sonarr | PVR for TV Shows |
+| spotweb | Usenet indexer |
+| nzbget | NZB Processor |
+| jackett | Proxy and aggregate torrent API's |
+| lidarr | PVR for Music |
+| transmission | Torrent Processor |
+
+**NETWORK**
+| App | Use-case / alternative for |
+|---|---|
+| pihole | |
+| expressvpn | |
+| wireguard | |
+| wireshark | |
+| librespeed | Network speed test |
+| openspeedtest | |
+| traefik | A high performance webserver and reverse proxy |
+| portainer | Manage your containers, images etc. |
+| portainer-agent | API Agent to allow aggregation into remote portainer instance |
+| statping | Keep track of service uptime |
+| pwndrop | Pen-testing toolkit for evil file drops |
+| anonaddy | E-mail aliassing/forwarding service |
+| netdata | |
+| nginx-static | |
+| glances | Monitor server performance |
+
+**AUTOMATION**
+| App | Use-case / alternative for |
+|---|---|
+| homeassistant | Full home-automation integration suite |
+| node-red | |
+
+**PUBLISHING**
+| App | Use-case / alternative for |
+|---|---|
+| ghost | Free publishing platform |
+| wordpress | Free publishing platform |
+| gitea | Substitutes: Github, Gitlab |
+| mealie | Online recipe book |
+
+**BOOKKEEPING**
+| App | Use-case / alternative for |
+|---|---|
+| fireflyiii | Substitutes: Mint, AFAS Personal etc. |
+| invoiceninja | Substitutes: e.g. Moneybird |
+
+**PERSONAL "CLOUD"**
+| App | Use-case / alternative for |
+|---|---|
+| nextcloud | Google Drive, Contacts, Calendar and Photos |
+| syncthing | Decentralized file sync server |
+| pydio-cells | Advanced online file manager |
+| baikal | Cal/Carddav server (e.g. Google Contacts) |
+
+**MISC**
+| App | Use-case / alternative for |
+|---|---|
+| bitwarden | Password Manager (e.g. Lastpass) |
+| flame | |
+| handbrake | |
+| huginn | |
+| matomo | Substitutes: Google Analytics |
+| minecraft-server | |
+| prosody | |
 | searx | |
-| sonarr | |
-| spotweb | |
-| standardnotes | |
-| statping | |
-| syncthing | |
 | thelounge | |
 | tokentracker | |
 | tpb-proxy | |
-| traefik | |
-| transmission | |
-| wallabag | Substitutes: Pocket, Instapaper |
-| wireguard | |
-| wireshark | |
-| wordpress | Free publishing platform |
 
 
 ## Implementation status:
@@ -157,7 +195,7 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Wireguard | Done |  Some special instructions for combining with PiHole  |
 | Netdata | WIP |   |
 | Glances | Done |   |
-| Mastodon | WIP |   |
+| Mastodon | Done | [Detailed notes](./docs/mastodon.md) |
 | FireflyIII | Done |   |
 
 ## LetsEncrypt ACME support out of the box!
