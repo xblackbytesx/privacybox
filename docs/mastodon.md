@@ -27,7 +27,9 @@ docker-compose run --rm mastodon-web bundle exec rake mastodon:setup
 
 At the end the terminal outputs your configuration, including secret keys. Copy and paste it into `.env.production` file in the root (also see .env.production.example).
 
-At the very end of the configuration add the following config
+OPTIONAL: At the very end of the configuration add the following config
+Please note that running an Elasticsearch service is resource intensive. 
+I recommend using this on well equipped hardware only.
 ```
 ES_ENABLED=true
 ES_HOST=mastodon-es
