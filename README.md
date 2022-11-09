@@ -1,4 +1,4 @@
-# privacybox-docker
+# Privacybox
 Zero-config self-hosted alternatives to most popular services.
 
 ## Instructions
