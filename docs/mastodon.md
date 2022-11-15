@@ -42,3 +42,17 @@ You should now be able to run your instance the usual way.
 ```
 docker-compose up -d
 ```
+
+## Upgrading to newer version
+The upgrade process for the most part is the same as with any other container but it does require some post-upgrade steps to flush cache and migrate the database.
+```
+docker-compose pull && docker-compose up -d --build
+```
+
+```
+docker-compose run --rm mastodon-web bin/tootctl cache clear
+```
+
+```
+docker-compose run --rm mastodon-web rails db:migrate
+```
