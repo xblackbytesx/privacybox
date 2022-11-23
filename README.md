@@ -161,8 +161,6 @@ Each of these services serve a purpose of either substituting a non-free and non
 | prosody | |
 | searx | |
 | thelounge | |
-| tokentracker | |
-| tpb-proxy | |
 
 
 ## Implementation status:
