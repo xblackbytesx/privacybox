@@ -1,0 +1,37 @@
+version: "3.3"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  uptime-kuma-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/uptime-kuma/data
+
+services:
+  uptime-kuma:
+    container_name: uptime-kuma
+    image: louislam/uptime-kuma:1
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - uptime-kuma-data:/app/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.uptime-kuma.entrypoints=http
+      - traefik.http.routers.uptime-kuma.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.uptime-kuma-secure.entrypoints=https
+      - traefik.http.routers.uptime-kuma-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.uptime-kuma-secure.tls=true
+      - traefik.http.routers.uptime-kuma-secure.tls.certresolver=le-dns
+      - traefik.http.routers.uptime-kuma-secure.service=uptime-kuma
+      - traefik.http.routers.uptime-kuma-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.uptime-kuma.loadbalancer.server.port=3001
+    networks:
+      - proxy
+    restart: always
