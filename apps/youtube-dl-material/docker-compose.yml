@@ -52,7 +52,7 @@ volumes:
 
 services:
   youtube-dl-db:
-    container_name: mongo-db
+    container_name: youtube-dl-db
     image: mongo:latest
     security_opt:
       - no-new-privileges:true
