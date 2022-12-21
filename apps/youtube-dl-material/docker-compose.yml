@@ -70,6 +70,8 @@ services:
     security_opt:
       - no-new-privileges:true
     environment: 
+      UID: ${PUID}
+      GID: ${PGID}
       ytdl_mongodb_connection_string: 'mongodb://youtube-dl-db:27017'
       ytdl_use_local_db: 'false'
       write_ytdl_config: 'true'
