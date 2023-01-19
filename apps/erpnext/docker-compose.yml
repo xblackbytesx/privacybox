@@ -89,7 +89,7 @@ services:
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS:?No db password set}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
     volumes:
       - erpnext-database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
@@ -98,7 +98,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - mysqladmin ping -h localhost --password=${DB_PASS}
+        - mysqladmin ping -h localhost --password=${DB_ROOT_PASS}
       interval: 1s
       retries: 15
     restart: unless-stopped
