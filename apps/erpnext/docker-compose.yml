@@ -1,0 +1,252 @@
+version: '3'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  erpnext-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/erpnext/database
+  erpnext-sites:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/erpnext/sites
+  erpnext-assets:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/erpnext/assets/
+  redis-data:
+
+services:
+  erpnext-backend:
+    container_name: erpnext-backend
+    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    depends_on:
+      erpnext-configurator:
+        condition: service_completed_successfully
+    volumes:
+      - erpnext-sites:/home/frappe/frappe-bench/sites
+      - erpnext-assets:/home/frappe/frappe-bench/sites/assets:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: on-failure
+
+  erpnext-configurator:
+    container_name: erpnext-configurator
+    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command:
+      - configure.py
+    depends_on:
+      erpnext-configurator:
+        condition: service_completed_successfully
+      erpnext-db:
+        condition: service_healthy
+      erpnext-redis:
+        condition: service_started
+    environment:
+      DB_HOST: erpnext-db
+      DB_PORT: "3306"
+      REDIS_CACHE: erpnext-redis:6379/0
+      REDIS_QUEUE: erpnext-redis:6379/1
+      REDIS_SOCKETIO: erpnext-redis:6379/2
+      SOCKETIO_PORT: "9000"
+    volumes:
+      - erpnext-sites:/home/frappe/frappe-bench/sites
+      - erpnext-assets:/home/frappe/frappe-bench/sites/assets:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: on-failure
+
+  erpnext-db:
+    container_name: erpnext-db
+    image: mariadb:10.6
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS:?No db password set}
+    volumes:
+      - erpnext-database:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h localhost --password=${DB_PASS}
+      interval: 1s
+      retries: 15
+    restart: unless-stopped
+
+  erpnext-app:
+    container_name: erpnext-app
+    image: frappe/erpnext-nginx:${ERPNEXT_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+      - proxy
+    depends_on:
+      erpnext-backend:
+        condition: service_started
+      erpnext-websocket:
+        condition: service_started
+    environment:
+      BACKEND: erpnext-backend:8000
+      FRAPPE_SITE_NAME_HEADER: localhost
+      SOCKETIO: erpnext-websocket:9000
+      UPSTREAM_REAL_IP_ADDRESS: localhost
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.erpnext-app.entrypoints=http
+      - traefik.http.routers.erpnext-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.erpnext-app-secure.entrypoints=https
+      - traefik.http.routers.erpnext-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.erpnext-app-secure.tls=true
+      - traefik.http.routers.erpnext-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.erpnext-app-secure.service=erpnext-app
+      - traefik.http.routers.erpnext-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.erpnext-app.loadbalancer.server.port=8080
+    volumes:
+      - erpnext-assets:/usr/share/nginx/html/assets
+      - erpnext-sites:/usr/share/nginx/html/sites
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+
+  erpnext-redis:
+    container_name: erpnext-redis
+    image: redis:alpine
+    security_opt:
+      - no-new-privileges:true
+    networks: 
+      - internal
+    volumes:
+      - redis-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+  
+  erpnext-websocket:
+    container_name: erpnext-websocket
+    image: frappe/frappe-socketio:${FRAPPE_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    depends_on:
+      erpnext-configurator:
+        condition: service_completed_successfully
+    volumes:
+      - erpnext-sites:/home/frappe/frappe-bench/sites
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
+  erpnext-queue-short:
+    container_name: erpnext-queue-short
+    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    depends_on:
+      erpnext-configurator:
+        condition: service_completed_successfully
+    command: bench worker --queue short
+    volumes:
+      - erpnext-sites:/home/frappe/frappe-bench/sites
+      - erpnext-assets:/home/frappe/frappe-bench/sites/assets:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
+  erpnext-queue-default:
+    container_name: erpnext-queue-default
+    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    depends_on:
+      erpnext-configurator:
+        condition: service_completed_successfully
+    command: bench worker --queue default
+    volumes:
+      - erpnext-sites:/home/frappe/frappe-bench/sites
+      - erpnext-assets:/home/frappe/frappe-bench/sites/assets:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
+  erpnext-queue-long:
+    container_name: erpnext-queue-long
+    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    depends_on:
+      erpnext-configurator:
+        condition: service_completed_successfully
+    command: bench worker --queue long
+    volumes:
+      - erpnext-sites:/home/frappe/frappe-bench/sites
+      - erpnext-assets:/home/frappe/frappe-bench/sites/assets:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
+  erpnext-scheduler:
+    container_name: erpnext-scheduler
+    image: frappe/erpnext-worker:${ERPNEXT_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    depends_on:
+      erpnext-configurator:
+        condition: service_completed_successfully
+    command: bench schedule
+    volumes:
+      - erpnext-sites:/home/frappe/frappe-bench/sites
+      - erpnext-assets:/home/frappe/frappe-bench/sites/assets:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
