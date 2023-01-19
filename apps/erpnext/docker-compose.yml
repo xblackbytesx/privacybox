@@ -57,8 +57,6 @@ services:
     command:
       - configure.py
     depends_on:
-      erpnext-configurator:
-        condition: service_completed_successfully
       erpnext-db:
         condition: service_healthy
       erpnext-redis:
