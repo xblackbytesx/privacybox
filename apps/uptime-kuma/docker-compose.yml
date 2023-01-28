@@ -16,7 +16,7 @@ volumes:
 services:
   uptime-kuma:
     container_name: uptime-kuma
-    image: louislam/uptime-kuma:1
+    image: louislam/uptime-kuma:1-alpine
     security_opt:
       - no-new-privileges:true
     volumes:
