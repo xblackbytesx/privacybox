@@ -1,4 +1,4 @@
-version: '3.3'
+version: "3"
 
 networks:
   proxy:
@@ -22,59 +22,27 @@ volumes:
       device: ${DOCKER_ROOT}/matrix/synapse/data
 
 services:
-  matrix-synapse-db:
-    container_name: matrix-synapse-db
-    image: postgres:12-alpine
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      - POSTGRES_DB=synapse
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_USER_PASS}
-      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
-    volumes:
-      - synapse-database:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
-    networks:
-      - internal
-    labels:
-      - "traefik.enable=false"
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-    restart: unless-stopped
-
-  matrix-synapse-redis:
-    container_name: matrix-synapse-redis
-    image: redis:alpine
-    security_opt:
-      - no-new-privileges:true
-    networks: 
-      - internal
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-    labels:
-      - "traefik.enable=false"
-    restart: unless-stopped
-
-  matrix-synapse:
+  matrix-synapse-app:
     container_name: matrix-synapse
     image: matrixdotorg/synapse:latest
     security_opt:
       - no-new-privileges:true
     environment:
-      # - SYNAPSE_CONFIG_DIR="/data"
-      # - SYNAPSE_CONFIG_PATH="/data/homeserver.yaml"
-      # - SYNAPSE_SERVER_NAME=matrix.${DOMAIN}
-      # - SYNAPSE_REPORT_STATS=no
+      - SYNAPSE_SERVER_NAME=${SUBDOMAIN}.${DOMAIN}
+      - SYNAPSE_REPORT_STATS=no
+      - SYNAPSE_DATABASE_URL=postgresql://matrix:matrix@matrix-synapse-db:5432/matrix
+      - SYNAPSE_REDIS_URL=redis://matrix-synapse-redis:6379
+      # - SYNAPSE_ENABLE_REGISTRATION=true
+      - SYNAPSE_FEDERATION_ALLOW_FROM_LOOPBACK=true
+      - SYNAPSE_FEDERATION_ALLOW_FROM=*
       - UID=1000
       - GID=1000
       - TZ="Europe/Amsterdam"
+    ports:
+      - "8008:8008"
     volumes:
       - synapse-data:/data
-      - /etc/localtime:/etc/localtime:ro
-    depends_on:
+    links:
       - matrix-synapse-db
       - matrix-synapse-redis
     networks:
@@ -82,63 +50,42 @@ services:
       - internal
     labels:
       - traefik.enable=true
-      - traefik.http.routers.matrix-synapse.entrypoints=http
-      - traefik.http.routers.matrix-synapse.rule=Host(`synapse.${DOMAIN}`)
-      - traefik.http.routers.matrix-synapse-secure.entrypoints=https
-      - traefik.http.routers.matrix-synapse-secure.rule=Host(`synapse.${DOMAIN}`)
-      - traefik.http.routers.matrix-synapse-secure.tls=true
-      - traefik.http.routers.matrix-synapse-secure.tls.certresolver=le-dns
-      - traefik.http.routers.matrix-synapse-secure.service=matrix-synapse
-      - traefik.http.routers.matrix-synapse-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-      - traefik.http.services.matrix-synapse.loadbalancer.server.port=8008 
-    restart: unless-stopped
+      - traefik.http.routers.matrix-synapse-app.entrypoints=http
+      - traefik.http.routers.matrix-synapse-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.matrix-synapse-app-secure.entrypoints=https
+      - traefik.http.routers.matrix-synapse-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.matrix-synapse-app-secure.tls=true
+      - traefik.http.routers.matrix-synapse-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.matrix-synapse-app-secure.service=matrix-synapse-app
+      - traefik.http.routers.matrix-synapse-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.matrix-synapse-app.loadbalancer.server.port=8008 
+    restart: always
 
-  # Enable this to enable federation
-  matrix-nginx:
-    container_name: matrix-nginx
-    image: "nginx:latest"
+  matrix-synapse-db:
+    container_name: matrix-synapse-db
+    image: postgres:alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - POSTGRES_USER=matrix
+      - POSTGRES_PASSWORD=matrix
+      - POSTGRES_DB=matrix
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - synapse-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    restart: always
+
+  matrix-synapse-redis:
+    container_name: matrix-synapse-redis
+    image: redis:alpine
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ${DOCKER_ROOT}/matrix/nginx/matrix.conf:/etc/nginx/conf.d/matrix.conf
-      - ${DOCKER_ROOT}/matrix/nginx/www:/var/www/
+      - ./redis:/data
       - /etc/localtime:/etc/localtime:ro
     networks:
-      - proxy
       - internal
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.matrix-nginx.entrypoints=http
-      - traefik.http.routers.matrix-nginx.rule=Host(`matrix.${DOMAIN}`)
-      - traefik.http.routers.matrix-nginx-secure.entrypoints=https
-      - traefik.http.routers.matrix-nginx-secure.rule=Host(`matrix.${DOMAIN}`)
-      - traefik.http.routers.matrix-nginx-secure.tls=true
-      - traefik.http.routers.matrix-nginx-secure.tls.certresolver=le-dns
-      - traefik.http.routers.matrix-nginx-secure.service=matrix-nginx
-      - traefik.http.routers.matrix-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-      - traefik.http.services.matrix-nginx.loadbalancer.server.port=80
-    restart: "unless-stopped"
-
-  matrix-element:
-    container_name: matrix-element
-    image: "vectorim/element-web:latest"
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - "${DOCKER_ROOT}/matrix/element/data/config.json:/app/config.json:ro"
-      - /etc/localtime:/etc/localtime:ro
-    networks:
-      - proxy
-      - internal
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.matrix-element.entrypoints=http
-      - traefik.http.routers.matrix-element.rule=Host(`element.${DOMAIN}`)
-      - traefik.http.routers.matrix-element-secure.entrypoints=https
-      - traefik.http.routers.matrix-element-secure.rule=Host(`element.${DOMAIN}`)
-      - traefik.http.routers.matrix-element-secure.tls=true
-      - traefik.http.routers.matrix-element-secure.tls.certresolver=le-dns
-      - traefik.http.routers.matrix-element-secure.service=matrix-element
-      - traefik.http.routers.matrix-element-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-      - traefik.http.services.matrix-element.loadbalancer.server.port=80
-    restart: "unless-stopped"
+    restart: always
