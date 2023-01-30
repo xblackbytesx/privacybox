@@ -23,7 +23,7 @@ volumes:
 
 services:
   matrix-synapse-app:
-    container_name: matrix-synapse
+    container_name: matrix-synapse-app
     image: matrixdotorg/synapse:latest
     security_opt:
       - no-new-privileges:true
@@ -42,6 +42,7 @@ services:
       - "8008:8008"
     volumes:
       - synapse-data:/data
+      - /etc/localtime:/etc/localtime:ro
     links:
       - matrix-synapse-db
       - matrix-synapse-redis
@@ -60,6 +61,30 @@ services:
       - traefik.http.routers.matrix-synapse-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
       - traefik.http.services.matrix-synapse-app.loadbalancer.server.port=8008 
     restart: always
+
+  # Uncomment if you don't want federation
+  matrix-synapse-well-known:
+    container_name: matrix-synapse-well-known
+    image: nginx:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+        - ./well-known:/usr/share/nginx/html/.well-known
+        - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.matrix-synapse-well-known.entrypoints=http
+      - traefik.http.routers.matrix-synapse-well-known.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && PathPrefix(`/.well-known`)
+      - traefik.http.routers.matrix-synapse-well-known-secure.entrypoints=https
+      - traefik.http.routers.matrix-synapse-well-known-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && PathPrefix(`/.well-known`)
+      - traefik.http.routers.matrix-synapse-well-known-secure.tls=true
+      - traefik.http.routers.matrix-synapse-well-known-secure.tls.certresolver=le-dns
+      - traefik.http.routers.matrix-synapse-well-known-secure.service=matrix-synapse-well-known
+      - traefik.http.routers.matrix-synapse-well-known-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.matrix-synapse-well-known.loadbalancer.server.port=80
 
   matrix-synapse-db:
     container_name: matrix-synapse-db
