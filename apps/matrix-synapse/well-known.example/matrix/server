@@ -1,1 +1,3 @@
-https://matrix.privacy.box
+{
+  "m.server": "matrix.privacy.box:443"
+}
