@@ -8,6 +8,7 @@ apps/traefik/data/config.yml
 apps/ghost/deployments
 apps/nginx-static/deployments
 apps/wordpress/deployments
+apps/matrix-synapse/well-known
 **/update-jellyfin.sh
 **/redis
 logs
