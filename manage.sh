@@ -92,7 +92,7 @@ case "$ACTION_FLAG" in
     "--getcompose")
         echo "Installing latest docker-compose"
         sudo mv ${COMPOSEPATH} ${COMPOSEPATH}BAK${TIMESTAMP_MINUTE}
-        sudo curl -L "https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-$(uname -s)-$(uname -m)" -o ${COMPOSEPATH}
+        sudo curl -L "https://github.com/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s)-$(uname -m)" -o ${COMPOSEPATH}
         sudo chmod +x ${COMPOSEPATH}
         echo "Succesfully installed $(${COMPOSEPATH} --version)"
         ;;
