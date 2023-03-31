@@ -63,7 +63,7 @@ services:
       - zipline-db
     environment:
       - CORE_RETURN_HTTPS=false
-      - CORE_SECRET=changethis
+      - CORE_SECRET=${APP_SECRET}
       - CORE_HOST=0.0.0.0
       - CORE_PORT=3000
       - CORE_DATABASE_URL=postgres://zipline:${DB_USER_PASS}@zipline-db/zipline
