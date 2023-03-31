@@ -1,0 +1,28 @@
+sharry.restserver {
+
+  base-url = "https://upload.privacy.box"
+
+  bind {
+    address = "0.0.0.0"
+    port = 9090
+  }
+
+  backend {
+    auth {
+      fixed.enabled = true ## enabled admin:admin access
+    }
+
+    jdbc {
+      url = "jdbc:postgresql://sharry-db:5432/sharry"
+      user = "sharry"
+      password = "secret"
+    }
+
+    signup {
+      mode = "open"
+      invite-time = "14 days"
+      invite-password = "generate-invite"
+    }
+  }
+
+}
