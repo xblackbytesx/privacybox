@@ -234,6 +234,7 @@ case "$ACTION_FLAG" in
         echo "--provision"
         echo "--getcompose"
         echo "--free-dsm-ports"
+        echo "--create-dsm-tun"
         echo "--start --all"
         echo "--start --killswitch-apps"
         echo "--start --ghost"
