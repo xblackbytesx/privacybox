@@ -13,7 +13,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/romm/database/
+      device: ${DOCKER_ROOT}/romm/database
   romm-resources:
     driver: local
     driver_opts:
@@ -28,31 +28,31 @@ volumes:
       device: ${ROMS_PATH}
 
 services:
-  romm-db:
-    container_name: romm-db
-    image: mariadb:latest
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - internal
-    # network_mode: container:expressvpn
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
-    environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=${DB_NAME}
-      - MYSQL_USER=romm
-      - MYSQL_PASSWORD=${DB_USER_PASS}
-    volumes:
-      - romm-database:/var/lib/mysql
-      - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=false"
-    healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      timeout: 20s
-      interval: 15s
-      retries: 30
-    restart: unless-stopped
+  # romm-db:
+  #   container_name: romm-db
+  #   image: mariadb:latest
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   networks:
+  #     - internal
+  #   # network_mode: container:expressvpn
+  #   command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+  #     - MYSQL_DATABASE=${DB_NAME}
+  #     - MYSQL_USER=romm
+  #     - MYSQL_PASSWORD=${DB_USER_PASS}
+  #   volumes:
+  #     - romm-database:/var/lib/mysql
+  #     - /etc/localtime:/etc/localtime:ro
+  #   labels:
+  #     - "traefik.enable=false"
+  #   healthcheck:
+  #     test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+  #     timeout: 20s
+  #     interval: 15s
+  #     retries: 30
+  #   restart: unless-stopped
 
   romm-app:
     container_name: romm-app
@@ -60,19 +60,20 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - ROMM_DB_DRIVER="mariadb"
-      - DB_HOST=romm-db
-      - DB_PORT=3306
-      - DB_USER=romm
-      - DB_NAME=${DB_NAME}
-      - DB_PASSWD=${DB_USER_PASS}
+      # - ROMM_DB_DRIVER="mariadb"
+      # - DB_HOST=romm-db
+      # - DB_PORT=3306
+      # - DB_USER=romm
+      # - DB_NAME=${DB_NAME}
+      # - DB_PASSWD=${DB_USER_PASS}
       - CLIENT_ID=${IGDB_CLIENT_ID}
       - CLIENT_SECRET=${IGDB_CLIENT_SECRET}
       - STEAMGRIDDB_API_KEY=${STEAMGRIDDB_API_KEY}
     volumes:
       - 'romm-roms-dir:/romm/library'
       - 'romm-resources:/romm/resources'
-      - '${DOCKER_ROOT}/romm/config/config.yml:/romm/config.yml'
+      # - '${DOCKER_ROOT}/romm/config/config.yml:/romm/config.yml' # Optional
+      - 'romm-database:/romm/database'
       - /etc/localtime:/etc/localtime:ro
     labels:
       # - "traefik.enable=false"
