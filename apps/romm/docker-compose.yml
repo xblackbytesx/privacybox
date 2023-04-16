@@ -1,11 +1,11 @@
 version: '3'
 
-# networks:
-#   proxy:
-#     name: proxy
-#     external: true
-#   internal:
-#     internal: true
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
 
 volumes:
   romm-database:
@@ -33,9 +33,9 @@ services:
     image: mariadb:latest
     security_opt:
       - no-new-privileges:true
-    # networks:
-    #   - internal
-    network_mode: container:expressvpn
+    networks:
+      - internal
+    # network_mode: container:expressvpn
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
@@ -75,23 +75,23 @@ services:
       - '${DOCKER_ROOT}/romm/config/config.yml:/romm/config.yml'
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=false"
-      # - "traefik.enable=true"
-      # - "traefik.http.routers.romm.entrypoints=http"
-      # - "traefik.http.routers.romm.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      # - "traefik.http.routers.romm.middlewares=secured@file"
-      # - "traefik.http.routers.romm-secure.entrypoints=https"
-      # - "traefik.http.routers.romm-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      # - "traefik.http.routers.romm-secure.tls=true"
-      # - "traefik.http.routers.romm-secure.tls.certresolver=le-dns"
-      # - "traefik.http.routers.romm-secure.service=romm"
-      # - "traefik.http.services.romm.loadbalancer.server.port=80"
+      # - "traefik.enable=false"
+      - "traefik.enable=true"
+      - "traefik.http.routers.romm.entrypoints=http"
+      - "traefik.http.routers.romm.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.romm.middlewares=secured@file"
+      - "traefik.http.routers.romm-secure.entrypoints=https"
+      - "traefik.http.routers.romm-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.http.routers.romm-secure.tls=true"
+      - "traefik.http.routers.romm-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.romm-secure.service=romm"
+      - "traefik.http.services.romm.loadbalancer.server.port=80"
     depends_on:
       - romm-db
-    # networks:
-    #   - internal
-    #   - proxy
+    networks:
+      - internal
+      - proxy
     # ports:
     #   - 5959:80
-    network_mode: container:expressvpn
+    # network_mode: container:expressvpn
     restart: unless-stopped
