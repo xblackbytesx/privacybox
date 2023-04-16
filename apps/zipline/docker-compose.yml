@@ -1,0 +1,85 @@
+version: '3.7'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  zipline-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/zipline/database
+  zipline-uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/zipline/uploads
+  zipline-public:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/zipline/public
+
+services:
+  zipline-db:
+    container_name: zipline-db
+    image: postgres:15-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - POSTGRES_DB=zipline
+      - POSTGRES_USER=zipline
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - zipline-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "zipline"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  zipline-app:
+    container_name: zipline-app
+    image: ghcr.io/diced/zipline
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - 'zipline-uploads:/zipline/uploads'
+      - 'zipline-public:/zipline/public'
+    depends_on:
+      - zipline-db
+    environment:
+      - CORE_RETURN_HTTPS=false
+      - CORE_SECRET=${APP_SECRET}
+      - CORE_HOST=0.0.0.0
+      - CORE_PORT=3000
+      - CORE_DATABASE_URL=postgres://zipline:${DB_USER_PASS}@zipline-db/zipline
+      - CORE_LOGGER=true
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.zipline-app.entrypoints=http
+      - traefik.http.routers.zipline-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.zipline-app-secure.entrypoints=https
+      - traefik.http.routers.zipline-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.zipline-app-secure.tls=true
+      - traefik.http.routers.zipline-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.zipline-app-secure.service=zipline-app
+      - traefik.http.routers.zipline-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.zipline-app.loadbalancer.server.port=3000
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped

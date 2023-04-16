@@ -101,6 +101,10 @@ case "$ACTION_FLAG" in
         source scripts/free-dsm-ports.sh
         ;;
 
+    "--create-dsm-tun")
+        source scripts/create-dsm-tun.sh
+        ;;
+
     "--start"|"--stop"|"--update"|"--restart")
         case "$ACTION_SCOPE" in
             "--all")
@@ -230,6 +234,7 @@ case "$ACTION_FLAG" in
         echo "--provision"
         echo "--getcompose"
         echo "--free-dsm-ports"
+        echo "--create-dsm-tun"
         echo "--start --all"
         echo "--start --killswitch-apps"
         echo "--start --ghost"
