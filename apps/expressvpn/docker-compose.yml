@@ -3,7 +3,7 @@ version: "3.3"
 services:
     expressvpn:
         container_name: expressvpn
-        image: polkaned/expressvpn
+        image: polkaned/expressvpn:latest
         security_opt:
             - no-new-privileges:true
         environment:
