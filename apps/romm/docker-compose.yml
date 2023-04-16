@@ -87,8 +87,8 @@ services:
       - "traefik.http.routers.romm-app-secure.tls.certresolver=le-dns"
       - "traefik.http.routers.romm-app-secure.service=romm-app"
       - "traefik.http.services.romm-app.loadbalancer.server.port=80"
-    depends_on:
-      - romm-db
+    # depends_on:
+    #   - romm-db
     networks:
       - internal
       - proxy
