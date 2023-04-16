@@ -44,4 +44,7 @@ services:
             # Spotweb
             - 2354:80
             - 2355:3306
+            # Romm
+            - 5858:3306
+            - 5959:80
         restart: unless-stopped
