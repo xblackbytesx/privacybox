@@ -48,7 +48,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Validate input
-if [[ -z "$action" ]] || [[ -z "$entity_type" && "$action" != "backup" ]]; then
+if [[ -z "$action" ]] || [[ -z "$entity_type" && "$action" != "backup" && "$action" != "free-dsm-ports" && "$action" != "create-dsm-tun" ]]; then
   usage
 fi
 
