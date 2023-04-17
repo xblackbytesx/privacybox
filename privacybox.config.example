@@ -10,9 +10,11 @@ BACKUP_ROOT=/media/storage/backups
 ##################################
 ## APPS DEPLOYED ON THIS SYSTEM ##
 ##################################
-# Array of all apps running on this system
-DEPLOYED_APPS=baikal, bitwarden, cryptofolio, drawio, flame, freshrss, ghost, gitea, glances, homeassistant, invidious, matrix-synapse, pihole, portainer, searx, standardnotes, statping, syncthing, traefik, wallabag, wireguard
+# List of all apps running on this system
+DEPLOYED_APPS=traefik, portainer-agent, expressvpn, transmission, nzbget, sonarr, radarr, lidarr, readarr, spotweb, prowlarr, jellyfin, syncthing, baikal, navidrome, pigallery2
 
-# Array of apps running on this system behind a VPN and require a killswitch
-# Uncomment the next line to enable VPN killswitch protection on supported apps.
-# KILLSWITCH_APPS=transmission, nzbget, sonarr, radarr, lidarr, readarr, spotweb, prowlarr
+# List of apps running on this system behind a VPN and require a killswitch 
+VPN_PROTECTED=transmission, nzbget, prowlarr, sonarr, radarr, lidarr, readarr, spotweb
+
+# List of apps capable of running VPN checks against (e.g. containers with curl installed)
+VPN_CHECKS=transmission, expressvpn, sonarr, radarr
