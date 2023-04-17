@@ -13,3 +13,6 @@ fi
 if ( !(lsmod | grep -q "^tun\s") ); then
   insmod /lib/modules/tun.ko
 fi
+
+echo "Done!"
+echo "Don't forget to add this script to your boot scripts using the scheduler: Control Panel -> Task Schedule"

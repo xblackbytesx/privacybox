@@ -11,8 +11,8 @@ BACKUP_ROOT=/media/storage/backups
 ## APPS DEPLOYED ON THIS SYSTEM ##
 ##################################
 # Array of all apps running on this system
-DEPLOYED_APPS=( baikal bitwarden cryptofolio drawio flame freshrss ghost gitea glances homeassistant invidious matrix-synapse pihole portainer searx standardnotes statping syncthing traefik wallabag wireguard )
+DEPLOYED_APPS=baikal, bitwarden, cryptofolio, drawio, flame, freshrss, ghost, gitea, glances, homeassistant, invidious, matrix-synapse, pihole, portainer, searx, standardnotes, statping, syncthing, traefik, wallabag, wireguard
 
 # Array of apps running on this system behind a VPN and require a killswitch
 # Uncomment the next line to enable VPN killswitch protection on supported apps.
-# KILLSWITCH_APPS=( transmission nzbget sonarr radarr lidarr readarr spotweb prowlarr )
+# KILLSWITCH_APPS=transmission, nzbget, sonarr, radarr, lidarr, readarr, spotweb, prowlarr

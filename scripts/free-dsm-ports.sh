@@ -21,3 +21,6 @@ sed -i "s/^\( *listen .*\)$HTTP_PORT/\1$HTTP_PATCH_PORT/" /usr/syno/share/nginx/
 
 sed -i "s/^\( *listen .*\)$HTTPS_PATCH_PORT/\1$HTTPS_PORT/" /usr/syno/share/nginx/*.mustache
 sed -i "s/^\( *listen .*\)$HTTPS_PORT/\1$HTTPS_PATCH_PORT/" /usr/syno/share/nginx/*.mustache
+
+echo "Done!"
+echo "Don't forget to add this script to your boot scripts using the scheduler: Control Panel -> Task Schedule"
