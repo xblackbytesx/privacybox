@@ -1,0 +1,65 @@
+version: "3.7"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  audiobookshelf-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/audiobookshelf/config
+  audiobookshelf-metadata:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/audiobookshelf/metadata
+  audiobookshelf-audiobooks-dir:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${BOOKS_PATH}
+  audiobookshelf-ebooks-dir:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${BOOKS_PATH}
+  audiobookshelf-podcasts-dir:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${BOOKS_PATH}
+
+services:
+  audiobookshelf:
+    container_name: audiobookshelf
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - audiobookshelf-config:/config
+      - audiobookshelf-metadata:/metadata
+      - audiobookshelf-audiobooks-dir:/audiobooks
+      - audiobookshelf-ebooks-dir:/ebooks
+      - audiobookshelf-podcasts-dir:/podcasts
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.audiobookshelf.entrypoints=http
+      - traefik.http.routers.audiobookshelf.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.audiobookshelf-secure.entrypoints=https
+      - traefik.http.routers.audiobookshelf-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.audiobookshelf-secure.tls=true
+      - traefik.http.routers.audiobookshelf-secure.tls.certresolver=le-dns
+      - traefik.http.routers.audiobookshelf-secure.service=audiobookshelf
+      - traefik.http.routers.audiobookshelf-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.audiobookshelf.loadbalancer.server.port=80
+    networks:
+      - proxy
+    restart: unless-stopped
