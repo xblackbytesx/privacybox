@@ -1,4 +1,4 @@
-version: '3'
+version: "3.4"
 
 networks:
   proxy:
@@ -8,32 +8,101 @@ networks:
     internal: true
 
 volumes:
-  paperless-ngx-config:
+  paperless-ngx-database:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/paperless-ngx/config
+      device: ${DOCKER_ROOT}/paperless-ngx/database
+  paperless-ngx-redis:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/paperless-ngx/redis
   paperless-ngx-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/paperless-ngx/data
+  paperless-ngx-documents:
     driver: local
     driver_opts:
       type: ${MEDIA_DRIVER_OPT_TYPE}
       o: ${MEDIA_DRIVER_OPT_O}
       device: ${DOCUMENTS_PATH}
+  paperless-ngx-export:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${EXPORT_PATH}
+  paperless-ngx-consume:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${CONSUME_PATH}
 
 services:
-  paperless-ngx-app:
-    container_name: paperless-ngx-app
-    image: lscr.io/linuxserver/paperless-ngx:latest
+  paperless-ngx-db:
+    container_name: paperless-ngx-db
+    image: docker.io/library/postgres:13
     security_opt:
       - no-new-privileges:true
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=Europe/Amsterdam
     volumes:
-      - paperless-ngx-config:/config
-      - paperless-ngx-data:/data
+      - paperless-ngx-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=false
+    networks: 
+      - internal
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    restart: unless-stopped
+
+  paperless-ngx-redis:
+    container_name: paperless-ngx-redis
+    image: docker.io/library/redis:7
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - paperless-ngx-redis:/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=false
+    networks: 
+      - internal
+    restart: unless-stopped
+
+  paperless-ngx-app:
+    container_name: paperless-ngx-app
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - paperless-ngx-db
+      - paperless-ngx-redis
+    environment:
+      USERMAP_UID: ${PUID}
+      USERMAP_GID: ${PGID}
+      PAPERLESS_OCR_LANGUAGES=: ng nld
+      PAPERLESS_OCR_LANGUAGE: eng
+      PAPERLESS_URL: https://${SUBDOMAIN}.${DOMAIN}
+      # PAPERLESS_FORCE_SCRIPT_NAME: /PATHPREFIX
+      # PAPERLESS_STATIC_URL: /PATHPREFIX/static/
+      PAPERLESS_SECRET_KEY: ${SECRET_KEY}
+      PAPERLESS_REDIS: redis://paperless-ngx-redis:6379
+      PAPERLESS_DBHOST: paperless-ngx-db
+      PAPERLESS_TIME_ZONE: Europe/Amsterdam
+    volumes:
+      - paperless-ngx-data:/usr/src/paperless/data
+      - paperless-ngx-documents:/usr/src/paperless/media
+      - paperless-ngx-export:/usr/src/paperless/export
+      - paperless-ngx-consume:/usr/src/paperless/consume
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
@@ -49,4 +118,9 @@ services:
     networks: 
       - internal
       - proxy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
