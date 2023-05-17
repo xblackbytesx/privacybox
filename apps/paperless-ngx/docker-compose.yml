@@ -89,7 +89,7 @@ services:
     environment:
       USERMAP_UID: ${PUID}
       USERMAP_GID: ${PGID}
-      PAPERLESS_OCR_LANGUAGES=: eng nld
+      PAPERLESS_OCR_LANGUAGES: eng nld
       PAPERLESS_OCR_LANGUAGE: eng
       PAPERLESS_URL: https://${SUBDOMAIN}.${DOMAIN}
       # PAPERLESS_FORCE_SCRIPT_NAME: /PATHPREFIX
