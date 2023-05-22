@@ -1,0 +1,44 @@
+version: "3.4"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+services:
+  agendav-app:
+    container_name: agendav
+    image: ghcr.io/nagimov/agendav-docker:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - AGENDAV_SERVER_NAME=127.0.0.1
+      - AGENDAV_TITLE=${TITLE_TEXT}
+      - AGENDAV_FOOTER=${FOOTER_TEXT}
+      - AGENDAV_ENC_KEY=${ENCRYPTION_KEY}
+      - AGENDAV_CALDAV_SERVER=${CALDAV_SERVER_URL}
+      - AGENDAV_CALDAV_PUBLIC_URL=${CALDAV_PUBLIC_URL}
+      - AGENDAV_TIMEZONE=${TIMEZONE}
+      - AGENDAV_LANG=en
+      - AGENDAV_LOG_DIR=/tmp/
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.agendav-app.entrypoints=http
+      - traefik.http.routers.agendav-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.agendav-app-secure.entrypoints=https
+      - traefik.http.routers.agendav-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.agendav-app-secure.tls=true
+      - traefik.http.routers.agendav-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.agendav-app-secure.service=agendav-app
+      - traefik.http.routers.agendav-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.agendav-app.loadbalancer.server.port=8080
+    networks: 
+      - proxy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
