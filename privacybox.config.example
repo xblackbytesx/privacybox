@@ -5,7 +5,6 @@
 #######################
 DOCKER_ROOT=/media/storage/docker
 STORAGE_ROOT=/media/storage
-BACKUP_ROOT=/media/storage/backups
 
 ##################################
 ## APPS DEPLOYED ON THIS SYSTEM ##
@@ -18,3 +17,19 @@ VPN_PROTECTED=transmission, nzbget, prowlarr, sonarr, radarr, lidarr, readarr, s
 
 # List of apps capable of running VPN checks against (e.g. containers with curl installed)
 VPN_CHECKS=transmission, expressvpn, sonarr, radarr
+
+####################
+## BACKUPS CONFIG ##
+####################
+BACKUP_ROOT=/media/storage/backups
+
+# Relative to the DOCKER_ROOT path (will be prefixed)
+EXCLUDE_PATHS=(
+  "photoprism/data/albums"
+  "photoprism/data/cache"
+  "photoprism/data/serial"
+  "photoprism/data/sidecar"
+  "pigallery/temp"
+  "jellyfin"
+  "jellyfinBAK"
+)
