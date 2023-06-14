@@ -116,14 +116,57 @@ execute_action() {
 
 # Function to run backup.sh script
 run_backup() {
-  backup_script="scripts/backup.sh"
+  PRIVACYBOX_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+  TIMESTAMP_HOUR=$(date +%Y%m%d%H)
+  SERVER_NAME=$(cat /proc/sys/kernel/hostname)
+  BACKUP_FILE="$BACKUP_ROOT/$TIMESTAMP_HOUR-$SERVER_NAME.tar.gz"
+  BACKUP_PATHS=("$PRIVACYBOX_DIR" "$DOCKER_ROOT")
 
-  if [[ -f "$backup_script" ]]; then
-    echo "Running backup script..."
-    chmod +x "$backup_script"
-    ./"$backup_script"
+  # Build the exclude options for tar command
+  EXCLUDE_OPTS=""
+  for PATH in "${EXCLUDE_PATHS[@]}"; do
+    EXCLUDE_OPTS+="--exclude=$DOCKER_ROOT/$PATH "
+  done
+
+  # Task summary
+  echo "Backup Task Summary:"
+  echo "Backup Directory: $BACKUP_DIR"
+  echo "Backup Filename: $BACKUP_FILE"
+
+  for PATH in "${BACKUP_PATHS[@]}"; do
+    echo "  - $PATH"
+  done
+
+  echo "Paths to be Backed Up:"
+  echo "Paths to be Excluded:"
+  for PATH in "${EXCLUDE_PATHS[@]}"; do
+    echo "  - $DOCKER_ROOT/$PATH"
+  done
+
+  # Prompt for confirmation
+  read -p "Are you sure you want to continue with the backup? (y/n): " -n 1 -r
+  echo    # move to a new line
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  then
+      echo "Backup cancelled."
+      exit 1
+  fi
+
+  # Make the backup directory
+  mkdir -p "$BACKUP_ROOT"
+  if [ $? -ne 0 ]; then
+    echo "Failed to create backup directory" >&2
+    exit 1
+  fi
+
+  # Create the backup
+  sudo tar $EXCLUDE_OPTS -zcvpf "$BACKUP_FILE" "${BACKUP_PATHS[@]}"
+
+  if [ $? -ne 0 ]; then
+    echo "Failed to create backup" >&2
+    exit 1
   else
-    echo "Backup script not found: $backup_script"
+    echo "Backup succeeded: $BACKUP_FILE"
   fi
 }
 
