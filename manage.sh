@@ -130,14 +130,14 @@ run_backup() {
 
   # Task summary
   echo "Backup Task Summary:"
-  echo "Backup Directory: $BACKUP_DIR"
+  echo "Backup Directory: $BACKUP_ROOT"
   echo "Backup Filename: $BACKUP_FILE"
 
+  echo "Paths to be Backed Up:"
   for PATH in "${BACKUP_PATHS[@]}"; do
     echo "  - $PATH"
   done
 
-  echo "Paths to be Backed Up:"
   echo "Paths to be Excluded:"
   for PATH in "${EXCLUDE_PATHS[@]}"; do
     echo "  - $DOCKER_ROOT/$PATH"
