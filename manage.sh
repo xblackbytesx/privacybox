@@ -168,11 +168,12 @@ run_backup() {
     exit 1
   fi
 
-  # Create the backup
-  sudo tar $EXCLUDE_OPTS -zcvpf "$BACKUP_FILE" "${BACKUP_PATHS[@]}"
+  # Create the backup and capture any error output
+  ERROR_OUTPUT=$(sudo tar $EXCLUDE_OPTS -zcvpf "$BACKUP_FILE" "${BACKUP_PATHS[@]}" 2>&1 >/dev/null)
 
   if [ $? -ne 0 ]; then
-    echo "Failed to create backup" >&2
+    echo "Failed to create backup: $BACKUP_FILE" >&2
+    echo "Error: $ERROR_OUTPUT" >&2
     exit 1
   else
     echo "Backup succeeded: $BACKUP_FILE"
