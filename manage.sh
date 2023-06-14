@@ -124,8 +124,11 @@ run_backup() {
 
   # Build the exclude options for tar command
   EXCLUDE_OPTS=""
+  FULL_EXCLUDE_PATHS=()
   for PATH in "${EXCLUDE_PATHS[@]}"; do
-    EXCLUDE_OPTS+="--exclude=$DOCKER_ROOT/$PATH "
+    FULL_PATH="$DOCKER_ROOT/$PATH"
+    EXCLUDE_OPTS+="--exclude=$FULL_PATH "
+    FULL_EXCLUDE_PATHS+=("$FULL_PATH")
   done
 
   # Task summary
@@ -139,8 +142,8 @@ run_backup() {
   done
 
   echo "Paths to be Excluded:"
-  for PATH in "${EXCLUDE_PATHS[@]}"; do
-    echo "  - $DOCKER_ROOT/$PATH"
+  for PATH in "${FULL_EXCLUDE_PATHS[@]}"; do
+    echo "  - $PATH"
   done
 
   # Prompt for confirmation
