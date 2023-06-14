@@ -24,4 +24,4 @@ VPN_CHECKS=transmission, expressvpn, sonarr, radarr
 BACKUP_ROOT=/media/storage/backups
 
 # Relative to the DOCKER_ROOT path (will be prefixed)
-EXCLUDE_PATHS=("photoprism/data/albums" "photoprism/data/cache" "photoprism/data/serial" "photoprism/data/sidecar" "pigallery/temp" "jellyfin" "jellyfinBAK")
+EXCLUDE_PATHS=photoprism/data/albums photoprism/data/cache photoprism/data/serial photoprism/data/sidecar pigallery/temp jellyfin jellyfinBAK

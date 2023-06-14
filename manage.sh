@@ -122,6 +122,9 @@ run_backup() {
   BACKUP_FILE="$BACKUP_ROOT/$TIMESTAMP_HOUR-$SERVER_NAME.tar.gz"
   BACKUP_PATHS=("$PRIVACYBOX_DIR" "$DOCKER_ROOT")
 
+  # Convert the string to an array
+  IFS=' ' read -r -a EXCLUDE_PATHS <<< "$EXCLUDE_PATHS"
+
   # Build the exclude options for tar command
   EXCLUDE_OPTS=""
   FULL_EXCLUDE_PATHS=()
@@ -145,6 +148,9 @@ run_backup() {
   for PATH in "${FULL_EXCLUDE_PATHS[@]}"; do
     echo "  - $PATH"
   done
+
+  echo "Command to be run:"
+  echo "sudo tar $EXCLUDE_OPTS -zcvpf \"$BACKUP_FILE\" \"${BACKUP_PATHS[@]}\""
 
   # Prompt for confirmation
   read -p "Are you sure you want to continue with the backup? (y/n): " -n 1 -r
