@@ -19,32 +19,19 @@ services:
     image: itzg/minecraft-server:latest
     security_opt:
       - no-new-privileges:true
-    # networks:
-    #   - proxy
     ports:
-      - 25565:25565/udp
+      - 25565:25565
     environment:
-      # UID: ${PUID}
-      # GID: ${PGID}
+      UID: ${PUID}
+      GID: ${PGID}
       EULA: "TRUE"
       SERVER_NAME: ${SERVER_NAME}
-      GAMEMODE: ${GAME_MODE}
+      MODE: ${GAME_MODE}
       DIFFICULTY: ${DIFFICULTY}
-      ALLOW_LIST_USERS: ${ALLOWED_USERS}
-      ALLOW_CHEATS: "true"
-      # ONLINE_MODE: ${ONLINE_MODE}
+      MEMORY: 4G
+      ONLINE_MODE: ${ONLINE_MODE}
+      LEVEL: ${ACTIVE_WORLD}
     volumes:
       - minecraft-data:/data
       - /etc/localtime:/etc/localtime:ro
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.minecraft-java-server.entrypoints=http"
-    #   - "traefik.http.routers.minecraft-java-server.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.minecraft-java-server.middlewares=secured@file"
-    #   - "traefik.http.routers.minecraft-java-server-secure.entrypoints=https"
-    #   - "traefik.http.routers.minecraft-java-server-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.minecraft-java-server-secure.tls=true"
-    #   - "traefik.http.routers.minecraft-java-server-secure.tls.certresolver=le-dns"
-    #   - "traefik.http.routers.minecraft-java-server-secure.service=minecraft-java-server"
-    #   - "traefik.http.services.minecraft-java-server.loadbalancer.server.port=25565"
     restart: unless-stopped
