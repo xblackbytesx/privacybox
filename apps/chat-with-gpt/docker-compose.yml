@@ -35,9 +35,4 @@ services:
       - traefik.http.services.chat-with-gpt-app.loadbalancer.server.port=3000
     networks: 
       - proxy
-    healthcheck:
-      test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
     restart: unless-stopped
