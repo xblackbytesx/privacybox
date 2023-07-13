@@ -1,0 +1,43 @@
+version: "3.4"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  chat-with-gpt-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/chat-with-gpt/data
+
+services:
+  chat-with-gpt-app:
+    container_name: chat-with-gpt
+    image: ghcr.io/cogentapps/chat-with-gpt:release
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - chat-with-gpt-data:/app/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.chat-with-gpt-app.entrypoints=http
+      - traefik.http.routers.chat-with-gpt-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.chat-with-gpt-app-secure.entrypoints=https
+      - traefik.http.routers.chat-with-gpt-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.chat-with-gpt-app-secure.tls=true
+      - traefik.http.routers.chat-with-gpt-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.chat-with-gpt-app-secure.service=chat-with-gpt-app
+      - traefik.http.routers.chat-with-gpt-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.chat-with-gpt-app.loadbalancer.server.port=3000
+    networks: 
+      - proxy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
