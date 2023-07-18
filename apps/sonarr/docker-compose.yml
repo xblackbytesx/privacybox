@@ -1,9 +1,9 @@
 version: '3'
 
-# networks:
-#   proxy:
-#     name: proxy
-#     external: true
+networks:
+  proxy:
+    name: proxy
+    external: true
 
 volumes:
   sonarr-config:
@@ -42,20 +42,17 @@ services:
       - sonarr-downloads-dir:/downloads
       - ./scripts:/scripts
       - /etc/localtime:/etc/localtime:ro
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.sonarr.entrypoints=http"
-    #   - "traefik.http.routers.sonarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.sonarr.middlewares=secured@file"
-    #   - "traefik.http.routers.sonarr-secure.entrypoints=https"
-    #   - "traefik.http.routers.sonarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.sonarr-secure.tls=true"
-    #   - "traefik.http.routers.sonarr-secure.tls.certresolver=le-dns"
-    #   - "traefik.http.routers.sonarr-secure.service=sonarr"
-    #   - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
-    # networks:
-    #   - proxy
     labels:
-      - "traefik.enable=false"
-    network_mode: container:expressvpn
+      - traefik.enable=true
+      - traefik.http.routers.sonarr.entrypoints=http
+      - traefik.http.routers.sonarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.sonarr-secure.entrypoints=https
+      - traefik.http.routers.sonarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.sonarr-secure.tls=true
+      - traefik.http.routers.sonarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.sonarr-secure.service=sonarr
+      - traefik.http.routers.sonarr-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.sonarr.loadbalancer.server.port=8989
+    networks:
+      - proxy
     restart: unless-stopped

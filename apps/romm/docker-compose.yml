@@ -35,7 +35,6 @@ services:
   #     - no-new-privileges:true
   #   networks:
   #     - internal
-  #   # network_mode: container:expressvpn
   #   command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
   #   environment:
   #     - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
@@ -75,24 +74,20 @@ services:
       # - '${DOCKER_ROOT}/romm/config/config.yml:/romm/config.yml' # Optional
       - 'romm-database:/romm/database'
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      # - "traefik.enable=false"
-      - "traefik.enable=true"
-      - "traefik.http.routers.romm-app.entrypoints=http"
-      - "traefik.http.routers.romm-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.romm-app.middlewares=secured@file"
-      - "traefik.http.routers.romm-app-secure.entrypoints=https"
-      - "traefik.http.routers.romm-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.romm-app-secure.tls=true"
-      - "traefik.http.routers.romm-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.romm-app-secure.service=romm-app"
-      - "traefik.http.services.romm-app.loadbalancer.server.port=80"
     # depends_on:
     #   - romm-db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.romm-app.entrypoints=http
+      - traefik.http.routers.romm-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.romm-app-secure.entrypoints=https
+      - traefik.http.routers.romm-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.romm-app-secure.tls=true
+      - traefik.http.routers.romm-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.romm-app-secure.service=romm-app
+      - traefik.http.routers.romm-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.romm-app.loadbalancer.server.port=80
     networks:
       - internal
       - proxy
-    # ports:
-    #   - 5959:80
-    # network_mode: container:expressvpn
     restart: unless-stopped

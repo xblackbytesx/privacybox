@@ -1,9 +1,9 @@
 version: '3'
 
-# networks:
-#   proxy:
-#     name: proxy
-#     external: true
+networks:
+  proxy:
+    name: proxy
+    external: true
 
 volumes:
   radarr-config:
@@ -42,20 +42,17 @@ services:
       - radarr-downloads-dir:/downloads
       - ./scripts:/scripts
       - /etc/localtime:/etc/localtime:ro
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.radarr.entrypoints=http"
-    #   - "traefik.http.routers.radarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.radarr.middlewares=secured@file"
-    #   - "traefik.http.routers.radarr-secure.entrypoints=https"
-    #   - "traefik.http.routers.radarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.radarr-secure.tls=true"
-    #   - "traefik.http.routers.radarr-secure.tls.certresolver=le-dns"
-    #   - "traefik.http.routers.radarr-secure.service=radarr"
-    #   - "traefik.http.services.radarr.loadbalancer.server.port=7878"
-    # networks:
-    #   - proxy
     labels:
-      - "traefik.enable=false"
-    network_mode: container:expressvpn
+      - traefik.enable=true
+      - traefik.http.routers.radarr.entrypoints=http
+      - traefik.http.routers.radarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.radarr-secure.entrypoints=https
+      - traefik.http.routers.radarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.radarr-secure.tls=true
+      - traefik.http.routers.radarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.radarr-secure.service=radarr
+      - traefik.http.routers.radarr-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.radarr.loadbalancer.server.port=7878
+    networks:
+      - proxy
     restart: unless-stopped

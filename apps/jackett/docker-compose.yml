@@ -1,5 +1,10 @@
 version: '3.3'
 
+networks:
+  proxy:
+    name: proxy
+    external: true
+
 volumes:
   jackett-config:
     driver: local
@@ -28,5 +33,17 @@ services:
       - jackett-config:/config
       - jackett-downloads:/downloads
       - /etc/localtime:/etc/localtime:ro
-    network_mode: container:expressvpn
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.jackett.entrypoints=http
+      - traefik.http.routers.jackett.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.jackett-secure.entrypoints=https
+      - traefik.http.routers.jackett-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.jackett-secure.tls=true
+      - traefik.http.routers.jackett-secure.tls.certresolver=le-dns
+      - traefik.http.routers.jackett-secure.service=jackett
+      - traefik.http.routers.jackett-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.jackett.loadbalancer.server.port=9117
+    networks:
+      - proxy
     restart: unless-stopped

@@ -1,5 +1,10 @@
 version: "2.1"
 
+networks:
+  proxy:
+    name: proxy
+    external: true
+
 volumes:
   transmission-config:
     driver: local
@@ -38,5 +43,20 @@ services:
       - transmission-downloads:/downloads
       - transmission-watchdir:/watch
       - /etc/localtime:/etc/localtime:ro
-    network_mode: container:expressvpn
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.transmission.entrypoints=http
+      - traefik.http.routers.transmission.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.transmission-secure.entrypoints=https
+      - traefik.http.routers.transmission-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.transmission-secure.tls=true
+      - traefik.http.routers.transmission-secure.tls.certresolver=le-dns
+      - traefik.http.routers.transmission-secure.service=transmission
+      - traefik.http.routers.transmission-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.transmission.loadbalancer.server.port=9091
+    networks:
+      - proxy
+    ports:
+      - 51413:51413
+      - 51413:51413/udp
     restart: unless-stopped
