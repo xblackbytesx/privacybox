@@ -1,11 +1,11 @@
 version: '3'
 
-# networks:
-#   proxy:
-#     name: proxy
-#     external: true
-#   internal:
-#     internal: true
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
 
 volumes:
   spotweb-database:
@@ -21,7 +21,8 @@ services:
     image: mariadb:latest
     security_opt:
       - no-new-privileges:true
-    network_mode: container:expressvpn
+    networks:
+      - internal
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
@@ -52,23 +53,22 @@ services:
       - DB_NAME=spotweb
       - DB_USER=spotweb
       - DB_PASS=${DB_USER_PASS}
+    depends_on:
+      - spotweb-db
     volumes:
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=false"
-      # - "traefik.enable=true"
-      # - "traefik.http.routers.spotweb-app.entrypoints=http"
-      # - "traefik.http.routers.spotweb-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      # - "traefik.http.routers.spotweb-app.middlewares=secured@file"
-      # - "traefik.http.routers.spotweb-app-secure.entrypoints=https"
-      # - "traefik.http.routers.spotweb-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      # - "traefik.http.routers.spotweb-app-secure.tls=true"
-      # - "traefik.http.routers.spotweb-app-secure.tls.certresolver=le-dns"
-      # - "traefik.http.routers.spotweb-app-secure.service=spotweb-app"
-      # - "traefik.http.services.spotweb-app.loadbalancer.server.port=80"
-    depends_on:
-      - spotweb-db
-    network_mode: container:expressvpn
-    # ports:
-    #   - 2354:80
+      - traefik.enable=true
+      - traefik.http.routers.spotweb-app.entrypoints=http
+      - traefik.http.routers.spotweb-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.spotweb-app-secure.entrypoints=https
+      - traefik.http.routers.spotweb-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.spotweb-app-secure.tls=true
+      - traefik.http.routers.spotweb-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.spotweb-app-secure.service=spotweb-app
+      - traefik.http.routers.spotweb-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.spotweb-app.loadbalancer.server.port=80
+    networks:
+      - internal
+      - proxy
     restart: unless-stopped

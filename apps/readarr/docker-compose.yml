@@ -1,9 +1,9 @@
 version: '3'
 
-# networks:
-#   proxy:
-#     name: proxy
-#     external: true
+networks:
+  proxy:
+    name: proxy
+    external: true
 
 volumes:
   readarr-config:
@@ -41,20 +41,17 @@ services:
       - readarr-books-dir:/books
       - readarr-downloads-dir:/downloads  
       - /etc/localtime:/etc/localtime:ro
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.readarr.entrypoints=http"
-    #   - "traefik.http.routers.readarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.readarr.middlewares=secured@file"
-    #   - "traefik.http.routers.readarr-secure.entrypoints=https"
-    #   - "traefik.http.routers.readarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.readarr-secure.tls=true"
-    #   - "traefik.http.routers.readarr-secure.tls.certresolver=le-dns"
-    #   - "traefik.http.routers.readarr-secure.service=readarr"
-    #   - "traefik.http.services.readarr.loadbalancer.server.port=8787"
-    # networks:
-    #   - proxy
     labels:
-      - "traefik.enable=false"
-    network_mode: container:expressvpn
+      - traefik.enable=true
+      - traefik.http.routers.readarr.entrypoints=http
+      - traefik.http.routers.readarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.readarr-secure.entrypoints=https
+      - traefik.http.routers.readarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.readarr-secure.tls=true
+      - traefik.http.routers.readarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.readarr-secure.service=readarr
+      - traefik.http.routers.readarr-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.readarr.loadbalancer.server.port=8787
+    networks:
+      - proxy
     restart: unless-stopped

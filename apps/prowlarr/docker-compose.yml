@@ -1,5 +1,10 @@
 version: '3'
 
+networks:
+  proxy:
+    name: proxy
+    external: true
+
 volumes:
   prowlarr-config:
     driver: local
@@ -21,5 +26,17 @@ services:
     volumes:
       - prowlarr-config:/config
       - /etc/localtime:/etc/localtime:ro
-    network_mode: container:expressvpn
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.prowlarr.entrypoints=http
+      - traefik.http.routers.prowlarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.prowlarr-secure.entrypoints=https
+      - traefik.http.routers.prowlarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.prowlarr-secure.tls=true
+      - traefik.http.routers.prowlarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.prowlarr-secure.service=prowlarr
+      - traefik.http.routers.prowlarr-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.prowlarr.loadbalancer.server.port=9696
+    networks:
+      - proxy
     restart: unless-stopped

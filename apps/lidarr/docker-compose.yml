@@ -1,9 +1,9 @@
 version: '3'
 
-# networks:
-#   proxy:
-#     name: proxy
-#     external: true
+networks:
+  proxy:
+    name: proxy
+    external: true
 
 volumes:
   lidarr-config:
@@ -40,20 +40,17 @@ services:
       - lidarr-music-dir:/music
       - lidarr-downloads-dir:/downloads
       - /etc/localtime:/etc/localtime:ro
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.lidarr.entrypoints=http"
-    #   - "traefik.http.routers.lidarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.lidarr.middlewares=secured@file"
-    #   - "traefik.http.routers.lidarr-secure.entrypoints=https"
-    #   - "traefik.http.routers.lidarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-    #   - "traefik.http.routers.lidarr-secure.tls=true"
-    #   - "traefik.http.routers.lidarr-secure.tls.certresolver=le-dns"
-    #   - "traefik.http.routers.lidarr-secure.service=lidarr"
-    #   - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
-    # networks:
-    #   - proxy
     labels:
-      - "traefik.enable=false"
-    network_mode: container:expressvpn
+      - traefik.enable=true
+      - traefik.http.routers.lidarr.entrypoints=http
+      - traefik.http.routers.lidarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.lidarr-secure.entrypoints=https
+      - traefik.http.routers.lidarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.lidarr-secure.tls=true
+      - traefik.http.routers.lidarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.lidarr-secure.service=lidarr
+      - traefik.http.routers.lidarr-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.lidarr.loadbalancer.server.port=8686
+    networks:
+      - proxy
     restart: unless-stopped
