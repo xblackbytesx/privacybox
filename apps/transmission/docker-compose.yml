@@ -35,7 +35,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=Europe/Amsterdam
-      - TRANSMISSION_WEB_HOME=/combustion-release/
+      # - TRANSMISSION_WEB_HOME=/combustion-release/
       - USER=${TRANSMISSION_USER}
       - PASS=${TRANSMISSION_PASS}
     volumes:
