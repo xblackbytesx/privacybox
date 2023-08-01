@@ -52,11 +52,20 @@ if [[ -z "$action" ]] || [[ -z "$entity_type" && "$action" != "backup" && "$acti
   usage
 fi
 
+# Test if 'docker compose' command is available
+if docker compose version >/dev/null 2>&1; then
+    export COMPOSE_BIN='docker compose'
+else
+    export COMPOSE_BIN='docker-compose'
+fi
+
+echo "COMPOSE_BIN is set to $COMPOSE_BIN"
+
 # Function to check VPN status for a single app
 check_vpn() {
   app_name="$1"
   app_dir="apps/$app_name"
-  container_id=$(docker-compose -f "$app_dir/docker-compose.yml" ps -q)
+  container_id=$($COMPOSE_BIN -f "$app_dir/docker-compose.yml" ps -q)
 
   if [ -n "$container_id" ]; then
     container_ip=$(docker exec -it "$container_id" curl -s https://ifconfig.me)
@@ -100,12 +109,12 @@ execute_action() {
     echo "${action^}-ing $app_name..."
     cd "$app_dir" || exit
     case $action in
-      start) docker-compose up -d ;;
-      stop) docker-compose down -v ;;
-      restart) docker-compose restart ;;
+      start) $COMPOSE_BIN up -d ;;
+      stop) $COMPOSE_BIN down -v ;;
+      restart) $COMPOSE_BIN restart ;;
       update)
-        docker-compose pull
-        docker-compose up -d --build
+        $COMPOSE_BIN pull
+        $COMPOSE_BIN up -d --build
         ;;
     esac
     cd - >/dev/null || exit
