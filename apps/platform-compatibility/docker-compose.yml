@@ -1,0 +1,7 @@
+version: "3.8"
+
+services:
+  binfmt:
+    image: tonistiigi/binfmt
+    command: --install ${PLATFORMS}
+    privileged: true
