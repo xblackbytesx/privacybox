@@ -1,0 +1,19 @@
+{
+  # for more info about the config, check out the documentation
+  # https://join-lemmy.org/docs/en/administration/configuration.html
+
+  database: {
+    host: postgres
+    password: "{{ DB_USER_PASS }}"
+  }
+  hostname: "{{ $SUBDOMAIN.DOMAIN }}"
+  pictrs: {
+    url: "http://pictrs:8080/"
+    api_key: "{{ PICTRS_API_KEY }}"
+  }
+  email: {
+    smtp_server: "postfix:25"
+    smtp_from_address: "noreply@{{ SUBDOMAIN.DOMAIN }}"
+    tls_type: "none"
+  }
+}

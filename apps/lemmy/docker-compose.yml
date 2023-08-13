@@ -1,0 +1,139 @@
+version: "3.7"
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "4"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  lemmy-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/lemmy/database
+
+services:
+  postgres:
+    container_name: lemmy-postgres
+    image: postgres:15-alpine
+    security_opt:
+      - no-new-privileges:true
+    hostname: postgres
+    environment:
+      - POSTGRES_USER=lemmy
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_DB=lemmy
+    volumes:
+      - ./lemmy-database:/var/lib/postgresql/data:Z
+      # - ./customPostgresql.conf:/etc/postgresql.conf
+      - /etc/localtime:/etc/localtime:ro
+    logging: *default-logging
+    restart: unless-stopped
+
+  lemmy:
+    container_name: lemmy-app
+    image: dessalines/lemmy:latest
+    security_opt:
+      - no-new-privileges:true
+    hostname: lemmy
+    environment:
+      - RUST_LOG="warn"
+    volumes:
+      - ./lemmy.hjson:/config/config.hjson:Z
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - postgres
+      - pictrs
+    logging: *default-logging
+    restart: unless-stopped
+
+  lemmy-ui:
+    container_name: lemmy-ui
+    image: dessalines/lemmy-ui:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - LEMMY_UI_LEMMY_INTERNAL_HOST=lemmy:8536
+      - LEMMY_UI_LEMMY_EXTERNAL_HOST=${SUBDOMAIN}.${DOMAIN}
+      - LEMMY_UI_HTTPS=true
+    volumes:
+      - ./volumes/lemmy-ui/extra_themes:/app/extra_themes
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - lemmy
+    logging: *default-logging
+    restart: unless-stopped
+
+    lemmy-nginx:
+    container_name: lemmy-nginx
+    image: nginx:1-alpine
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - pictrs
+      - lemmy-ui
+    volumes:
+      - ./nginx_internal.conf:/etc/nginx/nginx.conf:ro,Z
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.lemmy-nginx.entrypoints=http
+      - traefik.http.routers.lemmy-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.lemmy-nginx-secure.entrypoints=https
+      - traefik.http.routers.lemmy-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.lemmy-nginx-secure.tls=true
+      - traefik.http.routers.lemmy-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.lemmy-nginx-secure.service=lemmy-nginx
+      - traefik.http.routers.lemmy-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.lemmy-nginx.loadbalancer.server.port=8536
+    logging: *default-logging
+    restart: unless-stopped
+
+  pictrs:
+    container_name: lemmy-pictrs
+    image: asonix/pictrs:0.4.0
+    security_opt:
+      - no-new-privileges:true
+    # this needs to match the pictrs url in lemmy.hjson
+    hostname: pictrs
+    # we can set options to pictrs like this, here we set max. image size and forced format for conversion
+    # entrypoint: /sbin/tini -- /usr/local/bin/pict-rs -p /mnt -m 4 --image-format webp
+    environment:
+      - PICTRS_OPENTELEMETRY_URL=http://otel:4137
+      - PICTRS__API_KEY=${PICTRS_API_KEY}
+      - RUST_LOG=debug
+      - RUST_BACKTRACE=full
+      - PICTRS__MEDIA__VIDEO_CODEC=vp9
+      - PICTRS__MEDIA__GIF__MAX_WIDTH=256
+      - PICTRS__MEDIA__GIF__MAX_HEIGHT=256
+      - PICTRS__MEDIA__GIF__MAX_AREA=65536
+      - PICTRS__MEDIA__GIF__MAX_FRAME_COUNT=400
+    user: 991:991
+    volumes:
+      - ./volumes/pictrs:/mnt:Z
+      - /etc/localtime:/etc/localtime:ro
+    deploy:
+      resources:
+        limits:
+          memory: 690m
+    logging: *default-logging
+    restart: unless-stopped
+
+  postfix:
+    container_name: lemmy-postfix
+    image: mwader/postfix-relay
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - POSTFIX_myhostname=${SUBDOMAIN}.${DOMAIN}
+    logging: *default-logging
+    restart: "unless-stopped"
