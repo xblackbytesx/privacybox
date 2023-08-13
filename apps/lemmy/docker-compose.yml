@@ -42,6 +42,8 @@ services:
       - ./lemmy-database:/var/lib/postgresql/data:Z
       # - ./customPostgresql.conf:/etc/postgresql.conf
       - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
     logging: *default-logging
     restart: unless-stopped
 
@@ -59,6 +61,8 @@ services:
     depends_on:
       - postgres
       - pictrs
+    networks:
+      - internal
     logging: *default-logging
     restart: unless-stopped
 
@@ -76,6 +80,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - lemmy
+    networks:
+      - internal
     logging: *default-logging
     restart: unless-stopped
 
@@ -101,6 +107,9 @@ services:
       - traefik.http.routers.lemmy-nginx-secure.service=lemmy-nginx
       - traefik.http.routers.lemmy-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
       - traefik.http.services.lemmy-nginx.loadbalancer.server.port=8536
+    networks:
+      - internal
+      - proxy
     logging: *default-logging
     restart: unless-stopped
 
@@ -127,6 +136,8 @@ services:
     volumes:
       - lemmy-pictrs:/mnt:Z
       - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
     deploy:
       resources:
         limits:
@@ -141,5 +152,7 @@ services:
       - no-new-privileges:true
     environment:
       - POSTFIX_myhostname=${SUBDOMAIN}.${DOMAIN}
+    networks:
+      - internal
     logging: *default-logging
     restart: "unless-stopped"
