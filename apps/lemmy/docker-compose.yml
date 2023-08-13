@@ -34,7 +34,7 @@ services:
     image: postgres:15-alpine
     security_opt:
       - no-new-privileges:true
-    hostname: postgres
+    hostname: lemmy-postgres
     environment:
       - POSTGRES_USER=lemmy
       - POSTGRES_PASSWORD=${DB_USER_PASS}
