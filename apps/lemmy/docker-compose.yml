@@ -54,7 +54,7 @@ services:
     image: dessalines/lemmy:latest
     security_opt:
       - no-new-privileges:true
-    hostname: lemmy-app
+    hostname: lemmy
     environment:
       - RUST_LOG="warn"
     volumes:
