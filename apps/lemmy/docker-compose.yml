@@ -20,6 +20,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/lemmy/database
+  lemmy-pictrs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/lemmy/pictrs
 
 services:
   postgres:
@@ -119,7 +125,7 @@ services:
       - PICTRS__MEDIA__GIF__MAX_FRAME_COUNT=400
     user: 991:991
     volumes:
-      - ./volumes/pictrs:/mnt:Z
+      - lemmy-pictrs:/mnt:Z
       - /etc/localtime:/etc/localtime:ro
     deploy:
       resources:
