@@ -28,7 +28,7 @@ volumes:
       device: ${DOCKER_ROOT}/lemmy/pictrs
 
 services:
-  postgres:
+  lemmy-postgres:
     container_name: lemmy-postgres
     platform: linux/amd64
     image: postgres:15-alpine
@@ -48,21 +48,21 @@ services:
     logging: *default-logging
     restart: unless-stopped
 
-  lemmy:
+  lemmy-app:
     container_name: lemmy-app
     platform: linux/amd64
     image: dessalines/lemmy:latest
     security_opt:
       - no-new-privileges:true
-    hostname: lemmy
+    hostname: lemmy-app
     environment:
       - RUST_LOG="warn"
     volumes:
       - ./lemmy.hjson:/config/config.hjson:Z
       - /etc/localtime:/etc/localtime:ro
     depends_on:
-      - postgres
-      - pictrs
+      - lemmy-postgres
+      - lemmy-pictrs
     networks:
       - internal
       - proxy
@@ -76,14 +76,14 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - LEMMY_UI_LEMMY_INTERNAL_HOST=lemmy:8536
+      - LEMMY_UI_LEMMY_INTERNAL_HOST=lemmy-app:8536
       - LEMMY_UI_LEMMY_EXTERNAL_HOST=${SUBDOMAIN}.${DOMAIN}
       - LEMMY_UI_HTTPS=true
     volumes:
       - ./volumes/lemmy-ui/extra_themes:/app/extra_themes
       - /etc/localtime:/etc/localtime:ro
     depends_on:
-      - lemmy
+      - lemmy-app
     networks:
       - internal
       - proxy
@@ -96,7 +96,7 @@ services:
     security_opt:
       - no-new-privileges:true
     depends_on:
-      - pictrs
+      - lemmy-pictrs
       - lemmy-ui
     volumes:
       - ./nginx_internal.conf:/etc/nginx/nginx.conf:ro,Z
@@ -118,14 +118,14 @@ services:
     logging: *default-logging
     restart: unless-stopped
 
-  pictrs:
+  lemmy-pictrs:
     container_name: lemmy-pictrs
     platform: linux/amd64
     image: asonix/pictrs:0.4.0
     security_opt:
       - no-new-privileges:true
     # this needs to match the pictrs url in lemmy.hjson
-    hostname: pictrs
+    hostname: lemmy-pictrs
     # we can set options to pictrs like this, here we set max. image size and forced format for conversion
     # entrypoint: /sbin/tini -- /usr/local/bin/pict-rs -p /mnt -m 4 --image-format webp
     environment:
@@ -151,7 +151,7 @@ services:
     logging: *default-logging
     restart: unless-stopped
 
-  postfix:
+  lemmy-postfix:
     container_name: lemmy-postfix
     image: mwader/postfix-relay
     security_opt:
