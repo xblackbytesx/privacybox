@@ -40,7 +40,7 @@ services:
       - POSTGRES_PASSWORD=${DB_USER_PASS}
       - POSTGRES_DB=lemmy
     volumes:
-      - ./lemmy-database:/var/lib/postgresql/data:Z
+      - lemmy-database:/var/lib/postgresql/data:Z
       # - ./customPostgresql.conf:/etc/postgresql.conf
       - /etc/localtime:/etc/localtime:ro
     networks:
