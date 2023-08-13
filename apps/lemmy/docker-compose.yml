@@ -30,6 +30,7 @@ volumes:
 services:
   postgres:
     container_name: lemmy-postgres
+    platform: linux/amd64
     image: postgres:15-alpine
     security_opt:
       - no-new-privileges:true
@@ -49,6 +50,7 @@ services:
 
   lemmy:
     container_name: lemmy-app
+    platform: linux/amd64
     image: dessalines/lemmy:latest
     security_opt:
       - no-new-privileges:true
@@ -68,6 +70,7 @@ services:
 
   lemmy-ui:
     container_name: lemmy-ui
+    platform: linux/amd64
     image: dessalines/lemmy-ui:latest
     security_opt:
       - no-new-privileges:true
@@ -115,6 +118,7 @@ services:
 
   pictrs:
     container_name: lemmy-pictrs
+    platform: linux/amd64
     image: asonix/pictrs:0.4.0
     security_opt:
       - no-new-privileges:true
