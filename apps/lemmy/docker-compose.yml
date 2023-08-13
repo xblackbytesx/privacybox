@@ -73,7 +73,7 @@ services:
     logging: *default-logging
     restart: unless-stopped
 
-    lemmy-nginx:
+  lemmy-nginx:
     container_name: lemmy-nginx
     image: nginx:1-alpine
     security_opt:
