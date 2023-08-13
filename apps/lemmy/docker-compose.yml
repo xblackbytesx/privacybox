@@ -65,6 +65,7 @@ services:
       - pictrs
     networks:
       - internal
+      - proxy
     logging: *default-logging
     restart: unless-stopped
 
@@ -85,6 +86,7 @@ services:
       - lemmy
     networks:
       - internal
+      - proxy
     logging: *default-logging
     restart: unless-stopped
 
