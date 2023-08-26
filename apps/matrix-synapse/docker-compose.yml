@@ -28,6 +28,8 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
+      # - VIRTUAL_HOST=${SUBDOMAIN}.${DOMAIN}
+      # - VIRTUAL_PORT=8008
       - SYNAPSE_SERVER_NAME=${SUBDOMAIN}.${DOMAIN}
       - SYNAPSE_REPORT_STATS=no
       - SYNAPSE_DATABASE_URL=postgresql://matrix:matrix@matrix-synapse-db:5432/matrix
@@ -39,7 +41,8 @@ services:
       - GID=1000
       - TZ="Europe/Amsterdam"
     ports:
-      - "8008:8008"
+      - "8008:8008/tcp"
+      - "8448:8448/tcp"
     volumes:
       - synapse-data:/data
       - /etc/localtime:/etc/localtime:ro
@@ -89,7 +92,7 @@ services:
 
   matrix-synapse-db:
     container_name: matrix-synapse-db
-    image: postgres:alpine
+    image: postgres:15-alpine
     security_opt:
       - no-new-privileges:true
     environment:
