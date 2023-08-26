@@ -30,7 +30,6 @@ volumes:
 services:
   lemmy-postgres:
     container_name: lemmy-postgres
-    platform: linux/amd64
     image: postgres:15-alpine
     security_opt:
       - no-new-privileges:true
@@ -41,7 +40,7 @@ services:
       - POSTGRES_DB=lemmy
     volumes:
       - lemmy-database:/var/lib/postgresql/data:Z
-      # - ./customPostgresql.conf:/etc/postgresql.conf
+      - ./customPostgresql.conf:/etc/postgresql.conf
       - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
