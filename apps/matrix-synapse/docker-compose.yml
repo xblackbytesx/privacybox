@@ -65,7 +65,7 @@ services:
   # Uncomment if you don't want federation
   matrix-synapse-well-known:
     container_name: matrix-synapse-well-known
-    image: nginx:latest
+    image: nginx:1-alpine
     security_opt:
       - no-new-privileges:true
     volumes:
