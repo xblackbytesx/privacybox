@@ -24,7 +24,7 @@ volumes:
 services:
   matrix-synapse-app:
     container_name: matrix-synapse-app
-    image: matrixdotorg/synapse:latest
+    image: ghcr.io/matrix-org/synapse:latest
     security_opt:
       - no-new-privileges:true
     environment:
