@@ -41,3 +41,7 @@ form_secret: "J.08eu~xO9X4ip~hgQ3ScY-MA9Lkw9;eP^QQ~2g4In~fYt=jnq"
 signing_key_path: "/data/matrix.privacy.box.signing.key"
 trusted_key_servers:
   - server_name: "matrix.org"
+turn_uris: ["turn:matrix.privacy.box:3478?transport=udp", "turn:matrix.privacy.box:3478?transport=tcp"]
+turn_shared_secret: "secret"
+turn_user_lifetime: "1h"
+turn_allow_guests: True
