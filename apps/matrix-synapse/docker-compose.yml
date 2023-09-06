@@ -20,7 +20,7 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/matrix/synapse/data
-  coturn-data:
+  synapse-coturn:
     driver: local
     driver_opts:
       type: none
@@ -135,7 +135,7 @@ services:
       - TURN_SECRET=${TURN_SECRET}
       - TURN_SIMPLE_LOG=true
     volumes:
-      - coturn-data:/var/lib/coturn
+      - synapse-coturn:/var/lib/coturn
       - /etc/localtime:/etc/localtime:ro
     networks:
       - proxy
