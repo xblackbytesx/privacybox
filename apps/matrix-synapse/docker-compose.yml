@@ -20,8 +20,43 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/matrix/synapse/data
+  coturn-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/matrix/synapse/coturn
 
 services:
+  matrix-synapse-db:
+    container_name: matrix-synapse-db
+    image: postgres:15-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_DB=synapse
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - synapse-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    restart: unless-stopped
+
+  matrix-synapse-redis:
+    container_name: matrix-synapse-redis
+    image: redis:alpine
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./redis:/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    restart: unless-stopped
+
   matrix-synapse-app:
     container_name: matrix-synapse-app
     image: ghcr.io/matrix-org/synapse:latest
@@ -90,31 +125,24 @@ services:
       - traefik.http.services.matrix-synapse-well-known.loadbalancer.server.port=80
     restart: unless-stopped
 
-  matrix-synapse-db:
-    container_name: matrix-synapse-db
-    image: postgres:15-alpine
+  matrix-synapse-coturn:
+    container_name: matrix-synapse-coturn
+    image: instrumentisto/coturn:4
     security_opt:
       - no-new-privileges:true
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_USER_PASS}
-      - POSTGRES_DB=synapse
-      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+      - TURN_REALM=${SUBDOMAIN}.${DOMAIN}
+      - TURN_SECRET=${TURN_SECRET}
+      - TURN_SIMPLE_LOG=true
     volumes:
-      - synapse-database:/var/lib/postgresql/data
+      - coturn-data:/var/lib/coturn
       - /etc/localtime:/etc/localtime:ro
     networks:
+      - proxy
       - internal
-    restart: unless-stopped
-
-  matrix-synapse-redis:
-    container_name: matrix-synapse-redis
-    image: redis:alpine
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - ./redis:/data
-      - /etc/localtime:/etc/localtime:ro
-    networks:
-      - internal
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "5349:5349/udp"
+      - "5349:5349/tcp"
     restart: unless-stopped
