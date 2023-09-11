@@ -21,6 +21,7 @@ services:
     environment:
       - TRANSIP_ACCOUNT_NAME=${TRANSIP_ACCOUNT_NAME}
       - TRANSIP_PRIVATE_KEY_PATH=transip.key
+      - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_API_TOKEN}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
