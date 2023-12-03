@@ -1,0 +1,61 @@
+version: '3'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  searxng-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/searxng/config
+
+services:
+  searxng-app:
+    container_name: searxng-app
+    image: searxng/searxng:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - BASE_URL=https://${SUBDOMAIN}.${DOMAIN}
+    volumes:
+      - searxng-config:/etc/searxng
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.searxng-app.entrypoints=http
+      - traefik.http.routers.searxng-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.searxng-app-secure.entrypoints=https
+      - traefik.http.routers.searxng-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.searxng-app-secure.tls=true
+      - traefik.http.routers.searxng-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.searxng-app-secure.service=searxng-app
+      - traefik.http.routers.searxng-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.searxng-app.loadbalancer.server.port=8080
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped
+
+  searxng-redis:
+    container_name: funkwhale-redis
+    image: redis:alpine
+    security_opt:
+      - no-new-privileges:true
+    command: redis-server --save 30 1 --loglevel warning
+    networks: 
+      - internal
+    volumes:
+      - ./data/redis:/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
+
