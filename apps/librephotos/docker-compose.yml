@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 networks:
   proxy:
@@ -31,25 +31,25 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/librephotos/logs
+      device: ${DOCKER_ROOT}/librephotos/data/logs
   librephotos-cache:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/librephotos/cache
+      device: ${DOCKER_ROOT}/librephotos/data/cache
 
 services:
   librephotos-proxy:
     container_name: librephotos-proxy
-    image: reallibrephotos/librephotos-proxy:dev
+    image: reallibrephotos/librephotos-proxy:latest
     security_opt:
       - no-new-privileges:true
-    tty: true
     networks:
       - internal
       - proxy
     volumes:
+      - librephotos-photos:/data:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
@@ -66,7 +66,7 @@ services:
 
   librephotos-db:
     container_name: librephotos-db
-    image: postgres:12-alpine
+    image: postgres:13-alpine
     security_opt:
       - no-new-privileges:true
     networks:
@@ -90,7 +90,7 @@ services:
 
   frontend:
     container_name: librephotos-frontend
-    image: reallibrephotos/librephotos-frontend:dev
+    image: reallibrephotos/librephotos-frontend:latest
     security_opt:
       - no-new-privileges:true
     tty: true
@@ -102,13 +102,13 @@ services:
 
   backend:
     container_name: librephotos-backend
-    image: reallibrephotos/librephotos:dev
+    image: reallibrephotos/librephotos:latest
     security_opt:
       - no-new-privileges:true
     networks:
       - internal
     volumes:
-      - librephotos-photos:/data
+      - librephotos-photos:/data:ro
       - librephotos-protected:/code/protected_media
       - librephotos-logs:/code/logs
       - librephotos-cache:/root/.cache
@@ -126,31 +126,16 @@ services:
       - DB_PASS=${DB_USER_PASS}
       - DB_HOST=librephotos-db
       - DB_PORT=5432
-      - REDIS_HOST=librephotos-redis
-      - REDIS_PORT=6379
-      - MAPBOX_API_KEY=${MAPBOX_API_KEY}
-      - TIME_ZONE=${TZ}
-      - WEB_CONCURRENCY=${GUNNI_WORKERS}
-      - WORKER_TIMEOUT=${WORKER_TIMEOUT}
-      - SKIP_PATTERNS=${SKIP_PATTERNS}
+      - MAPBOX_API_KEY=${MAPBOX_API_KEY:-}
+      - WEB_CONCURRENCY=${GUNNI_WORKERS:-1}
+      - SKIP_PATTERNS=${SKIP_PATTERNS:-}
+      - ALLOW_UPLOAD=${ALLOW_UPLOAD:-false}
+      - CSRF_TRUSTED_ORIGINS=${SUBDOMAIN}.${DOMAIN}
+      - DEBUG=0
+      - HEAVYWEIGHT_PROCESS=${HEAVYWEIGHT_PROCESS:-}
     labels:
       - "traefik.enable=false"
     depends_on:
       librephotos-db:
         condition: service_healthy
-    restart: unless-stopped
-
-  librephotos-redis:
-    container_name: librephotos-redis
-    image: redis:alpine
-    security_opt:
-      - no-new-privileges:true
-    networks: 
-      - internal
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-    labels:
-      - "traefik.enable=false"
     restart: unless-stopped
