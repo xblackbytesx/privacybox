@@ -109,8 +109,8 @@ services:
       - internal
     volumes:
       - librephotos-photos:/data:ro
-      - librephotos-protected:/code/protected_media
-      - librephotos-logs:/code/logs
+      - librephotos-protected:/protected_media
+      - librephotos-logs:/logs
       - librephotos-cache:/root/.cache
       - /etc/localtime:/etc/localtime:ro
     environment:
