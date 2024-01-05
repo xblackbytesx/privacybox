@@ -50,6 +50,7 @@ services:
       - proxy
     volumes:
       - librephotos-photos:/data:ro
+      - librephotos-protected:/protected_media
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
