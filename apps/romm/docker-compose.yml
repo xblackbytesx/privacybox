@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 networks:
   proxy:
@@ -96,7 +96,8 @@ services:
       # - '${DOCKER_ROOT}/romm/config/config.yml:/romm/config.yml' # Optional
       - /etc/localtime:/etc/localtime:ro
     depends_on:
-      - romm-db
+      romm-db:
+        condition: service_healthy
     labels:
       - traefik.enable=true
       - traefik.http.routers.romm-app.entrypoints=http
@@ -107,7 +108,7 @@ services:
       - traefik.http.routers.romm-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.romm-app-secure.service=romm-app
       - traefik.http.routers.romm-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-      - traefik.http.services.romm-app.loadbalancer.server.port=80
+      - traefik.http.services.romm-app.loadbalancer.server.port=8080
     networks:
       - internal
       - proxy
