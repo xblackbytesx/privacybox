@@ -1,0 +1,77 @@
+version: '3.8'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  ollama-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/ollama/data
+  ollama-ui:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/ollama/ui
+
+services:
+  ollama-backend:
+    container_name: ollama-backend
+    image: ollama/ollama:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ollama-data:/root/.ollama
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ollama-backend.entrypoints=http
+      - traefik.http.routers.ollama-backend.rule=Host(`backend.${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ollama-backend-secure.entrypoints=https
+      - traefik.http.routers.ollama-backend-secure.rule=Host(`backend.${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ollama-backend-secure.tls=true
+      - traefik.http.routers.ollama-backend-secure.tls.certresolver=le-dns
+      - traefik.http.routers.ollama-backend-secure.service=ollama-backend
+      - traefik.http.routers.ollama-backend-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.ollama-backend.loadbalancer.server.port=11434
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped
+
+  ollama-webui:
+    container_name: ollama-webui
+    image: ghcr.io/ollama-webui/ollama-webui:main
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ollama-ui:/app/backend/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - 'OLLAMA_API_BASE_URL=http://ollama-backend:11434/api'
+    depends_on:
+      - ollama-backend
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ollama-webui.entrypoints=http
+      - traefik.http.routers.ollama-webui.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ollama-webui-secure.entrypoints=https
+      - traefik.http.routers.ollama-webui-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ollama-webui-secure.tls=true
+      - traefik.http.routers.ollama-webui-secure.tls.certresolver=le-dns
+      - traefik.http.routers.ollama-webui-secure.service=ollama-webui
+      - traefik.http.routers.ollama-webui-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.ollama-webui.loadbalancer.server.port=8080
+    networks:
+      - internal
+      - proxy
+    # extra_hosts:
+    #   - host.docker.internal:host-gateway
+    restart: unless-stopped
