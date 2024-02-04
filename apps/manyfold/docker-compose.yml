@@ -1,0 +1,91 @@
+version: '3.8'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  manyfold-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/manyfold/database
+  manyfold-models:
+    driver: local
+    driver_opts:
+      type: ${MODELS_DRIVER_OPT_TYPE}
+      o: ${MODELS_DRIVER_OPT_O}
+      device: ${MODELS_PATH}
+
+services:
+  manyfold-db:
+    container_name: librephotos-db
+    image: postgres:15-alpine
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    environment:
+      - POSTGRES_USER=manyfold
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_DB=manyfold
+    volumes:
+      - manyfold-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -d manyfold -U manyfold']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  manyfold-redis:
+    container_name: manyfold-redis
+    image: redis:alpine
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./redis:/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+    restart: unless-stopped
+
+  manyfold-app:
+    container_name: manyfold-app
+    image: ghcr.io/manyfold3d/manyfold:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - manyfold-models:/libraries:${MODELS_DIR_PERMISSION}
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DATABASE_URL=postgresql://manyfold:${DB_USER_PASS}@manyfold-db/manyfold?pool=5
+      - SECRET_KEY_BASE=${APP_SECRET}
+      - REDIS_URL=redis://manyfold-redis:6379/1
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.manyfold-app.entrypoints=http
+      - traefik.http.routers.manyfold-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.manyfold-app-secure.entrypoints=https
+      - traefik.http.routers.manyfold-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.manyfold-app-secure.tls=true
+      - traefik.http.routers.manyfold-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.manyfold-app-secure.service=manyfold-app
+      - traefik.http.routers.manyfold-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.manyfold-app.loadbalancer.server.port=3214
+    networks:
+      - internal
+      - proxy
+    depends_on:
+      - manyfold-db
+      - manyfold-redis
+    restart: unless-stopped

@@ -14,12 +14,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/librephotos/database
-  librephotos-photos:
+  librephotos-stories:
     driver: local
     driver_opts:
-      type: ${PHOTOS_DRIVER_OPT_TYPE}
-      o: ${PHOTOS_DRIVER_OPT_O}
-      device: ${PHOTOS_PATH}
+      type: ${STORIES_DRIVER_OPT_TYPE}
+      o: ${STORIES_DRIVER_OPT_O}
+      device: ${STORIES_PATH}
   librephotos-protected:
     driver: local
     driver_opts:
@@ -49,7 +49,7 @@ services:
       - internal
       - proxy
     volumes:
-      - librephotos-photos:/data:ro
+      - librephotos-stories:/data:ro
       - librephotos-protected:/protected_media
       - /etc/localtime:/etc/localtime:ro
     labels:
@@ -111,7 +111,7 @@ services:
     networks:
       - internal
     volumes:
-      - librephotos-photos:/data:ro
+      - librephotos-stories:/data:ro
       - librephotos-protected:/protected_media
       - librephotos-logs:/logs
       - librephotos-cache:/root/.cache
