@@ -23,7 +23,7 @@ volumes:
 
 services:
   manyfold-db:
-    container_name: librephotos-db
+    container_name: manyfold-db
     image: postgres:15-alpine
     security_opt:
       - no-new-privileges:true
@@ -51,7 +51,6 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ./redis:/data
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
