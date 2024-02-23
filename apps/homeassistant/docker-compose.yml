@@ -122,7 +122,7 @@ services:
     volumes:
       - ha-whisper-data:/data
       - /etc/localtime:/etc/localtime:ro
-    command: [ "--model", "medium-int8", "--language", "en" ]
+    command: [ "--model", "tiny-int8", "--language", "en" ]
     labels:
       - "traefik.enable=false"
     ports:
