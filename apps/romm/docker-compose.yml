@@ -20,6 +20,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/romm/resources
+  romm-assets:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/romm/assets
   romm-roms-dir:
     driver: local
     driver_opts:
@@ -72,16 +78,9 @@ services:
       - IGDB_CLIENT_SECRET=${IGDB_CLIENT_SECRET}
       # [Optional - WIP] Use SteamGridDB as a source for covers
       # - STEAMGRIDDB_API_KEY=${STEAMGRIDDB_API_KEY}
-      # # [Optional] Will enable user management and require authentication to access the interface (disabled by default)
-      # - ROMM_AUTH_ENABLED=true # default: false
-      # - ROMM_AUTH_SECRET_KEY=<secret key> # Generate a key with `openssl rand -hex 32`
-      # - ROMM_AUTH_USERNAME=admin # default: admin
-      # - ROMM_AUTH_PASSWORD=<admin password> # default: admin
-      # # [Optional] Only required if authentication is enabled
-      # - ENABLE_EXPERIMENTAL_REDIS=true # default: false
-      # - REDIS_HOST=romm-redis
-      # - REDIS_PORT=6379
-      # - REDIS_PASSWORD=<redis password> # [Optional] Support for secured redis
+      - ROMM_AUTH_SECRET_KEY=${SECRET_KEY}
+      - ROMM_AUTH_USERNAME=${ADMIN_USER}
+      - ROMM_AUTH_PASSWORD=${ADMIN_PASS}
       # [Optional] Will enable asynchronous tasks (all disabled by default)
       # Important: Do NOT wrap the cron expression in quotes
       - ENABLE_RESCAN_ON_FILESYSTEM_CHANGE=true
@@ -95,6 +94,7 @@ services:
     volumes:
       - 'romm-roms-dir:/romm/library'
       - 'romm-resources:/romm/resources'
+      - 'romm-assets:/romm/assets'
       # - '${DOCKER_ROOT}/romm/config/config.yml:/romm/config.yml' # Optional
       - /etc/localtime:/etc/localtime:ro
     depends_on:
@@ -115,20 +115,3 @@ services:
       - internal
       - proxy
     restart: "unless-stopped"
-
-  # # [Optional] Only required if experimental Redis is enabled
-  # romm-redis:
-  #   image: redis:alpine
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   container_name: redis
-  #   volumes:
-  #     - romm-database:/var/lib/mysql
-  #     - /etc/localtime:/etc/localtime:ro
-  #   ports:
-  #     - 6379:6379
-  #   labels:
-  #     - "traefik.enable=false"
-  #   networks:
-  #     - internal
-  #   restart: unless-stopped
