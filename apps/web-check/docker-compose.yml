@@ -1,0 +1,27 @@
+version: '3.9'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+services:
+  web-check-app:
+    container_name: web-check-app
+    image: lissy93/web-check
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.web-check-app.entrypoints=http
+      - traefik.http.routers.web-check-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.web-check-app-secure.entrypoints=https
+      - traefik.http.routers.web-check-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.web-check-app-secure.tls=true
+      - traefik.http.routers.web-check-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.web-check-app-secure.service=web-check-app
+      - traefik.http.routers.web-check-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.web-check-app.loadbalancer.server.port=3000
+    networks:
+      - proxy
+    restart: unless-stopped
