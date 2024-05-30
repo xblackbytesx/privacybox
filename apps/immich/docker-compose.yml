@@ -14,12 +14,18 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/immich/database
-  immich-data:
+  immich-model-cache:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/immich/data
+      device: ${DOCKER_ROOT}/immich/data/model-cache
+  immich-uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/immich/data/uploads
   immich-stories:
     driver: local
     driver_opts:
@@ -48,11 +54,13 @@ services:
       - traefik.http.routers.immich-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
       - traefik.http.services.immich-app.loadbalancer.server.port=2283
     environment:
+      DB_USERNAME: immich
       DB_HOSTNAME: immich-database
       REDIS_HOSTNAME: immich-redis
     command: ['start.sh', 'immich']
     volumes:
-      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - immich-uploads:/usr/src/app/upload
+      - immich-stories:/usr/src/app/stories
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
@@ -61,7 +69,7 @@ services:
     depends_on:
       - immich-redis
       - immich-database
-    restart: always
+    restart: unless-stopped
 
   immich-microservices:
     container_name: immich-microservices
@@ -75,14 +83,15 @@ services:
       - internal
     command: ['start.sh', 'microservices']
     volumes:
-      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - immich-uploads:/usr/src/app/upload
+      - immich-stories:/usr/src/app/stories
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
     depends_on:
       - immich-redis
       - immich-database
-    restart: always
+    restart: unless-stopped
 
   immich-machine-learning:
     container_name: immich-machine-learning
@@ -97,11 +106,11 @@ services:
     #   file: hwaccel.ml.yml
     #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
     volumes:
-      - model-cache:/cache
+      - immich-model-cache:/cache
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
-    restart: always
+    restart: unless-stopped
 
   immich-redis:
     container_name: immich-redis
@@ -112,7 +121,7 @@ services:
       - internal
     volumes:
       - /etc/localtime:/etc/localtime:ro
-    restart: always
+    restart: unless-stopped
 
   immich-database:
     container_name: immich-postgres
@@ -123,14 +132,11 @@ services:
       - internal
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_USER: immich
+      POSTGRES_DB: immich
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
       - immich-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
     command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
-    restart: always
-
-volumes:
-  model-cache:
+    restart: unless-stopped
