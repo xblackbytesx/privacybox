@@ -60,7 +60,7 @@ services:
     command: ['start.sh', 'immich']
     volumes:
       - immich-uploads:/usr/src/app/upload
-      - immich-stories:/usr/src/app/stories
+      - immich-stories:/usr/src/app/stories:ro
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
@@ -84,7 +84,7 @@ services:
     command: ['start.sh', 'microservices']
     volumes:
       - immich-uploads:/usr/src/app/upload
-      - immich-stories:/usr/src/app/stories
+      - immich-stories:/usr/src/app/stories:ro
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
