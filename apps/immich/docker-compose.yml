@@ -81,6 +81,7 @@ services:
     #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
     networks:
       - internal
+      - proxy
     environment:
       DB_HOSTNAME: immich-database
       DB_DATABASE_NAME: immich
@@ -108,6 +109,7 @@ services:
       - no-new-privileges:true
     networks:
       - internal
+      - proxy
     # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
     #   file: hwaccel.ml.yml
     #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
