@@ -1,0 +1,119 @@
+version: '3'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  dawarich-gem-cache:
+  dawarich-shared-data:
+  dawarich-public:
+  dawarich-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/dawarich/database
+  
+services:
+  dawarich-redis:
+    container_name: dawarich-redis
+    image: redis:7.0-alpine
+    security_opt:
+      - no-new-privileges:true
+    command: redis-server
+    networks:
+      - internal
+    volumes:
+      - dawarich-shared-data:/var/shared/redis
+    restart: unless-stopped
+
+  dawarich-db:
+    container_name: dawarich-db
+    image: postgres:14.2-alpine
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - dawarich-database:/var/lib/postgresql/data
+      - dawarich-shared-data:/var/shared
+    networks:
+      - internal
+    environment:
+      POSTGRES_DB: dawarich
+      POSTGRES_USER: dawarich
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    restart: unless-stopped
+
+  dawarich-app:
+    container_name: dawarich-app
+    image: freikin/dawarich:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - dawarich-gem-cache:/usr/local/bundle/gems
+      - dawarich-public:/var/app/dawarich-public
+    networks:
+      - internal
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.dawarich-app.entrypoints=http
+      - traefik.http.routers.dawarich-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.dawarich-app-secure.entrypoints=https
+      - traefik.http.routers.dawarich-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.dawarich-app-secure.tls=true
+      - traefik.http.routers.dawarich-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.dawarich-app-secure.service=dawarich-app
+      - traefik.http.routers.dawarich-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.dawarich-app.loadbalancer.server.port=3000
+    stdin_open: true
+    tty: true
+    entrypoint: dev-entrypoint.sh
+    command: ['bin/dev']
+    environment:
+      RAILS_ENV: development
+      REDIS_URL: redis://dawarich-redis:6379/0
+      DATABASE_HOST: dawarich-db
+      DATABASE_USERNAME: dawarich
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+      DATABASE_NAME: dawarich
+      MIN_MINUTES_SPENT_IN_CITY: 60
+      APPLICATION_HOST: ${SUBDOMAIN}.${DOMAIN}
+      TIME_ZONE: Europe/London
+    depends_on:
+      - dawarich-db
+      - dawarich-redis
+    restart: unless-stopped
+
+  dawarich_sidekiq:
+    container_name: dawarich-sidekiq
+    image: freikin/dawarich:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - dawarich-gem-cache:/usr/local/bundle/gems
+      - dawarich-public:/var/app/dawarich-public
+    networks:
+      - internal
+      - proxy
+    stdin_open: true
+    tty: true
+    entrypoint: dev-entrypoint.sh
+    command: ['sidekiq']
+    environment:
+      RAILS_ENV: development
+      REDIS_URL: redis://dawarich-redis:6379/0
+      DATABASE_HOST: dawarich-db
+      DATABASE_USERNAME: dawarich
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+      DATABASE_NAME: dawarich
+      APPLICATION_HOST: ${SUBDOMAIN}.${DOMAIN}
+      BACKGROUND_PROCESSING_CONCURRENCY: 10
+    depends_on:
+      - dawarich-db
+      - dawarich-redis
+      - dawarich-app
+    restart: unless-stopped
