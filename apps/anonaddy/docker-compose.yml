@@ -1,4 +1,4 @@
-version: "3.5"
+name: AnonAddy
 
 networks:
   proxy:
@@ -24,15 +24,17 @@ volumes:
 services:
   anonaddy-db:
     container_name: anonaddy-db
-    image: mariadb:latest
+    image: mariadb:10
     security_opt:
       - no-new-privileges:true
     networks:
       - internal
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    command:
+      - "mysqld"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
     environment:
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MARIADB_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=anonaddy
       - MYSQL_USER=anonaddy
       - MYSQL_PASSWORD=${DB_USER_PASS}
@@ -50,7 +52,7 @@ services:
 
   anonaddy-redis:
     container_name: anonaddy-redis
-    image: redis:alpine
+    image: redis:4.0-alpine
     security_opt:
       - no-new-privileges:true
     networks: 
@@ -80,16 +82,16 @@ services:
       - anonaddy-data:/data
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.anonaddy-app.entrypoints=http"
-      - "traefik.http.routers.anonaddy-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.anonaddy-app.middlewares=secured@file"
-      - "traefik.http.routers.anonaddy-app-secure.entrypoints=https"
-      - "traefik.http.routers.anonaddy-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.anonaddy-app-secure.tls=true"
-      - "traefik.http.routers.anonaddy-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.anonaddy-app-secure.service=anonaddy-app"
-      - "traefik.http.services.anonaddy-app.loadbalancer.server.port=8000"
+      - traefik.enable=true
+      - traefik.http.routers.anonaddy-app.entrypoints=http
+      - traefik.http.routers.anonaddy-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.anonaddy-app-secure.entrypoints=https
+      - traefik.http.routers.anonaddy-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.anonaddy-app-secure.tls=true
+      - traefik.http.routers.anonaddy-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.anonaddy-app-secure.service=anonaddy-app
+      - traefik.http.routers.anonaddy-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.anonaddy-app.loadbalancer.server.port=8000
     depends_on:
       - anonaddy-db
       - anonaddy-redis
