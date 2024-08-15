@@ -43,11 +43,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      timeout: 20s
-      interval: 15s
-      retries: 30
     restart: unless-stopped
 
   anonaddy-redis:
@@ -80,7 +75,6 @@ services:
       - REDIS_HOST=anonaddy-redis
     volumes:
       - anonaddy-data:/data
-      - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
       - traefik.http.routers.anonaddy-app.entrypoints=http
