@@ -84,9 +84,9 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.anonaddy-app.entrypoints=http
-      - traefik.http.routers.anonaddy-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.anonaddy-app.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.anonaddy-app-secure.entrypoints=https
-      - traefik.http.routers.anonaddy-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.anonaddy-app-secure.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.anonaddy-app-secure.tls=true
       - traefik.http.routers.anonaddy-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.anonaddy-app-secure.service=anonaddy-app
