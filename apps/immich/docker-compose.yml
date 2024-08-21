@@ -78,6 +78,8 @@ services:
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     security_opt:
       - no-new-privileges:true
+    devices:
+      - /dev/dri:/dev/dri
     # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/hardware-transcoding
     #   file: hwaccel.transcoding.yml
     #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
@@ -114,6 +116,8 @@ services:
     networks:
       - internal
       - proxy
+    devices:
+      - /dev/dri:/dev/dri
     # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
     #   file: hwaccel.ml.yml
     #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
@@ -155,7 +159,7 @@ services:
       - immich-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
     healthcheck:
-      test: pg_isready --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' || exit 1; Chksum="$$(psql --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
+      test: pg_isready --dbname=immich --username=immich || exit 1; Chksum="$$(psql --dbname=immich --username=immich --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
       interval: 5m
       start_interval: 30s
       start_period: 5m
