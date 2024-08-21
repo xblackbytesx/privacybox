@@ -64,6 +64,8 @@ services:
       - immich-uploads:/usr/src/app/upload
       - immich-stories:/usr/src/app/stories:ro
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      disable: false
     env_file:
       - .env
     depends_on:
@@ -93,6 +95,8 @@ services:
       - immich-uploads:/usr/src/app/upload
       - immich-stories:/usr/src/app/stories:ro
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      disable: false
     env_file:
       - .env
     depends_on:
@@ -116,24 +120,28 @@ services:
     volumes:
       - immich-model-cache:/cache
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      disable: false
     env_file:
       - .env
     restart: unless-stopped
 
   immich-redis:
     container_name: immich-redis
-    image: registry.hub.docker.com/library/redis:6.2-alpine@sha256:84882e87b54734154586e5f8abd4dce69fe7311315e2fc6d67c29614c8de2672
+    image: docker.io/redis:6.2-alpine@sha256:e3b17ba9479deec4b7d1eeec1548a253acc5374d68d3b27937fcfe4df8d18c7e
     security_opt:
       - no-new-privileges:true
     networks:
       - internal
     volumes:
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: redis-cli ping || exit 1
     restart: unless-stopped
 
   immich-database:
     container_name: immich-postgres
-    image: registry.hub.docker.com/tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
+    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
     security_opt:
       - no-new-privileges:true
     networks:
@@ -146,5 +154,10 @@ services:
     volumes:
       - immich-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
-    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    healthcheck:
+      test: pg_isready --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' || exit 1; Chksum="$$(psql --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
+      interval: 5m
+      start_interval: 30s
+      start_period: 5m
+    command: ["postgres", "-c", "shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
     restart: unless-stopped
