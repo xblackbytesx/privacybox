@@ -1,0 +1,39 @@
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  jellyseerr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/jellyseerr/config
+
+services:
+  jellyseerr-app:
+    container_name: jellyseerr-app
+    image: fallenbagel/jellyseerr:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Europe/Amsterdam
+    volumes:
+      - jellyseerr-config:/app/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.jellyseerr-app.entrypoints=http
+      - traefik.http.routers.jellyseerr-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.jellyseerr-app-secure.entrypoints=https
+      - traefik.http.routers.jellyseerr-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.jellyseerr-app-secure.tls=true
+      - traefik.http.routers.jellyseerr-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.jellyseerr-app-secure.service=jellyseerr-app
+      - traefik.http.routers.jellyseerr-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.jellyseerr-app.loadbalancer.server.port=5055
+    networks:
+      - proxy
+    restart: unless-stopped
