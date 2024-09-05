@@ -1,0 +1,57 @@
+version: '3'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  bazarr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/bazarr/config
+  bazarr-series-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/video/series
+  bazarr-movies-dir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/video/movies
+
+services:
+  bazarr:
+    container_name: bazarr
+    image: ghcr.io/linuxserver/bazarr:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Amsterdam
+      - UMASK_SET=022 #optional
+    volumes:
+      - bazarr-config:/config
+      - bazarr-series-dir:/tv
+      - bazarr-movies-dir:/movies
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.bazarr.entrypoints=http
+      - traefik.http.routers.bazarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.bazarr-secure.entrypoints=https
+      - traefik.http.routers.bazarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.bazarr-secure.tls=true
+      - traefik.http.routers.bazarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.bazarr-secure.service=bazarr
+      - traefik.http.routers.bazarr-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.services.bazarr.loadbalancer.server.port=6767
+    networks:
+      - proxy
+    restart: unless-stopped
