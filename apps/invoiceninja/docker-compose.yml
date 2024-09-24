@@ -78,6 +78,8 @@ services:
       - DB_DATABASE1=ninja
       - PHANTOMJS_PDF_GENERATION=false
       - SNAPPDF_EXECUTABLE_PATH="/usr/bin/chromium-browser"
+      - IN_USER_EMAIL=${ADMIN_USER_EMAIL}
+      - IN_PASSWORD=${ADMIN_USER_PASS}
     volumes:
       # - ./config/hosts:/etc/hosts:ro
       # - ./config/php/php.ini:/usr/local/etc/php/php.ini
