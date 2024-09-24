@@ -79,8 +79,11 @@ services:
       - PHANTOMJS_PDF_GENERATION=false
       - SNAPPDF_EXECUTABLE_PATH="/usr/bin/chromium-browser"
     volumes:
-      - invoiceninja-public:/var/www/app/public
-      - invoiceninja-storage:/var/www/app/storage
+      # - ./config/hosts:/etc/hosts:ro
+      # - ./config/php/php.ini:/usr/local/etc/php/php.ini
+      # - ./config/php/php-cli.ini:/usr/local/etc/php/php-cli.ini
+      - invoiceninja-public:/var/www/app/public:rw,delegated
+      - invoiceninja-storage:/var/www/app/storage:rw,delegated
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - invoiceninja-db
