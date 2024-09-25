@@ -91,8 +91,8 @@ services:
 
     volumes:
       # - ./config/hosts:/etc/hosts:ro
-      - ./config/php/php.ini:/usr/local/etc/php/php.ini
-      - ./config/php/php-cli.ini:/usr/local/etc/php/php-cli.ini
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+      - ./php/php-cli.ini:/usr/local/etc/php/php-cli.ini
       - invoiceninja-public:/var/www/app/public:rw,delegated
       - invoiceninja-storage:/var/www/app/storage:rw,delegated
       - /etc/localtime:/etc/localtime:ro
