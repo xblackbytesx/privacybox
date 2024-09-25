@@ -1,4 +1,4 @@
-version: '3.7'
+name: InvoiceNinja
 
 networks:
   proxy:
@@ -46,8 +46,7 @@ services:
       - MYSQL_USER=ninja
       - MYSQL_PASSWORD=${DB_USER_PASS}
     volumes:
-      # - invoiceninja-database:/var/lib/mysql:rw,delegated
-      - invoiceninja-database:/var/lib/mysql
+      - invoiceninja-database:/var/lib/mysql:rw,delegated
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
@@ -70,20 +69,30 @@ services:
       - TRUSTED_PROXIES="*"
       - APP_URL=https://${SUBDOMAIN}.${DOMAIN}
       - APP_KEY=${APP_KEY}
-      - APP_DEBUG=true
+      - APP_DEBUG=false
       - MULTI_DB_ENABLED=false
       - DB_HOST1=invoiceninja-db
       - DB_USERNAME1=ninja
       - DB_PASSWORD1=${DB_USER_PASS}
       - DB_DATABASE1=ninja
       - PHANTOMJS_PDF_GENERATION=false
-      - SNAPPDF_EXECUTABLE_PATH="/usr/bin/chromium-browser"
+      - PDF_GENERATOR=snappdf
+      # - SNAPPDF_EXECUTABLE_PATH="/usr/bin/chromium-browser"
       - IN_USER_EMAIL=${ADMIN_USER_EMAIL}
       - IN_PASSWORD=${ADMIN_USER_PASS}
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=${SMTP_HOST}
+      - MAIL_PORT=${SMTP_PORT}
+      - MAIL_USERNAME=${SMTP_USER}
+      - MAIL_PASSWORD=${SMTP_PASS}
+      - MAIL_ENCRYPTION=${SMTP_ENCRYPTION}
+      - MAIL_FROM_ADDRESS=${SMTP_FROM_MAIL}
+      - MAIL_FROM_NAME=${SMTP_FROM_NAME}
+
     volumes:
       # - ./config/hosts:/etc/hosts:ro
-      # - ./config/php/php.ini:/usr/local/etc/php/php.ini
-      # - ./config/php/php-cli.ini:/usr/local/etc/php/php-cli.ini
+      - ./config/php/php.ini:/usr/local/etc/php/php.ini
+      - ./config/php/php-cli.ini:/usr/local/etc/php/php-cli.ini
       - invoiceninja-public:/var/www/app/public:rw,delegated
       - invoiceninja-storage:/var/www/app/storage:rw,delegated
       - /etc/localtime:/etc/localtime:ro
@@ -104,8 +113,7 @@ services:
       - internal
       - proxy
     volumes:
-      - invoiceninja-public:/var/www/app/public
-      - invoiceninja-storage:/var/www/app/storage
+      - invoiceninja-public:/var/www/app/public:ro
       - ./nginx/nginx.conf:/etc/nginx/conf.d/in-vhost.conf:ro
       - /etc/localtime:/etc/localtime:ro
     labels:
