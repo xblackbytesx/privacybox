@@ -89,15 +89,13 @@ services:
       - internal
     labels:
       - traefik.enable=true
-      - traefik.http.routers.matrix-synapse-app.entrypoints=http
-      - traefik.http.routers.matrix-synapse-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.matrix-synapse-app-secure.entrypoints=https
+      - traefik.http.routers.matrix-synapse-app-secure.entrypoints=websecure
       - traefik.http.routers.matrix-synapse-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.matrix-synapse-app-secure.tls=true
       - traefik.http.routers.matrix-synapse-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.matrix-synapse-app-secure.service=matrix-synapse-app
-      - traefik.http.routers.matrix-synapse-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-      - traefik.http.services.matrix-synapse-app.loadbalancer.server.port=8008 
+      - traefik.http.routers.matrix-synapse-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.matrix-synapse-app.loadbalancer.server.port=8008
     restart: unless-stopped
 
   # Uncomment if you don't want federation
@@ -114,14 +112,14 @@ services:
       - internal
     labels:
       - traefik.enable=true
-      - traefik.http.routers.matrix-synapse-well-known.entrypoints=http
+      - traefik.http.routers.matrix-synapse-well-known.entrypoints=web
       - traefik.http.routers.matrix-synapse-well-known.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && PathPrefix(`/.well-known`)
-      - traefik.http.routers.matrix-synapse-well-known-secure.entrypoints=https
+      - traefik.http.routers.matrix-synapse-well-known-secure.entrypoints=websecure
       - traefik.http.routers.matrix-synapse-well-known-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && PathPrefix(`/.well-known`)
       - traefik.http.routers.matrix-synapse-well-known-secure.tls=true
       - traefik.http.routers.matrix-synapse-well-known-secure.tls.certresolver=le-dns
       - traefik.http.routers.matrix-synapse-well-known-secure.service=matrix-synapse-well-known
-      - traefik.http.routers.matrix-synapse-well-known-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.matrix-synapse-well-known-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.matrix-synapse-well-known.loadbalancer.server.port=80
     restart: unless-stopped
 

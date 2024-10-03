@@ -71,16 +71,14 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASS}
       SAMPLE_DATA: 'false'
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.statping.entrypoints=http"
-      - "traefik.http.routers.statping.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.statping.middlewares=secured@file"
-      - "traefik.http.routers.statping-secure.entrypoints=https"
-      - "traefik.http.routers.statping-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.statping-secure.tls=true"
-      - "traefik.http.routers.statping-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.statping-secure.service=statping"
-      - "traefik.http.services.statping.loadbalancer.server.port=8080"
+      - traefik.enable=true
+      - traefik.http.routers.statping-app-secure.entrypoints=websecure
+      - traefik.http.routers.statping-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.statping-app-secure.tls=true
+      - traefik.http.routers.statping-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.statping-app-secure.service=statping-app
+      - traefik.http.routers.statping-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.statping-app.loadbalancer.server.port=8080
     networks:
       - internal
       - proxy

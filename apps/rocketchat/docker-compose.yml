@@ -98,8 +98,8 @@ services:
   #     --acme.email='your@email.tld'
   #     --acme.entrypoint=https
   #     --acme.storagefile=acme.json
-  #     --defaultentrypoints=http
-  #     --defaultentrypoints=https
+  #     --defaultentrypoints=web
+  #     --defaultentrypoints=websecure
   #     --entryPoints='Name:http Address::80 Redirect.EntryPoint:https'
   #     --entryPoints='Name:https Address::443 TLS.Certificates:'
   #  ports:

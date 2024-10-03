@@ -23,14 +23,12 @@ services:
       - psitransfer-data:/data
     labels:
       - traefik.enable=true
-      - traefik.http.routers.psitransfer-app.entrypoints=http
-      - traefik.http.routers.psitransfer-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.psitransfer-app-secure.entrypoints=https
+      - traefik.http.routers.psitransfer-app-secure.entrypoints=websecure
       - traefik.http.routers.psitransfer-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.psitransfer-app-secure.tls=true
       - traefik.http.routers.psitransfer-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.psitransfer-app-secure.service=psitransfer-app
-      - traefik.http.routers.psitransfer-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.psitransfer-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.psitransfer-app.loadbalancer.server.port=3000
     networks:
       - proxy

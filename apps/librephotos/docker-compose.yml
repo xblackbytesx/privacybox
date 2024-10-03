@@ -54,14 +54,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.librephotos-proxy.entrypoints=http
-      - traefik.http.routers.librephotos-proxy.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.librephotos-proxy-secure.entrypoints=https
+      - traefik.http.routers.librephotos-proxy-secure.entrypoints=websecure
       - traefik.http.routers.librephotos-proxy-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.librephotos-proxy-secure.tls=true
       - traefik.http.routers.librephotos-proxy-secure.tls.certresolver=le-dns
       - traefik.http.routers.librephotos-proxy-secure.service=librephotos-proxy
-      - traefik.http.routers.librephotos-proxy-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.librephotos-proxy-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.librephotos-proxy.loadbalancer.server.port=80
     depends_on:
       - backend

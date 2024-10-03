@@ -145,13 +145,11 @@ services:
         && nginx -g 'daemon off;'"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.funkwhale-nginx.entrypoints=http
-      - traefik.http.routers.funkwhale-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.funkwhale-nginx-secure.entrypoints=https
+      - traefik.http.routers.funkwhale-nginx-secure.entrypoints=websecure
       - traefik.http.routers.funkwhale-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.funkwhale-nginx-secure.tls=true
       - traefik.http.routers.funkwhale-nginx-secure.tls.certresolver=le-dns
       - traefik.http.routers.funkwhale-nginx-secure.service=funkwhale-nginx
-      - traefik.http.routers.funkwhale-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.funkwhale-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.funkwhale-nginx.loadbalancer.server.port=80
     restart: unless-stopped

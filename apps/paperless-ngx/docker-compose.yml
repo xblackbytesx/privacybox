@@ -106,14 +106,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.paperless-ngx-app.entrypoints=http
-      - traefik.http.routers.paperless-ngx-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.paperless-ngx-app-secure.entrypoints=https
+      - traefik.http.routers.paperless-ngx-app-secure.entrypoints=websecure
       - traefik.http.routers.paperless-ngx-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.paperless-ngx-app-secure.tls=true
       - traefik.http.routers.paperless-ngx-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.paperless-ngx-app-secure.service=paperless-ngx-app
-      - traefik.http.routers.paperless-ngx-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.paperless-ngx-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.paperless-ngx-app.loadbalancer.server.port=8000
     networks: 
       - internal
