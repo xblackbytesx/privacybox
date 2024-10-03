@@ -106,15 +106,18 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.entrypoints=http
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.entrypoints=web
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
-      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=https
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=websecure
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls=true
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=le-dns
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.service=wp-${COMPOSE_PROJECT_NAME}-nginx
-      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.wp-${COMPOSE_PROJECT_NAME}-nginx.loadbalancer.server.port=80
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     restart: unless-stopped
 
   wp-redis:

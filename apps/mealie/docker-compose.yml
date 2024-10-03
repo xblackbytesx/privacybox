@@ -79,15 +79,18 @@ services:
       - mealie-data:/app/data
     labels:
       - traefik.enable=true
-      - traefik.http.routers.mealie-app.entrypoints=http
+      - traefik.http.routers.mealie-app.entrypoints=web
       - traefik.http.routers.mealie-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.mealie-app-secure.entrypoints=https
+      - traefik.http.routers.mealie-app-secure.entrypoints=websecure
       - traefik.http.routers.mealie-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.mealie-app-secure.tls=true
       - traefik.http.routers.mealie-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.mealie-app-secure.service=mealie-app
-      - traefik.http.routers.mealie-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.mealie-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.mealie-app.loadbalancer.server.port=80
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

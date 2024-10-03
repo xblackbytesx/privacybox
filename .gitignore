@@ -5,6 +5,8 @@
 acme.json
 apps/traefik/data/traefik.yml
 apps/traefik/data/config.yml
+apps/traefik/data/traefik.yaml
+apps/traefik/data/config.yaml
 apps/ghost/deployments
 apps/nginx-static/deployments
 apps/wordpress/deployments

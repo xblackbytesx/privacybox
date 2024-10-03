@@ -75,6 +75,7 @@ services:
       - DB_USERNAME1=ninja
       - DB_PASSWORD1=${DB_USER_PASS}
       - DB_DATABASE1=ninja
+      - QUEUE_CONNECTION=database
       - PHANTOMJS_PDF_GENERATION=false
       - PDF_GENERATOR=snappdf
       # - SNAPPDF_EXECUTABLE_PATH="/usr/bin/chromium-browser"
@@ -118,13 +119,16 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.invoiceninja-nginx.entrypoints=http
+      - traefik.http.routers.invoiceninja-nginx.entrypoints=web
       - traefik.http.routers.invoiceninja-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.invoiceninja-nginx-secure.entrypoints=https
+      - traefik.http.routers.invoiceninja-nginx-secure.entrypoints=websecure
       - traefik.http.routers.invoiceninja-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.invoiceninja-nginx-secure.tls=true
       - traefik.http.routers.invoiceninja-nginx-secure.tls.certresolver=le-dns
       - traefik.http.routers.invoiceninja-nginx-secure.service=invoiceninja-nginx
-      - traefik.http.routers.invoiceninja-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.invoiceninja-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.invoiceninja-nginx.loadbalancer.server.port=80
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     restart: unless-stopped

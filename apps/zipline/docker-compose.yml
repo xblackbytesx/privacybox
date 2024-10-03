@@ -70,15 +70,18 @@ services:
       - CORE_LOGGER=true
     labels:
       - traefik.enable=true
-      - traefik.http.routers.zipline-app.entrypoints=http
+      - traefik.http.routers.zipline-app.entrypoints=web
       - traefik.http.routers.zipline-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.zipline-app-secure.entrypoints=https
+      - traefik.http.routers.zipline-app-secure.entrypoints=websecure
       - traefik.http.routers.zipline-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.zipline-app-secure.tls=true
       - traefik.http.routers.zipline-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.zipline-app-secure.service=zipline-app
-      - traefik.http.routers.zipline-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.zipline-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.zipline-app.loadbalancer.server.port=3000
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

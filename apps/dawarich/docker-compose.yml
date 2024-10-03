@@ -60,15 +60,18 @@ services:
       - proxy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.dawarich-app.entrypoints=http
+      - traefik.http.routers.dawarich-app.entrypoints=web
       - traefik.http.routers.dawarich-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.dawarich-app-secure.entrypoints=https
+      - traefik.http.routers.dawarich-app-secure.entrypoints=websecure
       - traefik.http.routers.dawarich-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.dawarich-app-secure.tls=true
       - traefik.http.routers.dawarich-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.dawarich-app-secure.service=dawarich-app
-      - traefik.http.routers.dawarich-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.dawarich-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.dawarich-app.loadbalancer.server.port=3000
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     stdin_open: true
     tty: true
     entrypoint: dev-entrypoint.sh

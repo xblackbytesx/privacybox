@@ -23,15 +23,18 @@ services:
       - uptime-kuma-data:/app/data
     labels:
       - traefik.enable=true
-      - traefik.http.routers.uptime-kuma.entrypoints=http
+      - traefik.http.routers.uptime-kuma.entrypoints=web
       - traefik.http.routers.uptime-kuma.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.uptime-kuma-secure.entrypoints=https
+      - traefik.http.routers.uptime-kuma-secure.entrypoints=websecure
       - traefik.http.routers.uptime-kuma-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.uptime-kuma-secure.tls=true
       - traefik.http.routers.uptime-kuma-secure.tls.certresolver=le-dns
       - traefik.http.routers.uptime-kuma-secure.service=uptime-kuma
-      - traefik.http.routers.uptime-kuma-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.uptime-kuma-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.uptime-kuma.loadbalancer.server.port=3001
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: always

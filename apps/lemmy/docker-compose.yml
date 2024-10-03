@@ -102,15 +102,18 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.lemmy-nginx.entrypoints=http
+      - traefik.http.routers.lemmy-nginx.entrypoints=web
       - traefik.http.routers.lemmy-nginx.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.lemmy-nginx-secure.entrypoints=https
+      - traefik.http.routers.lemmy-nginx-secure.entrypoints=websecure
       - traefik.http.routers.lemmy-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.lemmy-nginx-secure.tls=true
       - traefik.http.routers.lemmy-nginx-secure.tls.certresolver=le-dns
       - traefik.http.routers.lemmy-nginx-secure.service=lemmy-nginx
-      - traefik.http.routers.lemmy-nginx-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.lemmy-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.lemmy-nginx.loadbalancer.server.port=8536
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

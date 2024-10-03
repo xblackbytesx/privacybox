@@ -69,15 +69,18 @@ services:
       - huginn-db
     labels:
       - traefik.enable=true
-      - traefik.http.routers.hugin.entrypoints=http
+      - traefik.http.routers.hugin.entrypoints=web
       - traefik.http.routers.hugin.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.hugin-secure.entrypoints=https
+      - traefik.http.routers.hugin-secure.entrypoints=websecure
       - traefik.http.routers.hugin-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.hugin-secure.tls=true
       - traefik.http.routers.hugin-secure.tls.certresolver=le-dns
       - traefik.http.routers.hugin-secure.service=hugin
-      - traefik.http.routers.hugin-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.hugin-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.hugin.loadbalancer.server.port=3000
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

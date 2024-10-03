@@ -125,15 +125,18 @@ services:
       UPSTREAM_REAL_IP_RECURSIVE: "off"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.erpnext-app.entrypoints=http
+      - traefik.http.routers.erpnext-app.entrypoints=web
       - traefik.http.routers.erpnext-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.erpnext-app-secure.entrypoints=https
+      - traefik.http.routers.erpnext-app-secure.entrypoints=websecure
       - traefik.http.routers.erpnext-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.erpnext-app-secure.tls=true
       - traefik.http.routers.erpnext-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.erpnext-app-secure.service=erpnext-app
-      - traefik.http.routers.erpnext-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.erpnext-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.erpnext-app.loadbalancer.server.port=8080
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     volumes:
       - erpnext-assets:/usr/share/nginx/html/assets
       - erpnext-sites:/usr/share/nginx/html/sites
