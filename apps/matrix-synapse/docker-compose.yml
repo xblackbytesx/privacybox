@@ -116,8 +116,6 @@ services:
       - internal
     labels:
       - traefik.enable=true
-      - traefik.http.routers.matrix-synapse-well-known.entrypoints=web
-      - traefik.http.routers.matrix-synapse-well-known.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && PathPrefix(`/.well-known`)
       - traefik.http.routers.matrix-synapse-well-known-secure.entrypoints=websecure
       - traefik.http.routers.matrix-synapse-well-known-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && PathPrefix(`/.well-known`)
       - traefik.http.routers.matrix-synapse-well-known-secure.tls=true
@@ -158,7 +156,7 @@ services:
       - SYNCV3_SERVER=https://${SUBDOMAIN}.${DOMAIN}
       - SYNCV3_DB=postgresql://${SLIDING_SYNC_DB_USER}:${SLIDING_SYNC_DB_USER_PASS}@matrix-synapse-db/slidingsync?sslmode=disable
       - SYNCV3_SECRET=${SLIDING_SYNC_SECRET}
-      - SYNCV3_BINDADDR=:8008
+      - SYNCV3_BINDADDR=:8009
     volumes:
       - synapse-sliding-sync:/data
       - /etc/localtime:/etc/localtime:ro
@@ -167,15 +165,14 @@ services:
       - internal
     labels:
       - traefik.enable=true
-      - traefik.http.routers.matrix-sliding-sync.entrypoints=http
-      - traefik.http.routers.matrix-sliding-sync.rule=Host(`sliding.${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.matrix-sliding-sync-secure.entrypoints=https
       - traefik.http.routers.matrix-sliding-sync-secure.rule=Host(`sliding.${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.matrix-sliding-sync-secure.tls=true
       - traefik.http.routers.matrix-sliding-sync-secure.tls.certresolver=le-dns
       - traefik.http.routers.matrix-sliding-sync-secure.service=matrix-sliding-sync
-      - traefik.http.routers.matrix-sliding-sync-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
-      - traefik.http.services.matrix-sliding-sync.loadbalancer.server.port=8008
-    restart: unless-stopped
+      - traefik.http.routers.matrix-sliding-sync-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.matrix-sliding-sync.loadbalancer.server.port=8009
     depends_on:
       - matrix-synapse-db
+      - matrix-synapse-app
+    restart: unless-stopped
