@@ -92,18 +92,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.standardnotes-api-gateway.entrypoints=web
-      - traefik.http.routers.standardnotes-api-gateway.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)
       - traefik.http.routers.standardnotes-api-gateway-secure.entrypoints=websecure
       - traefik.http.routers.standardnotes-api-gateway-secure.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)
       - traefik.http.routers.standardnotes-api-gateway-secure.tls=true
       - traefik.http.routers.standardnotes-api-gateway-secure.tls.certresolver=le-dns
       - traefik.http.routers.standardnotes-api-gateway-secure.service=standardnotes-api-gateway
-      - traefik.http.routers.standardnotes-api-gateway-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.standardnotes-api-gateway-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.standardnotes-api-gateway.loadbalancer.server.port=3000
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     restart: unless-stopped
 
   standardnotes-auth:
@@ -230,16 +225,11 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.standardnotes-web.entrypoints=web
-      - traefik.http.routers.standardnotes-web.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.standardnotes-web-secure.entrypoints=websecure
       - traefik.http.routers.standardnotes-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.standardnotes-web-secure.tls=true
       - traefik.http.routers.standardnotes-web-secure.tls.certresolver=le-dns
       - traefik.http.routers.standardnotes-web-secure.service=standardnotes-web
-      - traefik.http.routers.standardnotes-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.standardnotes-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.standardnotes-web.loadbalancer.server.port=3001
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     restart: unless-stopped

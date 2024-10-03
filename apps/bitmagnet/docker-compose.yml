@@ -71,16 +71,11 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.bitmagnet.entrypoints=web
-      - traefik.http.routers.bitmagnet.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.bitmagnet-secure.entrypoints=websecure
       - traefik.http.routers.bitmagnet-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.bitmagnet-secure.tls=true
       - traefik.http.routers.bitmagnet-secure.tls.certresolver=le-dns
       - traefik.http.routers.bitmagnet-secure.service=bitmagnet
-      - traefik.http.routers.bitmagnet-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.bitmagnet-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.bitmagnet.loadbalancer.server.port=3333
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     restart: unless-stopped

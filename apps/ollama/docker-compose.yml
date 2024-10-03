@@ -32,18 +32,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.ollama-backend.entrypoints=web
-      - traefik.http.routers.ollama-backend.rule=Host(`backend.${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.ollama-backend-secure.entrypoints=websecure
       - traefik.http.routers.ollama-backend-secure.rule=Host(`backend.${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.ollama-backend-secure.tls=true
       - traefik.http.routers.ollama-backend-secure.tls.certresolver=le-dns
       - traefik.http.routers.ollama-backend-secure.service=ollama-backend
-      - traefik.http.routers.ollama-backend-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.ollama-backend-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.ollama-backend.loadbalancer.server.port=11434
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy
@@ -63,18 +58,13 @@ services:
       - ollama-backend
     labels:
       - traefik.enable=true
-      - traefik.http.routers.ollama-webui.entrypoints=web
-      - traefik.http.routers.ollama-webui.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.ollama-webui-secure.entrypoints=websecure
       - traefik.http.routers.ollama-webui-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.ollama-webui-secure.tls=true
       - traefik.http.routers.ollama-webui-secure.tls.certresolver=le-dns
       - traefik.http.routers.ollama-webui-secure.service=ollama-webui
-      - traefik.http.routers.ollama-webui-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.ollama-webui-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.ollama-webui.loadbalancer.server.port=8080
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

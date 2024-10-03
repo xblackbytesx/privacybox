@@ -35,18 +35,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.jackett.entrypoints=web
-      - traefik.http.routers.jackett.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.jackett-secure.entrypoints=websecure
       - traefik.http.routers.jackett-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.jackett-secure.tls=true
       - traefik.http.routers.jackett-secure.tls.certresolver=le-dns
       - traefik.http.routers.jackett-secure.service=jackett
-      - traefik.http.routers.jackett-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.jackett-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.jackett.loadbalancer.server.port=9117
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: unless-stopped

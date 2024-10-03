@@ -16,16 +16,11 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.openspeedtest.entrypoints=web
-      - traefik.http.routers.openspeedtest.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.openspeedtest-secure.entrypoints=websecure
       - traefik.http.routers.openspeedtest-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.openspeedtest-secure.tls=true
       - traefik.http.routers.openspeedtest-secure.tls.certresolver=le-dns
       - traefik.http.routers.openspeedtest-secure.service=openspeedtest
-      - traefik.http.routers.openspeedtest-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.openspeedtest-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.openspeedtest.loadbalancer.server.port=8080
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     restart: unless-stopped

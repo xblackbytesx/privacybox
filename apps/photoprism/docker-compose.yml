@@ -123,18 +123,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.photoprism-app.entrypoints=web
-      - traefik.http.routers.photoprism-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.photoprism-app-secure.entrypoints=websecure
       - traefik.http.routers.photoprism-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.photoprism-app-secure.tls=true
       - traefik.http.routers.photoprism-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.photoprism-app-secure.service=photoprism-app
-      - traefik.http.routers.photoprism-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.photoprism-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.photoprism-app.loadbalancer.server.port=2342
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

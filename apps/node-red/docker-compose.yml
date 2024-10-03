@@ -36,17 +36,12 @@ services:
       # - nodered-download-dir:/storage
     labels:
       - traefik.enable=true
-      - traefik.http.routers.nodered.entrypoints=web
-      - traefik.http.routers.nodered.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.nodered-secure.entrypoints=websecure
       - traefik.http.routers.nodered-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.nodered-secure.tls=true
       - traefik.http.routers.nodered-secure.tls.certresolver=le-dns
       - traefik.http.routers.nodered-secure.service=nodered
-      - traefik.http.routers.nodered-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.nodered-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.nodered.loadbalancer.server.port=1880
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy

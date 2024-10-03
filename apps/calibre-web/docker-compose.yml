@@ -37,18 +37,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.calibre-web.entrypoints=web
-      - traefik.http.routers.calibre-web.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.calibre-web-secure.entrypoints=websecure
       - traefik.http.routers.calibre-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.calibre-web-secure.tls=true
       - traefik.http.routers.calibre-web-secure.tls.certresolver=le-dns
       - traefik.http.routers.calibre-web-secure.service=calibre-web
-      - traefik.http.routers.calibre-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.calibre-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.calibre-web.loadbalancer.server.port=8083
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: unless-stopped
