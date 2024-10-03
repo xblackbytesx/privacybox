@@ -35,16 +35,17 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=ghost
       - MYSQL_PASSWORD=${DB_USER_PASS}
+      - MARIADB_AUTO_UPGRADE=1
     volumes:
       - ghost-database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      timeout: 20s
-      interval: 15s
-      retries: 30
+        # healthcheck:
+        # test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+        # timeout: 20s
+        # interval: 15s
+        # retries: 30
     restart: unless-stopped
 
   ghost-app:
@@ -64,14 +65,12 @@ services:
       - ghost-content:/var/lib/ghost/content
     labels:
       - traefik.enable=true
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.entrypoints=http
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=https
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
+      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=websecure
+      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.rule=Host(`${BLOG_URL}`) || Host(`www.${BLOG_URL}`)
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls=true
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.service=ghost-${COMPOSE_PROJECT_NAME}-app
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.ghost-${COMPOSE_PROJECT_NAME}-app.loadbalancer.server.port=2368
     depends_on:
       - ghost-db

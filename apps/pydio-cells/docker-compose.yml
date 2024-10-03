@@ -69,10 +69,8 @@
 #       - /etc/localtime:/etc/localtime:ro
 #     labels:
 #       - "traefik.enable=true"
-#       - "traefik.http.routers.pydio-cells-app.entrypoints=http"
-#       - "traefik.http.routers.pydio-cells-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
 #       - "traefik.http.routers.pydio-cells-app.middlewares=secured@file"
-#       - "traefik.http.routers.pydio-cells-app-secure.entrypoints=https"
+#       - "traefik.http.routers.pydio-cells-app-secure.entrypoints=websecure"
 #       - "traefik.http.routers.pydio-cells-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
 #       - "traefik.http.routers.pydio-cells-app-secure.tls=true"
 #       - "traefik.http.routers.pydio-cells-app-secure.tls.certresolver=le-dns"
@@ -149,16 +147,14 @@ services:
       - pydio-cells-config:/config
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pydio-cells-app.entrypoints=http"
-      - "traefik.http.routers.pydio-cells-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.pydio-cells-app.middlewares=secured@file"
-      - "traefik.http.routers.pydio-cells-app-secure.entrypoints=https"
-      - "traefik.http.routers.pydio-cells-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.pydio-cells-app-secure.tls=true"
-      - "traefik.http.routers.pydio-cells-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.pydio-cells-app-secure.service=pydio-cells-app"
-      - "traefik.http.services.pydio-cells-app.loadbalancer.server.port=8080"
+      - traefik.enable=true
+      - traefik.http.routers.pydio-cells-app-secure.entrypoints=websecure
+      - traefik.http.routers.pydio-cells-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.pydio-cells-app-secure.tls=true
+      - traefik.http.routers.pydio-cells-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.pydio-cells-app-secure.service=pydio-cells-app
+      - traefik.http.routers.pydio-cells-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.pydio-cells-app.loadbalancer.server.port=8080
     depends_on:
       - pydio-cells-db
     networks: 

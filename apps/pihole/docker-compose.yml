@@ -38,14 +38,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.pihole.entrypoints=http
-      - traefik.http.routers.pihole.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.pihole-secure.entrypoints=https
+      - traefik.http.routers.pihole-secure.entrypoints=websecure
       - traefik.http.routers.pihole-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.pihole-secure.tls=true
       - traefik.http.routers.pihole-secure.tls.certresolver=le-dns
       - traefik.http.routers.pihole-secure.service=pihole
-      - traefik.http.routers.pihole-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.pihole-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.pihole.loadbalancer.server.port=80
     networks:
       - proxy

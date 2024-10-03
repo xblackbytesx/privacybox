@@ -1,4 +1,4 @@
-version: "3.3"
+name: traefik
 
 networks:
   proxy:
@@ -8,7 +8,7 @@ networks:
 services:
   traefik:
     container_name: "traefik"
-    image: "traefik:v2.11"
+    image: "traefik:v3.2"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -20,57 +20,27 @@ services:
     # DNS Challenge only 
     environment:
       - TRANSIP_ACCOUNT_NAME=${TRANSIP_ACCOUNT_NAME}
-      - TRANSIP_PRIVATE_KEY_PATH=transip.key
+      - TRANSIP_PRIVATE_KEY_PATH=/transip.key
       - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_API_TOKEN}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./data/traefik.yml:/traefik.yml:ro
+      - ./data/traefik.yaml:/etc/traefik/traefik.yaml:ro
       - ./data/acme.json:/acme.json
-      - ./data/config.yml:/config.yml:ro
-      - ./data/transip.key:/transip.key:ro # DNS Challenge only
+      - ./data/config.yaml:/config.yaml:ro
+      - ./data/transip.key:/transip.key:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.traefik.entrypoints=http
+      - traefik.http.routers.traefik.entrypoints=web
       - traefik.http.routers.traefik.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.traefik-secure.entrypoints=https
+      - traefik.http.routers.traefik-secure.entrypoints=websecure
       - traefik.http.routers.traefik-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.traefik-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker,basic_auth@docker
+      - traefik.http.routers.traefik-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.routers.traefik-secure.tls=true
       - traefik.http.routers.traefik-secure.tls.certresolver=le-dns
       - traefik.http.routers.traefik-secure.service=api@internal
       - traefik.http.services.traefik.loadbalancer.server.port=8080
-
-      # Global settings from here on
-      - traefik.http.routers.http_catchall.rule=HostRegexp(`{any:.+}`) 
-      - traefik.http.routers.http_catchall.entrypoints=http 
- 
-      # SSL Redirect
-      - traefik.http.routers.http_catchall.middlewares=https_redirect
-      - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true  
- 
-      # WWW Redirect
-      - traefik.http.middlewares.non_www.redirectregex.regex=^(http|https)?://(?:www\.)?(.+)
-      - traefik.http.middlewares.non_www.redirectregex.replacement=https://$${2} 
-      - traefik.http.middlewares.non_www.redirectregex.permanent=true
-
-      # Secure headers
-      - traefik.http.middlewares.sec_headers.headers.framedeny=true
-      - traefik.http.middlewares.sec_headers.headers.browserxssfilter=true
-      - traefik.http.middlewares.sec_headers.headers.stsincludesubdomains=true
-      - traefik.http.middlewares.sec_headers.headers.stsseconds=31536000
-      - traefik.http.middlewares.sec_headers.headers.stspreload=true
-      - traefik.http.middlewares.sec_headers.headers.forcestsheader=true
-      - traefik.http.middlewares.sec_headers.headers.customframeoptionsvalue=`SAMEORIGIN`
-
-      # Gzip Compression
-      - traefik.http.middlewares.gzip_compress.compress=true
-
-      # Basic Auth
-
-      # Note: all dollar signs in the hash need to be doubled for escaping.
-      # To create user:password pair, it's possible to use this command:
-      # echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
-      # - "traefik.http.middlewares.basic_auth.basicauth.users=traefik:$$apr1$$zox82cHE$$iUh5Wo6tvbZM9dNcX/vfH/"
-      - traefik.http.middlewares.basic_auth.basicauth.users=${AUTH_USER}:${AUTH_PASS}
+      # Global settings
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file

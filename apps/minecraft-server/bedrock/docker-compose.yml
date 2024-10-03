@@ -38,10 +38,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
     # labels:
     #   - "traefik.enable=true"
-    #   - "traefik.http.routers.minecraft-bedrock-server.entrypoints=http"
-    #   - "traefik.http.routers.minecraft-bedrock-server.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
     #   - "traefik.http.routers.minecraft-bedrock-server.middlewares=secured@file"
-    #   - "traefik.http.routers.minecraft-bedrock-server-secure.entrypoints=https"
+    #   - "traefik.http.routers.minecraft-bedrock-server-secure.entrypoints=websecure"
     #   - "traefik.http.routers.minecraft-bedrock-server-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
     #   - "traefik.http.routers.minecraft-bedrock-server-secure.tls=true"
     #   - "traefik.http.routers.minecraft-bedrock-server-secure.tls.certresolver=le-dns"

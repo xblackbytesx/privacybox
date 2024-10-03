@@ -102,14 +102,12 @@ services:
         condition: service_healthy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.romm-app.entrypoints=http
-      - traefik.http.routers.romm-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.romm-app-secure.entrypoints=https
+      - traefik.http.routers.romm-app-secure.entrypoints=websecure
       - traefik.http.routers.romm-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.romm-app-secure.tls=true
       - traefik.http.routers.romm-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.romm-app-secure.service=romm-app
-      - traefik.http.routers.romm-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.romm-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.romm-app.loadbalancer.server.port=8080
     networks:
       - internal

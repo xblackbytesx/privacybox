@@ -1,0 +1,19 @@
+{
+  # for more info about the config, check out the documentation
+  # https://join-lemmy.org/docs/en/administration/configuration.html
+
+  database: {
+    host: lemmy-postgres
+    password: "mVD6GjVqKhCCdAvPXVM5cF4wP35rbUweYd6GRNnSJ2YUGQgDG06SSHismlTdLyMu"
+  }
+  hostname: "lemmy.dropdoos.nl"
+  pictrs: {
+    url: "http://lemmy-pictrs:8080/"
+    api_key: "mVD6GjVqKhCCdAvPXVM5cF4wP35rbUweYd6GRNnSJ2YUGQgDG06SSHismlTdLyMu"
+  }
+  email: {
+    smtp_server: "lemmy-postfix:25"
+    smtp_from_address: "noreply@lemmy.dropdoos.nl"
+    tls_type: "none"
+  }
+}

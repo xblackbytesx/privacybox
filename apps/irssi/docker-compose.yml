@@ -40,16 +40,14 @@ volumes:
     environment:
       - TERM
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.irssi-app.entrypoints=http"
-      - "traefik.http.routers.irssi-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.irssi-app.middlewares=secured@file"
-      - "traefik.http.routers.irssi-app-secure.entrypoints=https"
-      - "traefik.http.routers.irssi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.irssi-app-secure.tls=true"
-      - "traefik.http.routers.irssi-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.irssi-app-secure.service=irssi-app"
-      - "traefik.http.services.irssi-app.loadbalancer.server.port=3000"
+      - traefik.enable=true
+      - traefik.http.routers.irssi-app-secure.entrypoints=websecure
+      - traefik.http.routers.irssi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.irssi-app-secure.tls=true
+      - traefik.http.routers.irssi-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.irssi-app-secure.service=irssi-app
+      - traefik.http.routers.irssi-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.irssi-app.loadbalancer.server.port=3000
     networks:
       - proxy
       - internal

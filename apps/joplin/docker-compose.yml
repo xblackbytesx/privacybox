@@ -18,7 +18,7 @@ volumes:
 services:
   joplin-db:
     container_name: joplin-db
-    image: postgres:13-alpine
+    image: arm64v8/postgres:13-alpine
     security_opt:
       - no-new-privileges:true
     environment:
@@ -37,6 +37,7 @@ services:
     restart: unless-stopped
 
   joplin-app:
+    platform: linux/amd64
     image: joplin/server:latest
     security_opt:
       - no-new-privileges:true
@@ -53,14 +54,12 @@ services:
       - POSTGRES_HOST=joplin-db
     labels:
       - traefik.enable=true
-      - traefik.http.routers.joplin-app.entrypoints=http
-      - traefik.http.routers.joplin-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.joplin-app-secure.entrypoints=https
+      - traefik.http.routers.joplin-app-secure.entrypoints=websecure
       - traefik.http.routers.joplin-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.joplin-app-secure.tls=true
       - traefik.http.routers.joplin-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.joplin-app-secure.service=joplin-app
-      - traefik.http.routers.joplin-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.joplin-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.joplin-app.loadbalancer.server.port=22300
     networks:
       - internal
