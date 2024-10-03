@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
 
   searxng-redis:
-    container_name: funkwhale-redis
+    container_name: searxng-redis
     image: redis:alpine
     security_opt:
       - no-new-privileges:true
