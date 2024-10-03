@@ -118,15 +118,18 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.mastodon-web.entrypoints=http
+      - traefik.http.routers.mastodon-web.entrypoints=web
       - traefik.http.routers.mastodon-web.rule=Host(`${DOMAIN}`)
-      - traefik.http.routers.mastodon-web-secure.entrypoints=https
+      - traefik.http.routers.mastodon-web-secure.entrypoints=websecure
       - traefik.http.routers.mastodon-web-secure.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.mastodon-web-secure.tls=true
       - traefik.http.routers.mastodon-web-secure.tls.certresolver=le-dns
       - traefik.http.routers.mastodon-web-secure.service=mastodon-web
-      - traefik.http.routers.mastodon-web-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.mastodon-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.mastodon-web.loadbalancer.server.port=3000
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

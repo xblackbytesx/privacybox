@@ -28,15 +28,18 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.prowlarr.entrypoints=http
+      - traefik.http.routers.prowlarr.entrypoints=web
       - traefik.http.routers.prowlarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.prowlarr-secure.entrypoints=https
+      - traefik.http.routers.prowlarr-secure.entrypoints=websecure
       - traefik.http.routers.prowlarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.prowlarr-secure.tls=true
       - traefik.http.routers.prowlarr-secure.tls.certresolver=le-dns
       - traefik.http.routers.prowlarr-secure.service=prowlarr
-      - traefik.http.routers.prowlarr-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.prowlarr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.prowlarr.loadbalancer.server.port=9696
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: unless-stopped

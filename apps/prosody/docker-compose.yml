@@ -43,16 +43,19 @@ services:
       - prosody-modules:/usr/lib/prosody-modules
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.prosody.entrypoints=http"
-      - "traefik.http.routers.prosody.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.prosody.middlewares=secured@file"
-      - "traefik.http.routers.prosody-secure.entrypoints=https"
-      - "traefik.http.routers.prosody-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.prosody-secure.tls=true"
-      - "traefik.http.routers.prosody-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.prosody-secure.service=prosody"
-      - "traefik.http.services.prosody.loadbalancer.server.port=5280"
+      - traefik.enable=true
+      - traefik.http.routers.prosody-app.entrypoints=web
+      - traefik.http.routers.prosody-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.prosody-app-secure.entrypoints=websecure
+      - traefik.http.routers.prosody-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.prosody-app-secure.tls=true
+      - traefik.http.routers.prosody-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.prosody-app-secure.service=prosody-app
+      - traefik.http.routers.prosody-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.services.prosody-app.loadbalancer.server.port=5280
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: unless-stopped

@@ -1,5 +1,5 @@
 log:
-  level: info
+  level: INFO
 
 global:
   checkNewVersion: true
@@ -11,9 +11,9 @@ api:
   debug: true
 
 entryPoints:
-  http:
+  web:
     address: ":80"
-  https:
+  websecure:
     address: ":443"
 
 providers:
@@ -22,7 +22,7 @@ providers:
     exposedByDefault: false
     network: proxy
   file:
-    filename: ./config.yml
+    filename: /config.yaml
 
 certificatesResolvers:
   # le-http:
@@ -45,6 +45,7 @@ certificatesResolvers:
       dnsChallenge:
         provider: cloudflare
         delayBeforeCheck: 0
-        resolvers:
-          - "1.1.1.1:53"
-          - "1.0.0.1:53"
+
+resolvers:
+  - "1.1.1.1:53"
+  - "1.0.0.1:53"

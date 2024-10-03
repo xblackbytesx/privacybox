@@ -35,15 +35,18 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.syncthing-app.entrypoints=http
+      - traefik.http.routers.syncthing-app.entrypoints=web
       - traefik.http.routers.syncthing-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.syncthing-app-secure.entrypoints=https
+      - traefik.http.routers.syncthing-app-secure.entrypoints=websecure
       - traefik.http.routers.syncthing-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.syncthing-app-secure.tls=true
       - traefik.http.routers.syncthing-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.syncthing-app-secure.service=syncthing-app
-      - traefik.http.routers.syncthing-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.syncthing-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.syncthing-app.loadbalancer.server.port=8384
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks: 
       - proxy
     ports:

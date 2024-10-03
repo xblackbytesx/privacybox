@@ -27,16 +27,19 @@ services:
       - thelounge-config:/config
       - /etc/localtime:/etc/localtime:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.thelounge.entrypoints=http"
-      - "traefik.http.routers.thelounge.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.thelounge.middlewares=secured@file"
-      - "traefik.http.routers.thelounge-secure.entrypoints=https"
-      - "traefik.http.routers.thelounge-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.thelounge-secure.tls=true"
-      - "traefik.http.routers.thelounge-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.thelounge-secure.service=thelounge"
-      - "traefik.http.services.thelounge.loadbalancer.server.port=9000"
+      - traefik.enable=true
+      - traefik.http.routers.thelounge.entrypoints=web
+      - traefik.http.routers.thelounge.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.thelounge-secure.entrypoints=websecure
+      - traefik.http.routers.thelounge-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.thelounge-secure.tls=true
+      - traefik.http.routers.thelounge-secure.tls.certresolver=le-dns
+      - traefik.http.routers.thelounge-secure.service=thelounge
+      - traefik.http.routers.thelounge-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.services.thelounge.loadbalancer.server.port=9000
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     # # Used for SSH remoteForward

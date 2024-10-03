@@ -35,15 +35,18 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.nzbget.entrypoints=http
+      - traefik.http.routers.nzbget.entrypoints=web
       - traefik.http.routers.nzbget.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.nzbget-secure.entrypoints=https
+      - traefik.http.routers.nzbget-secure.entrypoints=websecure
       - traefik.http.routers.nzbget-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.nzbget-secure.tls=true
       - traefik.http.routers.nzbget-secure.tls.certresolver=le-dns
       - traefik.http.routers.nzbget-secure.service=nzbget
-      - traefik.http.routers.nzbget-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.nzbget-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.nzbget.loadbalancer.server.port=6789
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: unless-stopped

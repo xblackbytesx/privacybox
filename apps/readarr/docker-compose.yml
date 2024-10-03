@@ -43,15 +43,18 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.readarr.entrypoints=http
+      - traefik.http.routers.readarr.entrypoints=web
       - traefik.http.routers.readarr.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.readarr-secure.entrypoints=https
+      - traefik.http.routers.readarr-secure.entrypoints=websecure
       - traefik.http.routers.readarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.readarr-secure.tls=true
       - traefik.http.routers.readarr-secure.tls.certresolver=le-dns
       - traefik.http.routers.readarr-secure.service=readarr
-      - traefik.http.routers.readarr-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.readarr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
       - traefik.http.services.readarr.loadbalancer.server.port=8787
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: unless-stopped

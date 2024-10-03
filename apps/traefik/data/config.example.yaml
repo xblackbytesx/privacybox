@@ -1,7 +1,46 @@
 http:
+  middlewares:
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    non-www:
+      redirectRegex:
+        regex: "^(http|https)?://(?:www\\.)?(.+)"
+        replacement: "https://${2}"
+        permanent: true
+
+    secure-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+
+    gzip-compress:
+      compress: {}
+
+    basic-auth:
+      basicAuth:
+        users:
+          - "${AUTH_USER}:${AUTH_PASS}"
+
+  routers:
+    http-catchall:
+      rule: "HostRegexp(`{any:.+}`)"
+      entrypoints:
+        - web
+      middlewares:
+        - https-redirect
+      service: noop@internal
+
   # # Example of using Traefik to statically route and proxy network endpoints outside Traefik control.
   # # This is useful for proxying routers, nas-drives or even host-mode docker containers on localhost.
-  # routers:
   #   router-homeassistant:
   #     entryPoints:
   #       - https
@@ -180,3 +219,9 @@ http:
   #     loadBalancer:
   #       servers:
   #       - url: "http://10.0.200.5:2354"
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      sniStrict: true
