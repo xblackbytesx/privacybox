@@ -35,16 +35,17 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=ghost
       - MYSQL_PASSWORD=${DB_USER_PASS}
+      - MARIADB_AUTO_UPGRADE=1
     volumes:
       - ghost-database:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
-    healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      timeout: 20s
-      interval: 15s
-      retries: 30
+        # healthcheck:
+        # test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+        # timeout: 20s
+        # interval: 15s
+        # retries: 30
     restart: unless-stopped
 
   ghost-app:
