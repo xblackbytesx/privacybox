@@ -26,7 +26,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.entrypoints=websecure
-      - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.rule=Host(`${SITE_URL}`, `www.${SITE_URL}`)
+      - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${SITE_URL}`) || Host(`www.${SITE_URL}`)
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls=true
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls.certresolver=le-dns
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.service=nginx-static-${COMPOSE_PROJECT_NAME}
