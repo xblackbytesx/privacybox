@@ -49,8 +49,8 @@ services:
 
   lemmy-app:
     container_name: lemmy-app
-    platform: linux/amd64
-    image: dessalines/lemmy:latest
+    # platform: linux/amd64
+    image: dessalines/lemmy:0.19.3
     security_opt:
       - no-new-privileges:true
     hostname: lemmy
@@ -70,8 +70,8 @@ services:
 
   lemmy-ui:
     container_name: lemmy-ui
-    platform: linux/amd64
-    image: dessalines/lemmy-ui:latest
+    # platform: linux/amd64
+    image: dessalines/lemmy-ui:0.19.3
     security_opt:
       - no-new-privileges:true
     environment:
