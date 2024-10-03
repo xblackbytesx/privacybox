@@ -18,7 +18,7 @@ services:
       - "80:80"
       - "443:443"
     # DNS Challenge only 
-      environment:
+    environment:
       - TRANSIP_ACCOUNT_NAME=${TRANSIP_ACCOUNT_NAME}
       - TRANSIP_PRIVATE_KEY_PATH=/transip.key
       - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_API_TOKEN}
