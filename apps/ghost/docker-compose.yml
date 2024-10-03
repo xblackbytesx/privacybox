@@ -66,7 +66,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=websecure
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${BLOG_URL}`) || Host(`www.${BLOG_URL}`)
+      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.rule=Host(`${BLOG_URL}`) || Host(`www.${BLOG_URL}`)
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls=true
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.service=ghost-${COMPOSE_PROJECT_NAME}-app
