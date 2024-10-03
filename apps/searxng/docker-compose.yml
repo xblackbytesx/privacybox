@@ -28,18 +28,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.searxng-app.entrypoints=web
-      - traefik.http.routers.searxng-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.searxng-app-secure.entrypoints=websecure
       - traefik.http.routers.searxng-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.searxng-app-secure.tls=true
       - traefik.http.routers.searxng-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.searxng-app-secure.service=searxng-app
-      - traefik.http.routers.searxng-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.searxng-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.searxng-app.loadbalancer.server.port=8080
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

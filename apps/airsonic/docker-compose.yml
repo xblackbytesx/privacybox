@@ -53,18 +53,13 @@ services:
     #   - /dev/snd:/dev/snd #optional
     labels:
       - traefik.enable=true
-      - traefik.http.routers.airsonic.entrypoints=web
-      - traefik.http.routers.airsonic.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.airsonic-secure.entrypoints=websecure
       - traefik.http.routers.airsonic-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.airsonic-secure.tls=true
       - traefik.http.routers.airsonic-secure.tls.certresolver=le-dns
       - traefik.http.routers.airsonic-secure.service=airsonic
-      - traefik.http.routers.airsonic-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.airsonic-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.airsonic.loadbalancer.server.port=4040
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: unless-stopped

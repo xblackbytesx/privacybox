@@ -44,18 +44,13 @@ services:
       - proxy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.immich-app.entrypoints=web
-      - traefik.http.routers.immich-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.immich-app-secure.entrypoints=websecure
       - traefik.http.routers.immich-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.immich-app-secure.tls=true
       - traefik.http.routers.immich-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.immich-app-secure.service=immich-app
-      - traefik.http.routers.immich-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.immich-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.immich-app.loadbalancer.server.port=3001
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     environment:
       DB_HOSTNAME: immich-database
       DB_DATABASE_NAME: immich

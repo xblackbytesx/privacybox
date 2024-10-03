@@ -40,19 +40,14 @@ volumes:
     environment:
       - TERM
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.irssi-app.entrypoints=web"
-      - "traefik.http.routers.irssi-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.irssi-app.middlewares=secured@file"
-      - "traefik.http.routers.irssi-app-secure.entrypoints=websecure"
-      - "traefik.http.routers.irssi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.irssi-app-secure.tls=true"
-      - "traefik.http.routers.irssi-app-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.irssi-app-secure.service=irssi-app"
-      - "traefik.http.services.irssi-app.loadbalancer.server.port=3000"
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
+      - traefik.enable=true
+      - traefik.http.routers.irssi-app-secure.entrypoints=websecure
+      - traefik.http.routers.irssi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.irssi-app-secure.tls=true
+      - traefik.http.routers.irssi-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.irssi-app-secure.service=irssi-app
+      - traefik.http.routers.irssi-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.irssi-app.loadbalancer.server.port=3000
     networks:
       - proxy
       - internal

@@ -77,18 +77,13 @@ services:
       - anonaddy-data:/data
     labels:
       - traefik.enable=true
-      - traefik.http.routers.anonaddy-app.entrypoints=web
-      - traefik.http.routers.anonaddy-app.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.anonaddy-app-secure.entrypoints=websecure
       - traefik.http.routers.anonaddy-app-secure.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.anonaddy-app-secure.tls=true
       - traefik.http.routers.anonaddy-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.anonaddy-app-secure.service=anonaddy-app
-      - traefik.http.routers.anonaddy-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.anonaddy-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.anonaddy-app.loadbalancer.server.port=8000
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     depends_on:
       - anonaddy-db
       - anonaddy-redis

@@ -64,18 +64,13 @@ services:
       - ghost-content:/var/lib/ghost/content
     labels:
       - traefik.enable=true
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.entrypoints=web
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=websecure
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.rule=Host(`${BLOG_URL}`, `www.${BLOG_URL}`)
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls=true
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.service=ghost-${COMPOSE_PROJECT_NAME}-app
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.ghost-${COMPOSE_PROJECT_NAME}-app.loadbalancer.server.port=2368
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     depends_on:
       - ghost-db
     networks: 

@@ -27,17 +27,12 @@ services:
       - /etc/os-release:/host/etc/os-release:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.netdata.entrypoints=web
-      - traefik.http.routers.netdata.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.netdata-secure.entrypoints=websecure
       - traefik.http.routers.netdata-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.netdata-secure.tls=true
       - traefik.http.routers.netdata-secure.tls.certresolver=le-dns
       - traefik.http.routers.netdata-secure.service=netdata
-      - traefik.http.routers.netdata-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.netdata-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.netdata.loadbalancer.server.port=19999
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy

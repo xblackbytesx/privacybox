@@ -48,18 +48,13 @@ services:
       - sharry-db
     labels:
       - traefik.enable=true
-      - traefik.http.routers.sharry-app.entrypoints=web
-      - traefik.http.routers.sharry-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.sharry-app-secure.entrypoints=websecure
       - traefik.http.routers.sharry-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.sharry-app-secure.tls=true
       - traefik.http.routers.sharry-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.sharry-app-secure.service=sharry-app
-      - traefik.http.routers.sharry-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.sharry-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.sharry-app.loadbalancer.server.port=9090
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - internal
       - proxy

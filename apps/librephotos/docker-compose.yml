@@ -54,18 +54,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.librephotos-proxy.entrypoints=web
-      - traefik.http.routers.librephotos-proxy.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.librephotos-proxy-secure.entrypoints=websecure
       - traefik.http.routers.librephotos-proxy-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.librephotos-proxy-secure.tls=true
       - traefik.http.routers.librephotos-proxy-secure.tls.certresolver=le-dns
       - traefik.http.routers.librephotos-proxy-secure.service=librephotos-proxy
-      - traefik.http.routers.librephotos-proxy-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.librephotos-proxy-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.librephotos-proxy.loadbalancer.server.port=80
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     depends_on:
       - backend
       - frontend

@@ -24,18 +24,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.flame.entrypoints=web
-      - traefik.http.routers.flame.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.flame-secure.entrypoints=websecure
       - traefik.http.routers.flame-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.flame-secure.tls=true
       - traefik.http.routers.flame-secure.tls.certresolver=le-dns
       - traefik.http.routers.flame-secure.service=flame
-      - traefik.http.routers.flame-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.flame-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.flame.loadbalancer.server.port=5005
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.routers.http-catchall.middlewares=https-redirect@file
     networks:
       - proxy
     restart: unless-stopped
