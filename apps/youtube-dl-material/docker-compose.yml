@@ -85,14 +85,12 @@ services:
       - youtube-dl-users:/app/users
     labels:
       - traefik.enable=true
-      - traefik.http.routers.youtube-dl-material.entrypoints=http
-      - traefik.http.routers.youtube-dl-material.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.youtube-dl-material-secure.entrypoints=https
+      - traefik.http.routers.youtube-dl-material-secure.entrypoints=websecure
       - traefik.http.routers.youtube-dl-material-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.youtube-dl-material-secure.tls=true
       - traefik.http.routers.youtube-dl-material-secure.tls.certresolver=le-dns
       - traefik.http.routers.youtube-dl-material-secure.service=youtube-dl-material
-      - traefik.http.routers.youtube-dl-material-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.youtube-dl-material-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.youtube-dl-material.loadbalancer.server.port=17442
     networks:
       - internal

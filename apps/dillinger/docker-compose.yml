@@ -28,10 +28,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dillinger.entrypoints=http"
-      - "traefik.http.routers.dillinger.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.dillinger.middlewares=secured@file"
-      - "traefik.http.routers.dillinger-secure.entrypoints=https"
+      - "traefik.http.routers.dillinger-secure.entrypoints=websecure"
       - "traefik.http.routers.dillinger-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.dillinger-secure.tls=true"
       - "traefik.http.routers.dillinger-secure.tls.certresolver=le-dns"

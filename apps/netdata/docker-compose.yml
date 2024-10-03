@@ -26,15 +26,13 @@ services:
       - /sys:/host/sys:ro
       - /etc/os-release:/host/etc/os-release:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.netdata.entrypoints=http"
-      - "traefik.http.routers.netdata.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.netdata.middlewares=secured@file"
-      - "traefik.http.routers.netdata-secure.entrypoints=https"
-      - "traefik.http.routers.netdata-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
-      - "traefik.http.routers.netdata-secure.tls=true"
-      - "traefik.http.routers.netdata-secure.tls.certresolver=le-dns"
-      - "traefik.http.routers.netdata-secure.service=netdata"
-      - "traefik.http.services.netdata.loadbalancer.server.port=19999"
+      - traefik.enable=true
+      - traefik.http.routers.netdata-secure.entrypoints=websecure
+      - traefik.http.routers.netdata-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.netdata-secure.tls=true
+      - traefik.http.routers.netdata-secure.tls.certresolver=le-dns
+      - traefik.http.routers.netdata-secure.service=netdata
+      - traefik.http.routers.netdata-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.netdata.loadbalancer.server.port=19999
     networks:
       - proxy

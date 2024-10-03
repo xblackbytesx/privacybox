@@ -45,14 +45,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.transmission.entrypoints=http
-      - traefik.http.routers.transmission.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.transmission-secure.entrypoints=https
+      - traefik.http.routers.transmission-secure.entrypoints=websecure
       - traefik.http.routers.transmission-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.transmission-secure.tls=true
       - traefik.http.routers.transmission-secure.tls.certresolver=le-dns
       - traefik.http.routers.transmission-secure.service=transmission
-      - traefik.http.routers.transmission-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.transmission-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.transmission.loadbalancer.server.port=9091
     networks:
       - proxy

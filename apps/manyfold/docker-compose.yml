@@ -72,14 +72,12 @@ services:
       - REDIS_URL=redis://manyfold-redis:6379/1
     labels:
       - traefik.enable=true
-      - traefik.http.routers.manyfold-app.entrypoints=http
-      - traefik.http.routers.manyfold-app.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.manyfold-app-secure.entrypoints=https
+      - traefik.http.routers.manyfold-app-secure.entrypoints=websecure
       - traefik.http.routers.manyfold-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.manyfold-app-secure.tls=true
       - traefik.http.routers.manyfold-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.manyfold-app-secure.service=manyfold-app
-      - traefik.http.routers.manyfold-app-secure.middlewares=https_redirect@docker,non_www@docker,sec_headers@docker,gzip_compress@docker
+      - traefik.http.routers.manyfold-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.manyfold-app.loadbalancer.server.port=3214
     networks:
       - internal
