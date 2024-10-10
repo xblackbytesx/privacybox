@@ -1,0 +1,53 @@
+name: lycheeslicer
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  lycheeslicer-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/lycheeslicer/config
+  lycheeslicer-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/lycheeslicer/data
+
+services:
+  lycheeslicer-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lychee-slicer
+    image: lychee-slicer:latest
+    security_opt:
+      - seccomp=unconfined
+      - no-new-privileges:true
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.lycheeslicer-app-secure.entrypoints=websecure
+      - traefik.http.routers.lycheeslicer-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.lycheeslicer-app-secure.tls=true
+      - traefik.http.routers.lycheeslicer-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.lycheeslicer-app-secure.service=lycheeslicer-app
+      - traefik.http.routers.lycheeslicer-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.lycheeslicer-app.loadbalancer.server.port=3000
+    volumes:
+      - lycheeslicer-config:/config
+      - lycheeslicer-data:/data
+    shm_size: 1gb
+    restart: unless-stopped
