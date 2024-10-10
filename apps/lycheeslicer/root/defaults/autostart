@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Wait for the X server to start
+sleep 1
+
+# Launch Lychee Slicer
+/usr/bin/lycheeslicer
