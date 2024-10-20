@@ -50,47 +50,13 @@ services:
       - traefik.http.routers.immich-app-secure.tls.certresolver=le-dns
       - traefik.http.routers.immich-app-secure.service=immich-app
       - traefik.http.routers.immich-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.immich-app.loadbalancer.server.port=3001
+      - traefik.http.services.immich-app.loadbalancer.server.port=2283
     environment:
       DB_HOSTNAME: immich-database
       DB_DATABASE_NAME: immich
       DB_USERNAME: immich
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOSTNAME: immich-redis
-    command: ['start.sh', 'immich']
-    volumes:
-      - immich-uploads:/usr/src/app/upload
-      - immich-stories:/usr/src/app/stories:ro
-      - /etc/localtime:/etc/localtime:ro
-    healthcheck:
-      disable: false
-    env_file:
-      - .env
-    depends_on:
-      - immich-redis
-      - immich-database
-    restart: unless-stopped
-
-  immich-microservices:
-    container_name: immich-microservices
-    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
-    security_opt:
-      - no-new-privileges:true
-    devices:
-      - /dev/dri:/dev/dri
-    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/hardware-transcoding
-    #   file: hwaccel.transcoding.yml
-    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
-    networks:
-      - internal
-      - proxy
-    environment:
-      DB_HOSTNAME: immich-database
-      DB_DATABASE_NAME: immich
-      DB_USERNAME: immich
-      DB_PASSWORD: ${DB_PASSWORD}
-      REDIS_HOSTNAME: immich-redis
-    command: ['start.sh', 'microservices']
     volumes:
       - immich-uploads:/usr/src/app/upload
       - immich-stories:/usr/src/app/stories:ro
