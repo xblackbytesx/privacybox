@@ -1,0 +1,43 @@
+name: changedetection.io
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  changedetection-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/changedetection/config
+
+services:
+  changedetection:
+    container_name: changedetection
+    image: lscr.io/linuxserver/changedetection.io:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Amsterdam
+      - UMASK_SET=022 #optional
+      - BASE_URL= https://${SUBDOMAIN}.${DOMAIN}
+      # - PLAYWRIGHT_DRIVER_URL= #optional
+    volumes:
+      - changedetection-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.changedetection-secure.entrypoints=websecure
+      - traefik.http.routers.changedetection-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.changedetection-secure.tls=true
+      - traefik.http.routers.changedetection-secure.tls.certresolver=le-dns
+      - traefik.http.routers.changedetection-secure.service=changedetection
+      - traefik.http.routers.changedetection-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.changedetection.loadbalancer.server.port=5000
+    networks:
+      - proxy
+    restart: unless-stopped
