@@ -63,7 +63,7 @@ services:
 
   romm-app:
     container_name: romm-app
-    image: zurdi15/romm:latest
+    image: rommapp/romm:latest
     security_opt:
       - no-new-privileges:true
     environment:
