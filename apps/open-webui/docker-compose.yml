@@ -1,0 +1,38 @@
+name: open-webui
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  open-webui-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/open-webui/data
+
+services:
+  open-webui:
+    container_name: open-webui
+    image: ghcr.io/open-webui/open-webui:main
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - open-webui-data:/app/backend/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - OLLAMA_API_BASE_URL=
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.open-webui-secure.entrypoints=websecure
+      - traefik.http.routers.open-webui-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.open-webui-secure.tls=true
+      - traefik.http.routers.open-webui-secure.tls.certresolver=le-dns
+      - traefik.http.routers.open-webui-secure.service=open-webui
+      - traefik.http.routers.open-webui-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.open-webui.loadbalancer.server.port=8080
+    networks:
+      - proxy
+    restart: unless-stopped
