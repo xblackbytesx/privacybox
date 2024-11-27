@@ -392,7 +392,7 @@ services:
             - XMPP_SERVER_S2S_PORT
             - XMPP_SPEAKERSTATS_MODULES
         networks:
-            - internal
+            - internal:
                 aliases:
                     - ${XMPP_SERVER:-xmpp.internal}
         restart: unless-stopped
