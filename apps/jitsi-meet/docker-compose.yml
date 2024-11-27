@@ -4,8 +4,7 @@ networks:
   proxy:
     name: proxy
     external: true
-  internal:
-    internal: true
+  meet.jitsi:
 
 volumes:
   jitsi-meet-web:
@@ -233,7 +232,7 @@ services:
             - WHITEBOARD_COLLAB_SERVER_PUBLIC_URL
             - WHITEBOARD_COLLAB_SERVER_URL_BASE
         networks:
-            - internal
+            - meet.jitsi
             - proxy
         labels:
             - traefik.enable=true
@@ -392,9 +391,9 @@ services:
             - XMPP_SERVER_S2S_PORT
             - XMPP_SPEAKERSTATS_MODULES
         networks:
-            internal:
+            meet.jitsi:
                 aliases:
-                    - ${XMPP_SERVER:-xmpp.internal}
+                    - ${XMPP_SERVER:-xmpp.meet.jitsi}
         restart: unless-stopped
 
     # Focus component
@@ -484,7 +483,7 @@ services:
         depends_on:
             - jitsi-meet-prosody
         networks:
-            - internal
+            meet.jitsi:
         restart: unless-stopped
 
     # Video bridge
@@ -553,5 +552,5 @@ services:
         depends_on:
             - jitsi-meet-prosody
         networks:
-            - internal
+            meet.jitsi:
         restart: unless-stopped
