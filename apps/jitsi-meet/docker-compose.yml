@@ -488,7 +488,8 @@ services:
         restart: unless-stopped
 
     # Video bridge
-    jvb:
+    jitsi-meet-jvb:
+        container_name: jitsi-meet-jvb
         image: jitsi/jvb:${JITSI_IMAGE_VERSION:-stable-9823}
         ports:
             - '${JVB_PORT:-10000}:${JVB_PORT:-10000}/udp'
