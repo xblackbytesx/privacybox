@@ -1,0 +1,58 @@
+name: bluesky-pds
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  bluesky-pds-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/bluesky-pds/data
+
+services:
+  bluesky-pds:
+    container_name: bluesky-pds
+    image: ghcr.io/bluesky-social/pds:0.4
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - bluesky-pds-data:/opt/pds
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    labels:
+      - traefik.enable=true
+
+      - traefik.http.middlewares.bluesky-pds-header.headers.customrequestheaders.Host="{host}"
+
+      - traefik.http.routers.bluesky-pds-secure.entrypoints=websecure
+      - traefik.http.routers.bluesky-pds-secure.rule=Host(`${PDS_DOMAIN}`) && PathPrefix(`/xrpc`)
+      - traefik.http.routers.bluesky-pds-secure.tls=true
+      - traefik.http.routers.bluesky-pds-secure.tls.certresolver=cf-dns
+      - traefik.http.routers.bluesky-pds-secure.service=bluesky-pds
+      - traefik.http.routers.bluesky-pds-secure.priority=1000
+      - traefik.http.routers.bluesky-pds-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,bluesky-pds-header
+
+      - traefik.http.routers.bluesky-did-secure.entrypoints=websecure
+      - traefik.http.routers.bluesky-did-secure.rule=Host(`${HANDLE_DOMAIN}`) && Path(`/.well-known/atproto-did`)
+      - traefik.http.routers.bluesky-did-secure.tls=true
+      - traefik.http.routers.bluesky-did-secure.tls.certresolver=cf-dns
+      - traefik.http.routers.bluesky-did-secure.priority=1000
+      - traefik.http.routers.bluesky-did-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,bluesky-pds-header
+      
+      # You must create one of these blocks for every handle you would like to have if you want http verification to succeed
+      - traefik.http.routers.bluesky-did-secure.entrypoints=websecure
+      - traefik.http.routers.bluesky-did-secure.rule=Host(`${MAIN_HANDLE}.${HANDLE_DOMAIN}`) && Path(`/.well-known/atproto-did`)
+      - traefik.http.routers.bluesky-did-secure.tls=true
+      - traefik.http.routers.bluesky-did-secure.tls.certresolver=cf-dns
+      - traefik.http.routers.bluesky-did-secure.priority=1000
+      - traefik.http.routers.bluesky-did-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,bluesky-pds-header
+
+      - traefik.http.services.bluesky-pds.loadbalancer.server.port=3000
+    networks:
+      - proxy
+    restart: unless-stopped
