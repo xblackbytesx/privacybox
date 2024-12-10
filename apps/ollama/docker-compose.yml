@@ -24,7 +24,11 @@ services:
     volumes:
       - ollama-data:/root/.ollama
       - /etc/localtime:/etc/localtime:ro
-    # Be very cautious of exposing your Ollama API publicly.
+    ## Optional devices for HW acceleration
+    # devices:
+    #   - /dev/kfd
+    #   - /dev/dri
+    ## Be very cautious of exposing your Ollama API publicly.
     # labels:
     #   - traefik.enable=true
     #   - traefik.http.routers.ollama-secure.entrypoints=websecure
