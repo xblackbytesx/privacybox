@@ -4,6 +4,8 @@ networks:
   proxy:
     name: proxy
     external: true
+  internal-api-coms:
+    external: true
 
 volumes:
   ollama-data:
@@ -22,15 +24,17 @@ services:
     volumes:
       - ollama-data:/root/.ollama
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.ollama-secure.entrypoints=websecure
-      - traefik.http.routers.ollama-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.ollama-secure.tls=true
-      - traefik.http.routers.ollama-secure.tls.certresolver=le-dns
-      - traefik.http.routers.ollama-secure.service=ollama
-      - traefik.http.routers.ollama-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.ollama.loadbalancer.server.port=11434
+    # Be very cautious of exposing your Ollama API publicly.
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.ollama-secure.entrypoints=websecure
+    #   - traefik.http.routers.ollama-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+    #   - traefik.http.routers.ollama-secure.tls=true
+    #   - traefik.http.routers.ollama-secure.tls.certresolver=le-dns
+    #   - traefik.http.routers.ollama-secure.service=ollama
+    #   - traefik.http.routers.ollama-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+    #   - traefik.http.services.ollama.loadbalancer.server.port=11434
     networks:
-      - proxy
+      - internal-api-coms
+      # - proxy
     restart: unless-stopped

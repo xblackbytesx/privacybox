@@ -4,6 +4,8 @@ networks:
   proxy:
     name: proxy
     external: true
+  internal-api-coms:
+    external: true
 
 volumes:
   open-webui-data:
@@ -23,7 +25,7 @@ services:
       - open-webui-data:/app/backend/data
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - OLLAMA_API_BASE_URL=
+      - OLLAMA_BASE_URL=${OLLAMA_BACKEND_URL}
     labels:
       - traefik.enable=true
       - traefik.http.routers.open-webui-secure.entrypoints=websecure
@@ -34,5 +36,6 @@ services:
       - traefik.http.routers.open-webui-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.open-webui.loadbalancer.server.port=8080
     networks:
+      - internal-api-coms
       - proxy
     restart: unless-stopped
