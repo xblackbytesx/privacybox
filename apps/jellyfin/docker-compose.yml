@@ -1,5 +1,10 @@
 name: Jellyfin
 
+networks:
+  proxy:
+    name: proxy
+    external: true
+
 volumes:
   jellyfin-config:
     driver: local
@@ -19,24 +24,6 @@ volumes:
       type: ${MEDIA_DRIVER_OPT_TYPE}
       o: ${MEDIA_DRIVER_OPT_O}
       device: ${MOVIES_PATH}
-  jellyfin-music-dir:
-    driver: local
-    driver_opts:
-      type: ${MEDIA_DRIVER_OPT_TYPE}
-      o: ${MEDIA_DRIVER_OPT_O}
-      device: ${MUSIC_PATH}
-  jellyfin-stories-dir:
-    driver: local
-    driver_opts:
-      type: ${MEDIA_DRIVER_OPT_TYPE}
-      o: ${MEDIA_DRIVER_OPT_O}
-      device: ${STORIES_PATH}
-  jellyfin-books-dir:
-    driver: local
-    driver_opts:
-      type: ${MEDIA_DRIVER_OPT_TYPE}
-      o: ${MEDIA_DRIVER_OPT_O}
-      device: ${BOOKS_PATH}
 
 services:
   jellyfin-app:
@@ -47,17 +34,28 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=${TIMEZONE}
+      - TZ=Europe/Amsterdam
       - JELLYFIN_PublishedServerUrl=https://${SUBDOMAIN}.${DOMAIN}
     volumes:
       - jellyfin-config:/config
       - jellyfin-series-dir:/data/tvshows
       - jellyfin-movies-dir:/data/movies
-      - jellyfin-music-dir:/data/music
-      - jellyfin-stories-dir:/data/stories:${STORIES_DIR_PERMISSION}
-      - jellyfin-books-dir:/data/books
       - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+    ports:
+      - 7359:7359/udp #optional
+      # - 1900:1900/udp #optional
     labels:
-      - "traefik.enable=false"
-    network_mode: host
+      - traefik.enable=true
+      - traefik.http.routers.jellyfin-app-secure.entrypoints=websecure
+      - traefik.http.routers.jellyfin-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.jellyfin-app-secure.tls=true
+      - traefik.http.routers.jellyfin-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.jellyfin-app-secure.service=jellyfin-app
+      - traefik.http.routers.jellyfin-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.jellyfin-app.loadbalancer.server.port=8096
+    # Optional devices for HW Acceleration
+    devices:
+      - /dev/dri:/dev/dri
     restart: unless-stopped
