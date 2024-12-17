@@ -1,4 +1,4 @@
-name: Matomo
+name: matomo
 
 networks:
   proxy:

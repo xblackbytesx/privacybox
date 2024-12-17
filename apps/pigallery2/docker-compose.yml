@@ -1,4 +1,4 @@
-name: PiGallery2
+name: pigallery2
 
 networks:
   proxy:

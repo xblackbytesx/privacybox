@@ -1,4 +1,4 @@
-name: Bazarr
+name: bazarr
 
 networks:
   proxy:

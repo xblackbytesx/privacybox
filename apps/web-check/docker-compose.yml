@@ -1,4 +1,4 @@
-name: Web-Check
+name: web-check
 
 networks:
   proxy:

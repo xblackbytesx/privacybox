@@ -1,4 +1,4 @@
-name: NZBget
+name: nzbget
 
 networks:
   proxy:

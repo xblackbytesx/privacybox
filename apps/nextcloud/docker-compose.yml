@@ -1,4 +1,4 @@
-name: Nextcloud
+name: nextcloud
 
 networks:
   proxy:

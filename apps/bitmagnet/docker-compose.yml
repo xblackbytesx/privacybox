@@ -1,4 +1,4 @@
-name: BitMagnet
+name: bitmagnet
 
 networks:
   proxy:

@@ -1,4 +1,4 @@
-name: Frigate
+name: frigate
 
 networks:
   proxy:

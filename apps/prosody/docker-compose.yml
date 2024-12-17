@@ -1,4 +1,4 @@
-name: Prosody
+name: prosody
 
 networks:
   proxy:

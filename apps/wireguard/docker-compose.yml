@@ -1,4 +1,4 @@
-name: WireGuard
+name: wireguard
 
 networks:
   proxy:

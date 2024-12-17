@@ -1,4 +1,4 @@
-name: Readarr
+name: readarr
 
 networks:
   proxy:

@@ -1,4 +1,4 @@
-name: AgendDAV
+name: agendav
 
 networks:
   proxy:

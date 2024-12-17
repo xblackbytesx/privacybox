@@ -1,4 +1,4 @@
-name: Transmission
+name: transmission
 
 networks:
   proxy:

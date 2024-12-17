@@ -1,4 +1,4 @@
-name: Portainer-Agent
+name: portainer-agent
 
 services:
   portainer:

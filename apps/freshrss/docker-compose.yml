@@ -1,4 +1,4 @@
-name: FreshRSS
+name: freshrss
 
 networks:
   proxy:

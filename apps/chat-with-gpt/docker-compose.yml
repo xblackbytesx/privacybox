@@ -1,4 +1,4 @@
-name: Chat-With-GPT
+name: chat-with-gpt
 
 networks:
   proxy:

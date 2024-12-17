@@ -1,4 +1,4 @@
-name: JellySeerr
+name: jellyseerr
 
 networks:
   proxy:

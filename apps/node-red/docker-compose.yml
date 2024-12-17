@@ -1,4 +1,4 @@
-name: Node-Red
+name: node-red
 
 networks:
   proxy:

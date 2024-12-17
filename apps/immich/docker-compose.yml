@@ -1,4 +1,4 @@
-name: Immich
+name: immich
 
 networks:
   proxy:

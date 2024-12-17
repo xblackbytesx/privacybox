@@ -1,4 +1,4 @@
-name: PaperlessNGX
+name: paperless-ngx
 
 networks:
   proxy:
@@ -48,7 +48,7 @@ volumes:
 services:
   paperless-ngx-db:
     container_name: paperless-ngx-db
-    image: postgres:13-alpine
+    image: docker.io/library/postgres:13
     security_opt:
       - no-new-privileges:true
     volumes:

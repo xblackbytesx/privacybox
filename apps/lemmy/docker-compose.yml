@@ -1,4 +1,4 @@
-name: Lemmy
+name: lemmy
 
 x-logging: &default-logging
   driver: "json-file"

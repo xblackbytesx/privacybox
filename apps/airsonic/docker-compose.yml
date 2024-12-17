@@ -1,4 +1,4 @@
-name: Airsonic
+name: airsonic
 
 networks:
   proxy:

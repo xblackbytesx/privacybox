@@ -1,4 +1,4 @@
-name: Radarr
+name: radarr
 
 networks:
   proxy:

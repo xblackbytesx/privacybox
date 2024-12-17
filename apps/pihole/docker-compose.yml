@@ -1,4 +1,4 @@
-name: PiHole
+name: pihole
 
 networks:
   proxy:

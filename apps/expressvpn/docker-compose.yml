@@ -7,7 +7,7 @@
 #   - Not a silver bullet to be relied upon
 #   - Vendor bound so of limited use for all
 
-name: ExpressVPN
+name: expressvpn
 
 services:
     expressvpn:

@@ -1,4 +1,4 @@
-name: LibrePhotos
+name: librephotos
 
 networks:
   proxy:

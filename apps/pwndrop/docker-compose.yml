@@ -1,4 +1,4 @@
-name: PWNdrop
+name: pwndrop
 
 networks:
   proxy:

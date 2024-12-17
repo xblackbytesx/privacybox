@@ -1,4 +1,4 @@
-name: Ghost
+name: ghost
 
 networks:
   proxy:

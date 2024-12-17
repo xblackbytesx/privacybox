@@ -1,4 +1,4 @@
-name: StatPing
+name: statping
 
 networks:
   proxy:

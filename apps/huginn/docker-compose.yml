@@ -1,4 +1,4 @@
-name: Huginn
+name: huginn
 
 networks:
   proxy:

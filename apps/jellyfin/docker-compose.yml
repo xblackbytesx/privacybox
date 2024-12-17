@@ -1,4 +1,4 @@
-name: Jellyfin
+name: jellyfin
 
 networks:
   proxy:

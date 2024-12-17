@@ -1,4 +1,4 @@
-name: Glances
+name: glances
 
 networks:
   proxy:

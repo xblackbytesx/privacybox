@@ -1,4 +1,4 @@
-name: Tdarr
+name: tdarr
 
 networks:
   proxy:

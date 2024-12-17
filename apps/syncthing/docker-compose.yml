@@ -1,4 +1,4 @@
-name: SyncThing
+name: syncthing
 
 networks:
   proxy:

@@ -1,4 +1,4 @@
-name: LycheeSlicer
+name: lychee-slicer
 
 networks:
   proxy:

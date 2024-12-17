@@ -1,4 +1,4 @@
-name: Wallabag
+name: wallabag
 
 networks:
   proxy:

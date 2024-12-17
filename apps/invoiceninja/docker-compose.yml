@@ -1,4 +1,4 @@
-name: InvoiceNinja
+name: invoiceninja
 
 networks:
   proxy:

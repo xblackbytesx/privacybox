@@ -1,4 +1,4 @@
-name: Calibre-web
+name: calibre-web
 
 networks:
   proxy:

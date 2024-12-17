@@ -1,4 +1,4 @@
-name: Jackett
+name: jackett
 
 networks:
   proxy:

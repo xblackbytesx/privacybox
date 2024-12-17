@@ -1,4 +1,4 @@
-name: Portainer
+name: portainer
 
 networks:
   proxy:

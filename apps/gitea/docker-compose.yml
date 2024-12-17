@@ -1,4 +1,4 @@
-name: Gitea
+name: gitea
 
 networks:
   proxy:

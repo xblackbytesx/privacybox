@@ -1,4 +1,4 @@
-name: ExcaliDraw
+name: excalidraw
 
 networks:
   proxy:

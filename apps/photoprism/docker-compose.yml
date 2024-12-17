@@ -1,4 +1,4 @@
-name: PhotoPrism
+name: photoprism
 
 networks:
   proxy:

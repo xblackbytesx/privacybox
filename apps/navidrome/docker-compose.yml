@@ -1,4 +1,4 @@
-name: Navidrome
+name: navidrome
 
 networks:
   proxy:

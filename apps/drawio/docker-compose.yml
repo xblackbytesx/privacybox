@@ -1,4 +1,4 @@
-name: DrawIO
+name: draw-io
 
 networks:
     proxy:

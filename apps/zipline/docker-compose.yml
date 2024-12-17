@@ -1,4 +1,4 @@
-name: Zipline
+name: zipline
 
 networks:
   proxy:

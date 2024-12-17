@@ -1,4 +1,4 @@
-name: Joplin
+name: joplin
 
 networks:
   proxy:

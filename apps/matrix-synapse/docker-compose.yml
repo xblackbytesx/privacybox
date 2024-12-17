@@ -1,4 +1,4 @@
-name: Matrix-Synapse
+name: matrix-synapse
 
 networks:
   proxy:

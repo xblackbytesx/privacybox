@@ -1,4 +1,4 @@
-name: Ollama
+name: ollama
 
 networks:
   proxy:

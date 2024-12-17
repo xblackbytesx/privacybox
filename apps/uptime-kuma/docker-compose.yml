@@ -1,4 +1,4 @@
-name: Uptime-Kuma
+name: uptime-kuma
 
 networks:
   proxy:

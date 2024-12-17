@@ -1,4 +1,4 @@
-name: Dillinger
+name: dillinger
 
 networks:
   proxy:

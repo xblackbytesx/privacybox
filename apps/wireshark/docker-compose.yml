@@ -1,4 +1,4 @@
-name: WireShark
+name: wireshark
 
 networks:
   proxy:

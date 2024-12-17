@@ -1,4 +1,4 @@
-name: HomeAssistant
+name: homeassistant
 
 volumes:
   ha-mariadb:

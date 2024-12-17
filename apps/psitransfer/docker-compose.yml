@@ -1,4 +1,4 @@
-name: Psitransfer
+name: psitransfer
 
 networks:
   proxy:

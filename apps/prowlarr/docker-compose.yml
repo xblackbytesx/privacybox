@@ -1,4 +1,4 @@
-name: Prowlarr
+name: prowlarr
 
 networks:
   proxy:

@@ -1,4 +1,4 @@
-name: SpotWeb
+name: spotweb
 
 networks:
   proxy:

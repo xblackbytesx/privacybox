@@ -1,4 +1,4 @@
-name: YouTube-DL-Material
+name: youtube-dl-material
 
 networks:
   proxy:
