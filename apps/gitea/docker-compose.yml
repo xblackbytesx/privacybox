@@ -1,4 +1,4 @@
-version: '3.3'
+name: Gitea
 
 networks:
   proxy:
@@ -72,7 +72,7 @@ services:
       - traefik.http.routers.gitea-app-secure.entrypoints=websecure
       - traefik.http.routers.gitea-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.gitea-app-secure.tls=true
-      - traefik.http.routers.gitea-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.gitea-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.gitea-app-secure.service=gitea-app
       - traefik.http.routers.gitea-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.gitea-app.loadbalancer.server.port=3000

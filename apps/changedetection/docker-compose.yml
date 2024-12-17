@@ -1,4 +1,4 @@
-name: changedetection
+name: ChangeDetection
 
 networks:
   proxy:
@@ -22,7 +22,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - UMASK_SET=022 #optional
       - BASE_URL= https://${SUBDOMAIN}.${DOMAIN}
       # - PLAYWRIGHT_DRIVER_URL= #optional
@@ -34,7 +34,7 @@ services:
       - traefik.http.routers.changedetection-secure.entrypoints=websecure
       - traefik.http.routers.changedetection-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.changedetection-secure.tls=true
-      - traefik.http.routers.changedetection-secure.tls.certresolver=le-dns
+      - traefik.http.routers.changedetection-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.changedetection-secure.service=changedetection
       - traefik.http.routers.changedetection-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.changedetection.loadbalancer.server.port=5000

@@ -1,4 +1,4 @@
-version: '3.1'
+name: Ghost
 
 networks:
   proxy:
@@ -68,7 +68,7 @@ services:
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.entrypoints=websecure
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.rule=Host(`${BLOG_URL}`) || Host(`www.${BLOG_URL}`)
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls=true
-      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.service=ghost-${COMPOSE_PROJECT_NAME}-app
       - traefik.http.routers.ghost-${COMPOSE_PROJECT_NAME}-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.ghost-${COMPOSE_PROJECT_NAME}-app.loadbalancer.server.port=2368

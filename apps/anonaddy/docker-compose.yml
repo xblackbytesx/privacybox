@@ -80,7 +80,7 @@ services:
       - traefik.http.routers.anonaddy-app-secure.entrypoints=websecure
       - traefik.http.routers.anonaddy-app-secure.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.anonaddy-app-secure.tls=true
-      - traefik.http.routers.anonaddy-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.anonaddy-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.anonaddy-app-secure.service=anonaddy-app
       - traefik.http.routers.anonaddy-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.anonaddy-app.loadbalancer.server.port=8000

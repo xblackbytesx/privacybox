@@ -1,4 +1,4 @@
-version: '3'
+name: Lidarr
 
 networks:
   proxy:
@@ -34,7 +34,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - lidarr-config:/config
       - lidarr-music-dir:/music
@@ -45,7 +45,7 @@ services:
       - traefik.http.routers.lidarr-secure.entrypoints=websecure
       - traefik.http.routers.lidarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.lidarr-secure.tls=true
-      - traefik.http.routers.lidarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.lidarr-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.lidarr-secure.service=lidarr
       - traefik.http.routers.lidarr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.lidarr.loadbalancer.server.port=8686

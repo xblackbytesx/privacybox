@@ -1,4 +1,4 @@
-version: '3.8'
+name: Manyfold
 
 networks:
   proxy:
@@ -75,7 +75,7 @@ services:
       - traefik.http.routers.manyfold-app-secure.entrypoints=websecure
       - traefik.http.routers.manyfold-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.manyfold-app-secure.tls=true
-      - traefik.http.routers.manyfold-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.manyfold-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.manyfold-app-secure.service=manyfold-app
       - traefik.http.routers.manyfold-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.manyfold-app.loadbalancer.server.port=3214

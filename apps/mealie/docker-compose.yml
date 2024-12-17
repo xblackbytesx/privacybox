@@ -1,4 +1,4 @@
-version: "3.1"
+name: Mealie
 
 networks:
   proxy:
@@ -24,7 +24,7 @@ volumes:
 services:
   mealie-db:
     container_name: mealie-db
-    image: postgres:12-alpine
+    image: postgres:14-alpine
     security_opt:
       - no-new-privileges:true
     environment:
@@ -53,7 +53,7 @@ services:
     environment:
       PUID: ${PUID}
       PGID: ${PGID}
-      TZ: Europe/Amsterdam
+      TZ: ${TIMEZONE}
 
       # Database Settings
       DB_ENGINE: postgres
@@ -82,7 +82,7 @@ services:
       - traefik.http.routers.mealie-app-secure.entrypoints=websecure
       - traefik.http.routers.mealie-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.mealie-app-secure.tls=true
-      - traefik.http.routers.mealie-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.mealie-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.mealie-app-secure.service=mealie-app
       - traefik.http.routers.mealie-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.mealie-app.loadbalancer.server.port=80

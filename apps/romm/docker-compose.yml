@@ -1,4 +1,4 @@
-version: '3.8'
+name: Romm
 
 networks:
   proxy:
@@ -105,7 +105,7 @@ services:
       - traefik.http.routers.romm-app-secure.entrypoints=websecure
       - traefik.http.routers.romm-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.romm-app-secure.tls=true
-      - traefik.http.routers.romm-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.romm-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.romm-app-secure.service=romm-app
       - traefik.http.routers.romm-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.romm-app.loadbalancer.server.port=8080

@@ -1,4 +1,4 @@
-version: '3'
+name: HomeAssistant
 
 volumes:
   ha-mariadb:
@@ -61,7 +61,7 @@ services:
       - MYSQL_DATABASE=homeassistant
       - MYSQL_USER=homeassistant
       - MYSQL_PASSWORD=${DB_USER_PASS}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - ha-mariadb:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
@@ -88,7 +88,7 @@ services:
     ports:
       - "1883:1883"
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
@@ -101,7 +101,7 @@ services:
     depends_on:
       - ha-mqtt
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - ha-zigbee2mqtt-data:/app/data
       - /etc/localtime:/etc/localtime:ro
@@ -150,7 +150,7 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     # Map local /dev mountpoint to docker
     devices:
       - ${RFX_DEVICE_MOUNT}:/dev/ttyRFXtrx

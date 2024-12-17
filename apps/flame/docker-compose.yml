@@ -1,4 +1,4 @@
-version: '3'
+name: Flame
 
 networks:
   proxy:
@@ -27,7 +27,7 @@ services:
       - traefik.http.routers.flame-secure.entrypoints=websecure
       - traefik.http.routers.flame-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.flame-secure.tls=true
-      - traefik.http.routers.flame-secure.tls.certresolver=le-dns
+      - traefik.http.routers.flame-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.flame-secure.service=flame
       - traefik.http.routers.flame-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.flame.loadbalancer.server.port=5005

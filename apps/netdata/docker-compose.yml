@@ -1,4 +1,4 @@
-version: '3'
+name: NetData
 
 networks:
   proxy:
@@ -30,7 +30,7 @@ services:
       - traefik.http.routers.netdata-secure.entrypoints=websecure
       - traefik.http.routers.netdata-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.netdata-secure.tls=true
-      - traefik.http.routers.netdata-secure.tls.certresolver=le-dns
+      - traefik.http.routers.netdata-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.netdata-secure.service=netdata
       - traefik.http.routers.netdata-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.netdata.loadbalancer.server.port=19999

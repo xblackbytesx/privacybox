@@ -1,4 +1,4 @@
-version: "3.3"
+name: PiHole
 
 networks:
   proxy:
@@ -12,7 +12,7 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/pihole/etc/
-  pihole-dnsmasq:
+  piho${CERT_RESOLVER}masq:
     driver: local
     driver_opts:
       type: none
@@ -28,20 +28,20 @@ services:
       - "53:53/udp"
       - "67:67/udp"
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - WEBPASSWORD=${ADMIN_PASS}
       - VIRTUAL_HOST=https://${SUBDOMAIN}.${DOMAIN}
       - PIHOLE_DNS_=127.0.0.1;1.1.1.1;1.0.0.1
     volumes:
       - 'pihole-config:/etc/pihole/'
-      - 'pihole-dnsmasq:/etc/dnsmasq.d/'
+      - 'piho${CERT_RESOLVER}masq:/etc/dnsmasq.d/'
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
       - traefik.http.routers.pihole-secure.entrypoints=websecure
       - traefik.http.routers.pihole-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.pihole-secure.tls=true
-      - traefik.http.routers.pihole-secure.tls.certresolver=le-dns
+      - traefik.http.routers.pihole-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.pihole-secure.service=pihole
       - traefik.http.routers.pihole-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.pihole.loadbalancer.server.port=80

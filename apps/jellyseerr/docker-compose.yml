@@ -1,3 +1,5 @@
+name: JellySeerr
+
 networks:
   proxy:
     name: proxy
@@ -19,7 +21,7 @@ services:
       - no-new-privileges:true
     environment:
       - LOG_LEVEL=debug
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - jellyseerr-config:/app/config
       - /etc/localtime:/etc/localtime:ro
@@ -28,7 +30,7 @@ services:
       - traefik.http.routers.jellyseerr-app-secure.entrypoints=websecure
       - traefik.http.routers.jellyseerr-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.jellyseerr-app-secure.tls=true
-      - traefik.http.routers.jellyseerr-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.jellyseerr-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.jellyseerr-app-secure.service=jellyseerr-app
       - traefik.http.routers.jellyseerr-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.jellyseerr-app.loadbalancer.server.port=5055

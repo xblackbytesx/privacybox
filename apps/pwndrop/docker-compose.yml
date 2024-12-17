@@ -1,4 +1,4 @@
-version: '3'
+name: PWNdrop
 
 networks:
   proxy:
@@ -22,7 +22,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - SECRET_PATH=/pwndrop #optional
     volumes:
       - pwndrop-config:/config
@@ -32,7 +32,7 @@ services:
       - traefik.http.routers.pwndrop-app-secure.entrypoints=websecure
       - traefik.http.routers.pwndrop-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.pwndrop-app-secure.tls=true
-      - traefik.http.routers.pwndrop-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.pwndrop-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.pwndrop-app-secure.service=pwndrop-app
       - traefik.http.routers.pwndrop-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.pwndrop-app.loadbalancer.server.port=8080

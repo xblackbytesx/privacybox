@@ -1,4 +1,4 @@
-version: '3.7'
+name: Psitransfer
 
 networks:
   proxy:
@@ -26,7 +26,7 @@ services:
       - traefik.http.routers.psitransfer-app-secure.entrypoints=websecure
       - traefik.http.routers.psitransfer-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.psitransfer-app-secure.tls=true
-      - traefik.http.routers.psitransfer-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.psitransfer-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.psitransfer-app-secure.service=psitransfer-app
       - traefik.http.routers.psitransfer-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.psitransfer-app.loadbalancer.server.port=3000

@@ -1,4 +1,4 @@
-version: "3.7"
+name: Node-Red
 
 networks:
   proxy:
@@ -29,7 +29,7 @@ services:
     environment:
       # - PUID=1000
       # - PGID=1000
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - nodered-data:/data
       - /etc/localtime:/etc/localtime:ro
@@ -39,7 +39,7 @@ services:
       - traefik.http.routers.nodered-secure.entrypoints=websecure
       - traefik.http.routers.nodered-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.nodered-secure.tls=true
-      - traefik.http.routers.nodered-secure.tls.certresolver=le-dns
+      - traefik.http.routers.nodered-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.nodered-secure.service=nodered
       - traefik.http.routers.nodered-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.nodered.loadbalancer.server.port=1880

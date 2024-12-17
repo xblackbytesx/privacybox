@@ -1,4 +1,4 @@
-version: "3.7"
+name: Lemmy
 
 x-logging: &default-logging
   driver: "json-file"
@@ -105,7 +105,7 @@ services:
       - traefik.http.routers.lemmy-nginx-secure.entrypoints=websecure
       - traefik.http.routers.lemmy-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.lemmy-nginx-secure.tls=true
-      - traefik.http.routers.lemmy-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.lemmy-nginx-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.lemmy-nginx-secure.service=lemmy-nginx
       - traefik.http.routers.lemmy-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.lemmy-nginx.loadbalancer.server.port=8536

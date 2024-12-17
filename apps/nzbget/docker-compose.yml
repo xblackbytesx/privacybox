@@ -1,4 +1,4 @@
-version: "2.1"
+name: NZBget
 
 networks:
   proxy:
@@ -28,7 +28,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - nzbget-config:/config
       - nzbget-downloads:/downloads
@@ -38,7 +38,7 @@ services:
       - traefik.http.routers.nzbget-secure.entrypoints=websecure
       - traefik.http.routers.nzbget-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.nzbget-secure.tls=true
-      - traefik.http.routers.nzbget-secure.tls.certresolver=le-dns
+      - traefik.http.routers.nzbget-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.nzbget-secure.service=nzbget
       - traefik.http.routers.nzbget-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.nzbget.loadbalancer.server.port=6789

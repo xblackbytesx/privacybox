@@ -1,4 +1,4 @@
-name: tdarr
+name: Tdarr
 
 networks:
   proxy:
@@ -40,7 +40,7 @@ services:
     ports:
       - 8266:8266 # server port
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - PUID=${PUID}
       - PGID=${PGID}
       - UMASK_SET=002
@@ -58,7 +58,7 @@ services:
       - traefik.http.routers.tdarr-server-secure.entrypoints=websecure
       - traefik.http.routers.tdarr-server-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.tdarr-server-secure.tls=true
-      - traefik.http.routers.tdarr-server-secure.tls.certresolver=le-dns
+      - traefik.http.routers.tdarr-server-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.tdarr-server-secure.service=tdarr-server
       - traefik.http.routers.tdarr-server-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.tdarr-server.loadbalancer.server.port=8265
@@ -90,7 +90,7 @@ services:
   #   image: ghcr.io/haveagitgat/tdarr_node:latest
   #   network_mode: service:tdarr
   #   environment:
-  #     - TZ=Europe/London
+  #     - TZ=${TIMEZONE}
   #     - PUID=${PUID}
   #     - PGID=${PGID}
   #     - UMASK_SET=002

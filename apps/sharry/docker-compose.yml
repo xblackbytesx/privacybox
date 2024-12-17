@@ -1,4 +1,4 @@
-version: '3.7'
+name: Sharry
 
 networks:
   proxy:
@@ -51,7 +51,7 @@ services:
       - traefik.http.routers.sharry-app-secure.entrypoints=websecure
       - traefik.http.routers.sharry-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.sharry-app-secure.tls=true
-      - traefik.http.routers.sharry-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.sharry-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.sharry-app-secure.service=sharry-app
       - traefik.http.routers.sharry-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.sharry-app.loadbalancer.server.port=9090

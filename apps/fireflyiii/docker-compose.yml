@@ -1,4 +1,4 @@
-version: "3.3"
+name: FireflyIII
 
 networks:
   proxy:
@@ -58,7 +58,7 @@ services:
       - fireflyiii-upload:/var/www/firefly-iii/storage/upload
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - TZ=${TZ}
+      - TZ=${TIMEZONE}
       - DB_HOST=fireflyiii-db
       - DB_PORT=5432
       - DB_CONNECTION=pgsql
@@ -76,7 +76,7 @@ services:
       - traefik.http.routers.fireflyiii-app-secure.entrypoints=websecure
       - traefik.http.routers.fireflyiii-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.fireflyiii-app-secure.tls=true
-      - traefik.http.routers.fireflyiii-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.fireflyiii-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.fireflyiii-app-secure.service=fireflyiii-app
       - traefik.http.routers.fireflyiii-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.fireflyiii-app.loadbalancer.server.port=8080

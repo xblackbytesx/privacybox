@@ -1,4 +1,4 @@
-version: '3'
+name: Dawarich
 
 networks:
   proxy:
@@ -33,7 +33,7 @@ services:
 
   dawarich-db:
     container_name: dawarich-db
-    image: postgres:14.2-alpine
+    image: postgres:14-alpine
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -63,7 +63,7 @@ services:
       - traefik.http.routers.dawarich-app-secure.entrypoints=websecure
       - traefik.http.routers.dawarich-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.dawarich-app-secure.tls=true
-      - traefik.http.routers.dawarich-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.dawarich-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.dawarich-app-secure.service=dawarich-app
       - traefik.http.routers.dawarich-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.dawarich-app.loadbalancer.server.port=3000

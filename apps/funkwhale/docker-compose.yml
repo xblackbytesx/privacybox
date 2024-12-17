@@ -1,4 +1,4 @@
-version: "3"
+name: FunkWhale
 
 networks:
   proxy:
@@ -148,7 +148,7 @@ services:
       - traefik.http.routers.funkwhale-nginx-secure.entrypoints=websecure
       - traefik.http.routers.funkwhale-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.funkwhale-nginx-secure.tls=true
-      - traefik.http.routers.funkwhale-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.funkwhale-nginx-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.funkwhale-nginx-secure.service=funkwhale-nginx
       - traefik.http.routers.funkwhale-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.funkwhale-nginx.loadbalancer.server.port=80

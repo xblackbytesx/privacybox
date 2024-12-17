@@ -1,4 +1,4 @@
-version: '3'
+name: Prowlarr
 
 networks:
   proxy:
@@ -22,7 +22,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - prowlarr-config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -31,7 +31,7 @@ services:
       - traefik.http.routers.prowlarr-secure.entrypoints=websecure
       - traefik.http.routers.prowlarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.prowlarr-secure.tls=true
-      - traefik.http.routers.prowlarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.prowlarr-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.prowlarr-secure.service=prowlarr
       - traefik.http.routers.prowlarr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.prowlarr.loadbalancer.server.port=9696

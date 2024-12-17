@@ -1,4 +1,4 @@
-version: "3.8"
+name: ExcaliDraw
 
 networks:
   proxy:
@@ -18,7 +18,7 @@ services:
       - traefik.http.routers.excalidraw-secure.entrypoints=websecure
       - traefik.http.routers.excalidraw-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.excalidraw-secure.tls=true
-      - traefik.http.routers.excalidraw-secure.tls.certresolver=le-dns
+      - traefik.http.routers.excalidraw-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.excalidraw-secure.service=excalidraw
       - traefik.http.routers.excalidraw-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.excalidraw.loadbalancer.server.port=80

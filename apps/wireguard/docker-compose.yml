@@ -1,5 +1,4 @@
-
-version: "2.1"
+name: WireGuard
 
 networks:
   proxy:
@@ -26,7 +25,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - SERVERURL=${SERVER_URL}
       - SERVERPORT=${SERVER_PORT}
       - PEERS=${PEERS}

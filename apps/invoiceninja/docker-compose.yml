@@ -122,7 +122,7 @@ services:
       - traefik.http.routers.invoiceninja-nginx-secure.entrypoints=websecure
       - traefik.http.routers.invoiceninja-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.invoiceninja-nginx-secure.tls=true
-      - traefik.http.routers.invoiceninja-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.invoiceninja-nginx-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.invoiceninja-nginx-secure.service=invoiceninja-nginx
       - traefik.http.routers.invoiceninja-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.invoiceninja-nginx.loadbalancer.server.port=80

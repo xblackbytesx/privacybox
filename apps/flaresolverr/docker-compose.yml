@@ -1,4 +1,4 @@
-name: flaresolverr
+name: FlareSolverr
 
 networks:
   proxy:
@@ -15,7 +15,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - LOG_HTML=${LOG_HTML:-false}
       - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - /etc/localtime:/etc/localtime:ro
     labels:
@@ -23,7 +23,7 @@ services:
       - traefik.http.routers.flaresolverr-secure.entrypoints=websecure
       - traefik.http.routers.flaresolverr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.flaresolverr-secure.tls=true
-      - traefik.http.routers.flaresolverr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.flaresolverr-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.flaresolverr-secure.service=flaresolverr
       - traefik.http.routers.flaresolverr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.flaresolverr.loadbalancer.server.port=8191

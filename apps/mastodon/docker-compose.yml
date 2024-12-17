@@ -1,4 +1,4 @@
-version: '3'
+name: Mastodon
 
 networks:
   proxy:
@@ -121,7 +121,7 @@ services:
       - traefik.http.routers.mastodon-web-secure.entrypoints=websecure
       - traefik.http.routers.mastodon-web-secure.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.mastodon-web-secure.tls=true
-      - traefik.http.routers.mastodon-web-secure.tls.certresolver=le-dns
+      - traefik.http.routers.mastodon-web-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.mastodon-web-secure.service=mastodon-web
       - traefik.http.routers.mastodon-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.mastodon-web.loadbalancer.server.port=3000

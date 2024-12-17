@@ -1,3 +1,12 @@
+########################################
+########## DEPRECATION NOTICE ##########
+########################################
+# This app will be deprecated soon.
+# Reasons: 
+#   - Config has not been tested properly
+#   - Most likely needs an overhaul 
+#   - Might be integrated again after testing
+
 version: '3'
 
 networks:
@@ -128,7 +137,7 @@ services:
       - traefik.http.routers.erpnext-app-secure.entrypoints=websecure
       - traefik.http.routers.erpnext-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.erpnext-app-secure.tls=true
-      - traefik.http.routers.erpnext-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.erpnext-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.erpnext-app-secure.service=erpnext-app
       - traefik.http.routers.erpnext-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.erpnext-app.loadbalancer.server.port=8080

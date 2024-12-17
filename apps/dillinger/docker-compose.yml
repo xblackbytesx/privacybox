@@ -1,4 +1,4 @@
-version: '3'
+name: Dillinger
 
 networks:
   proxy:
@@ -22,7 +22,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - dillinger-config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -32,7 +32,7 @@ services:
       - "traefik.http.routers.dillinger-secure.entrypoints=websecure"
       - "traefik.http.routers.dillinger-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
       - "traefik.http.routers.dillinger-secure.tls=true"
-      - "traefik.http.routers.dillinger-secure.tls.certresolver=le-dns"
+      - "traefik.http.routers.dillinger-secure.tls.certresolver=${CERT_RESOLVER}"
       - "traefik.http.routers.dillinger-secure.service=dillinger"
       - "traefik.http.services.dillinger.loadbalancer.server.port=8080"
     networks:

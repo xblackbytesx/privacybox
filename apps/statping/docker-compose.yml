@@ -1,4 +1,4 @@
-version: "3.3"
+name: StatPing
 
 networks:
   proxy:
@@ -75,7 +75,7 @@ services:
       - traefik.http.routers.statping-app-secure.entrypoints=websecure
       - traefik.http.routers.statping-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.statping-app-secure.tls=true
-      - traefik.http.routers.statping-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.statping-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.statping-app-secure.service=statping-app
       - traefik.http.routers.statping-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.statping-app.loadbalancer.server.port=8080

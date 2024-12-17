@@ -1,4 +1,4 @@
-version: "3.7"
+name: Glances
 
 networks:
   proxy:
@@ -23,7 +23,7 @@ services:
       - traefik.http.routers.glances-app-secure.entrypoints=websecure
       - traefik.http.routers.glances-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.glances-app-secure.tls=true
-      - traefik.http.routers.glances-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.glances-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.glances-app-secure.service=glances-app
       - traefik.http.routers.glances-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.glances-app.loadbalancer.server.port=61208

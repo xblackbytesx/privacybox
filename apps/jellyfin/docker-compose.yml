@@ -1,4 +1,4 @@
-version: '3'
+name: Jellyfin
 
 volumes:
   jellyfin-config:
@@ -47,7 +47,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - JELLYFIN_PublishedServerUrl=https://${SUBDOMAIN}.${DOMAIN}
     volumes:
       - jellyfin-config:/config

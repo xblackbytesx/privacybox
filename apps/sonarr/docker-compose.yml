@@ -1,4 +1,4 @@
-version: '3'
+name: Sonarr
 
 networks:
   proxy:
@@ -34,7 +34,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - UMASK_SET=022 #optional
     volumes:
       - sonarr-config:/config
@@ -47,7 +47,7 @@ services:
       - traefik.http.routers.sonarr-secure.entrypoints=websecure
       - traefik.http.routers.sonarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.sonarr-secure.tls=true
-      - traefik.http.routers.sonarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.sonarr-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.sonarr-secure.service=sonarr
       - traefik.http.routers.sonarr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.sonarr.loadbalancer.server.port=8989

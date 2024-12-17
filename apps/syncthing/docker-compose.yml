@@ -1,4 +1,4 @@
-version: '3'
+name: SyncThing
 
 networks:
   proxy:
@@ -28,7 +28,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - syncthing-config:/config
       - syncthing-data:/data
@@ -38,7 +38,7 @@ services:
       - traefik.http.routers.syncthing-app-secure.entrypoints=websecure
       - traefik.http.routers.syncthing-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.syncthing-app-secure.tls=true
-      - traefik.http.routers.syncthing-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.syncthing-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.syncthing-app-secure.service=syncthing-app
       - traefik.http.routers.syncthing-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.syncthing-app.loadbalancer.server.port=8384

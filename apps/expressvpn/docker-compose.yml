@@ -1,4 +1,13 @@
-version: "3.3"
+########################################
+########## DEPRECATION NOTICE ##########
+########################################
+# This app will be deprecated soon.
+# Reasons: 
+#   - Not actively maintained by original maintainer
+#   - Not a silver bullet to be relied upon
+#   - Vendor bound so of limited use for all
+
+name: ExpressVPN
 
 services:
     expressvpn:

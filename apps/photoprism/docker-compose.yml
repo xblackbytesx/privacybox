@@ -1,4 +1,4 @@
-version: '3.5'
+name: PhotoPrism
 
 networks:
   proxy:
@@ -126,7 +126,7 @@ services:
       - traefik.http.routers.photoprism-app-secure.entrypoints=websecure
       - traefik.http.routers.photoprism-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.photoprism-app-secure.tls=true
-      - traefik.http.routers.photoprism-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.photoprism-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.photoprism-app-secure.service=photoprism-app
       - traefik.http.routers.photoprism-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.photoprism-app.loadbalancer.server.port=2342

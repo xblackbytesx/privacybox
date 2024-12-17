@@ -1,4 +1,4 @@
-version: '3'
+name: SpotWeb
 
 networks:
   proxy:
@@ -62,7 +62,7 @@ services:
       - traefik.http.routers.spotweb-app-secure.entrypoints=websecure
       - traefik.http.routers.spotweb-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.spotweb-app-secure.tls=true
-      - traefik.http.routers.spotweb-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.spotweb-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.spotweb-app-secure.service=spotweb-app
       - traefik.http.routers.spotweb-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.spotweb-app.loadbalancer.server.port=80

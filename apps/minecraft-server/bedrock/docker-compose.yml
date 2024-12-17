@@ -1,4 +1,4 @@
-version: "3.3"
+name: Minecraft-Server-Bedrock
 
 # networks:
 #   proxy:
@@ -42,7 +42,7 @@ services:
     #   - "traefik.http.routers.minecraft-bedrock-server-secure.entrypoints=websecure"
     #   - "traefik.http.routers.minecraft-bedrock-server-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)"
     #   - "traefik.http.routers.minecraft-bedrock-server-secure.tls=true"
-    #   - "traefik.http.routers.minecraft-bedrock-server-secure.tls.certresolver=le-dns"
+    #   - "traefik.http.routers.minecraft-bedrock-server-secure.tls.certresolver=${CERT_RESOLVER}"
     #   - "traefik.http.routers.minecraft-bedrock-server-secure.service=minecraft-bedrock-server"
     #   - "traefik.http.services.minecraft-bedrock-server.loadbalancer.server.port=19132"
     restart: unless-stopped

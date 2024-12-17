@@ -1,4 +1,4 @@
-version: '3'
+name: Ampache
 
 networks:
   proxy:
@@ -55,7 +55,7 @@ services:
       - traefik.http.routers.ampache-app-secure.entrypoints=websecure
       - traefik.http.routers.ampache-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.ampache-app-secure.tls=true
-      - traefik.http.routers.ampache-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.ampache-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.ampache-app-secure.service=ampache-app
       - traefik.http.routers.ampache-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.ampache-app.loadbalancer.server.port=80
