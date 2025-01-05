@@ -1,0 +1,25 @@
+name: homeassistant-addons-piper
+
+volumes:
+  ha-piper-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/homeassistant/piper/data
+
+services:
+  ha-piper:
+    container_name: ha-piper
+    image: rhasspy/wyoming-piper:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ha-piper-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    command: [ "--voice", "en_US-lessac-medium" ]
+    labels:
+      - "traefik.enable=false"
+    ports:
+      - "10200:10200"
+    restart: unless-stopped
