@@ -29,20 +29,6 @@ volumes:
       o: bind
       device: ${DOCKER_ROOT}/homeassistant/zigbee2mqtt/data
 
-  # ha-whisper-data:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${DOCKER_ROOT}/homeassistant/whisper/data
-
-  # ha-piper-data:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${DOCKER_ROOT}/homeassistant/piper/data
-
   ha-config:
     driver: local
     driver_opts:
@@ -113,36 +99,6 @@ services:
     ports:
       - "8099:8099"
     restart: unless-stopped
-
-  # ha-whisper:
-  #   container_name: ha-whisper
-  #   image: rhasspy/wyoming-whisper:latest
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   volumes:
-  #     - ha-whisper-data:/data
-  #     - /etc/localtime:/etc/localtime:ro
-  #   command: [ "--model", "tiny-int8", "--language", "en" ]
-  #   labels:
-  #     - "traefik.enable=false"
-  #   ports:
-  #     - "10300:10300"
-  #   restart: unless-stopped
-
-  # ha-piper:
-  #   container_name: ha-piper
-  #   image: rhasspy/wyoming-piper:latest
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   volumes:
-  #     - ha-piper-data:/data
-  #     - /etc/localtime:/etc/localtime:ro
-  #   command: [ "--voice", "en_US-lessac-medium" ]
-  #   labels:
-  #     - "traefik.enable=false"
-  #   ports:
-  #     - "10200:10200"
-  #   restart: unless-stopped
 
   ha-app:
     container_name: ha-app
