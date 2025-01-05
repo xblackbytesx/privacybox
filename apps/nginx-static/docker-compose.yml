@@ -1,4 +1,4 @@
-version: '3.3'
+name: nginx-static
 
 networks:
   proxy:
@@ -28,7 +28,7 @@ services:
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.entrypoints=websecure
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.rule=Host(`${SITE_URL}`) || Host(`www.${SITE_URL}`)
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls=true
-      - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls.certresolver=le-dns
+      - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.service=nginx-static-${COMPOSE_PROJECT_NAME}
       - traefik.http.routers.nginx-static-${COMPOSE_PROJECT_NAME}-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.nginx-static-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80

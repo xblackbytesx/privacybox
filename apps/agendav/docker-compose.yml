@@ -1,4 +1,4 @@
-version: "3.4"
+name: agendav
 
 networks:
   proxy:
@@ -28,7 +28,7 @@ services:
       - traefik.http.routers.agendav-app-secure.entrypoints=websecure
       - traefik.http.routers.agendav-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.agendav-app-secure.tls=true
-      - traefik.http.routers.agendav-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.agendav-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.agendav-app-secure.service=agendav-app
       - traefik.http.routers.agendav-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.agendav-app.loadbalancer.server.port=8080

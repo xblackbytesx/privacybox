@@ -1,4 +1,4 @@
-version: '3'
+name: calibre-web
 
 networks:
   proxy:
@@ -28,7 +28,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - DOCKER_MODS=linuxserver/calibre-web:calibre #optional
       # - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
     volumes:
@@ -40,7 +40,7 @@ services:
       - traefik.http.routers.calibre-web-secure.entrypoints=websecure
       - traefik.http.routers.calibre-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.calibre-web-secure.tls=true
-      - traefik.http.routers.calibre-web-secure.tls.certresolver=le-dns
+      - traefik.http.routers.calibre-web-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.calibre-web-secure.service=calibre-web
       - traefik.http.routers.calibre-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.calibre-web.loadbalancer.server.port=8083

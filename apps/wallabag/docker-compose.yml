@@ -1,4 +1,4 @@
-version: "3.3"
+name: wallabag
 
 networks:
   proxy:
@@ -87,7 +87,7 @@ services:
       - traefik.http.routers.wallabag-secure.entrypoints=websecure
       - traefik.http.routers.wallabag-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.wallabag-secure.tls=true
-      - traefik.http.routers.wallabag-secure.tls.certresolver=le-dns
+      - traefik.http.routers.wallabag-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.wallabag-secure.service=wallabag
       - traefik.http.routers.wallabag-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.wallabag.loadbalancer.server.port=80

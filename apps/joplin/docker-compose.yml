@@ -1,4 +1,4 @@
-version: '3'
+name: joplin
 
 networks:
   proxy:
@@ -57,7 +57,7 @@ services:
       - traefik.http.routers.joplin-app-secure.entrypoints=websecure
       - traefik.http.routers.joplin-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.joplin-app-secure.tls=true
-      - traefik.http.routers.joplin-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.joplin-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.joplin-app-secure.service=joplin-app
       - traefik.http.routers.joplin-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.joplin-app.loadbalancer.server.port=22300

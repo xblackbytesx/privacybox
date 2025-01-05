@@ -1,4 +1,4 @@
-version: '3'
+name: bitmagnet
 
 networks:
   proxy:
@@ -74,7 +74,7 @@ services:
       - traefik.http.routers.bitmagnet-secure.entrypoints=websecure
       - traefik.http.routers.bitmagnet-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.bitmagnet-secure.tls=true
-      - traefik.http.routers.bitmagnet-secure.tls.certresolver=le-dns
+      - traefik.http.routers.bitmagnet-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.bitmagnet-secure.service=bitmagnet
       - traefik.http.routers.bitmagnet-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.bitmagnet.loadbalancer.server.port=3333

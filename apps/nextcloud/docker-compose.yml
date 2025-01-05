@@ -1,4 +1,4 @@
-version: "3.3"
+name: nextcloud
 
 networks:
   proxy:
@@ -108,7 +108,7 @@ services:
       - traefik.http.routers.nextcloud-nginx-secure.entrypoints=websecure
       - traefik.http.routers.nextcloud-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.nextcloud-nginx-secure.tls=true
-      - traefik.http.routers.nextcloud-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.nextcloud-nginx-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.nextcloud-nginx-secure.service=nextcloud-nginx
       - traefik.http.routers.nextcloud-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,well_known_dav@docker,well_known_finger@docker
       - traefik.http.services.nextcloud-nginx.loadbalancer.server.port=80

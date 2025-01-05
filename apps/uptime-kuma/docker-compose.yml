@@ -1,4 +1,4 @@
-version: "3.3"
+name: uptime-kuma
 
 networks:
   proxy:
@@ -26,7 +26,7 @@ services:
       - traefik.http.routers.uptime-kuma-secure.entrypoints=websecure
       - traefik.http.routers.uptime-kuma-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.uptime-kuma-secure.tls=true
-      - traefik.http.routers.uptime-kuma-secure.tls.certresolver=le-dns
+      - traefik.http.routers.uptime-kuma-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.uptime-kuma-secure.service=uptime-kuma
       - traefik.http.routers.uptime-kuma-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.uptime-kuma.loadbalancer.server.port=3001

@@ -239,7 +239,7 @@ services:
             - traefik.http.routers.jitsi-meet-web-secure.entrypoints=websecure
             - traefik.http.routers.jitsi-meet-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
             - traefik.http.routers.jitsi-meet-web-secure.tls=true
-            - traefik.http.routers.jitsi-meet-web-secure.tls.certresolver=le-dns
+            - traefik.http.routers.jitsi-meet-web-secure.tls.certresolver=${CERT_RESOLVER}
             - traefik.http.routers.jitsi-meet-web-secure.service=jitsi-meet-web
             - traefik.http.routers.jitsi-meet-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
             - traefik.http.services.jitsi-meet-web.loadbalancer.server.port=80

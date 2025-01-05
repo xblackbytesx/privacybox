@@ -1,4 +1,4 @@
-version: '3.7'
+name: zipline
 
 networks:
   proxy:
@@ -73,7 +73,7 @@ services:
       - traefik.http.routers.zipline-app-secure.entrypoints=websecure
       - traefik.http.routers.zipline-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.zipline-app-secure.tls=true
-      - traefik.http.routers.zipline-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.zipline-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.zipline-app-secure.service=zipline-app
       - traefik.http.routers.zipline-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.zipline-app.loadbalancer.server.port=3000

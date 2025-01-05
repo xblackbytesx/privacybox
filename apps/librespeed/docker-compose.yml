@@ -1,4 +1,4 @@
-version: '3'
+name: librespeed
 
 networks:
   proxy:
@@ -55,7 +55,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - PASSWORD=${RESULTS_PASS}
       - DB_TYPE=mysql
       - DB_NAME=librespeed
@@ -70,7 +70,7 @@ services:
       - traefik.http.routers.librespeed-app-secure.entrypoints=websecure
       - traefik.http.routers.librespeed-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.librespeed-app-secure.tls=true
-      - traefik.http.routers.librespeed-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.librespeed-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.librespeed-app-secure.service=librespeed-app
       - traefik.http.routers.librespeed-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.librespeed-app.loadbalancer.server.port=80

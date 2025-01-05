@@ -1,4 +1,4 @@
-version: '3'
+name: bazarr
 
 networks:
   proxy:
@@ -34,7 +34,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - UMASK_SET=022 #optional
     volumes:
       - bazarr-config:/config
@@ -46,7 +46,7 @@ services:
       - traefik.http.routers.bazarr-secure.entrypoints=websecure
       - traefik.http.routers.bazarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.bazarr-secure.tls=true
-      - traefik.http.routers.bazarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.bazarr-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.bazarr-secure.service=bazarr
       - traefik.http.routers.bazarr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.bazarr.loadbalancer.server.port=6767

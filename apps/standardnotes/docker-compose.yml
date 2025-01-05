@@ -1,4 +1,4 @@
-version: '3.8'
+name: standardnotes
 
 networks:
   proxy:
@@ -95,7 +95,7 @@ services:
       - traefik.http.routers.standardnotes-api-gateway-secure.entrypoints=websecure
       - traefik.http.routers.standardnotes-api-gateway-secure.rule=Host(`${SUBDOMAIN}-api.${DOMAIN}`)
       - traefik.http.routers.standardnotes-api-gateway-secure.tls=true
-      - traefik.http.routers.standardnotes-api-gateway-secure.tls.certresolver=le-dns
+      - traefik.http.routers.standardnotes-api-gateway-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.standardnotes-api-gateway-secure.service=standardnotes-api-gateway
       - traefik.http.routers.standardnotes-api-gateway-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.standardnotes-api-gateway.loadbalancer.server.port=3000
@@ -228,7 +228,7 @@ services:
       - traefik.http.routers.standardnotes-web-secure.entrypoints=websecure
       - traefik.http.routers.standardnotes-web-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.standardnotes-web-secure.tls=true
-      - traefik.http.routers.standardnotes-web-secure.tls.certresolver=le-dns
+      - traefik.http.routers.standardnotes-web-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.standardnotes-web-secure.service=standardnotes-web
       - traefik.http.routers.standardnotes-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.standardnotes-web.loadbalancer.server.port=3001

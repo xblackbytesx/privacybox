@@ -31,14 +31,14 @@ certificatesResolvers:
   #     storage: acme.json
   #     httpChallenge:
   #       entryPoint: http
-  le-dns:
+  transip-dns:
     acme:
       email: john.doe@privacy.box
       storage: acme.json
       dnsChallenge:
         provider: transip
         delayBeforeCheck: 0
-  cf-dns:
+  cloudflare-dns:
     acme:
       email: john.doe@privacy.box
       storage: acme.json

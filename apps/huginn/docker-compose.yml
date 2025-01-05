@@ -1,4 +1,4 @@
-version: '3.3'
+name: huginn
 
 networks:
   proxy:
@@ -72,7 +72,7 @@ services:
       - traefik.http.routers.hugin-secure.entrypoints=websecure
       - traefik.http.routers.hugin-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.hugin-secure.tls=true
-      - traefik.http.routers.hugin-secure.tls.certresolver=le-dns
+      - traefik.http.routers.hugin-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.hugin-secure.service=hugin
       - traefik.http.routers.hugin-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.hugin.loadbalancer.server.port=3000

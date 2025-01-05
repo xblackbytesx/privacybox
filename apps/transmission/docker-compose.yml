@@ -1,4 +1,4 @@
-version: "2.1"
+name: transmission
 
 networks:
   proxy:
@@ -34,7 +34,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       # - TRANSMISSION_WEB_HOME=/combustion-release/
       - USER=${TRANSMISSION_USER}
       - PASS=${TRANSMISSION_PASS}
@@ -48,7 +48,7 @@ services:
       - traefik.http.routers.transmission-secure.entrypoints=websecure
       - traefik.http.routers.transmission-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.transmission-secure.tls=true
-      - traefik.http.routers.transmission-secure.tls.certresolver=le-dns
+      - traefik.http.routers.transmission-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.transmission-secure.service=transmission
       - traefik.http.routers.transmission-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.transmission.loadbalancer.server.port=9091

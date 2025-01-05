@@ -1,4 +1,4 @@
-version: '3'
+name: bitwarden
 
 networks:
   proxy:
@@ -28,7 +28,7 @@ services:
       - traefik.http.routers.bitwarden-secure.entrypoints=websecure
       - traefik.http.routers.bitwarden-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.bitwarden-secure.tls=true
-      - traefik.http.routers.bitwarden-secure.tls.certresolver=le-dns
+      - traefik.http.routers.bitwarden-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.bitwarden-secure.service=bitwarden
       - traefik.http.routers.bitwarden-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.bitwarden.loadbalancer.server.port=80

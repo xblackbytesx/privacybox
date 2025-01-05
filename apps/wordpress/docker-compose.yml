@@ -1,4 +1,4 @@
-version: "3.3"
+name: wordpress
 
 networks:
   proxy:
@@ -109,7 +109,7 @@ services:
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.entrypoints=websecure
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.rule=Host(`${BLOG_URL}`) || Host(`www.${BLOG_URL}`)
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls=true
-      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.service=wp-${COMPOSE_PROJECT_NAME}-nginx
       - traefik.http.routers.wp-${COMPOSE_PROJECT_NAME}-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.wp-${COMPOSE_PROJECT_NAME}-nginx.loadbalancer.server.port=80

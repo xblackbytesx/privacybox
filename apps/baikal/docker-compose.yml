@@ -1,4 +1,4 @@
-version: "3"
+name: baikal
 
 networks:
   proxy:
@@ -61,7 +61,7 @@ services:
       - traefik.http.routers.baikal-secure.entrypoints=websecure
       - traefik.http.routers.baikal-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.baikal-secure.tls=true
-      - traefik.http.routers.baikal-secure.tls.certresolver=le-dns
+      - traefik.http.routers.baikal-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.baikal-secure.service=baikal
       - traefik.http.routers.baikal-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.baikal.loadbalancer.server.port=80

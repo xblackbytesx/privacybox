@@ -1,4 +1,4 @@
-version: "3.7"
+name: audiobookshelf
 
 networks:
   proxy:
@@ -54,7 +54,7 @@ services:
       - traefik.http.routers.audiobookshelf-secure.entrypoints=websecure
       - traefik.http.routers.audiobookshelf-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.audiobookshelf-secure.tls=true
-      - traefik.http.routers.audiobookshelf-secure.tls.certresolver=le-dns
+      - traefik.http.routers.audiobookshelf-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.audiobookshelf-secure.service=audiobookshelf
       - traefik.http.routers.audiobookshelf-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.audiobookshelf.loadbalancer.server.port=80

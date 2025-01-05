@@ -1,4 +1,4 @@
-version: '3'
+name: radarr
 
 networks:
   proxy:
@@ -34,7 +34,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - UMASK_SET=022 #optional
     volumes:
       - radarr-config:/config
@@ -47,7 +47,7 @@ services:
       - traefik.http.routers.radarr-secure.entrypoints=websecure
       - traefik.http.routers.radarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.radarr-secure.tls=true
-      - traefik.http.routers.radarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.radarr-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.radarr-secure.service=radarr
       - traefik.http.routers.radarr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.radarr.loadbalancer.server.port=7878

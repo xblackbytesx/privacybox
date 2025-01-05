@@ -34,7 +34,7 @@ services:
     #   - traefik.http.routers.ollama-secure.entrypoints=websecure
     #   - traefik.http.routers.ollama-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
     #   - traefik.http.routers.ollama-secure.tls=true
-    #   - traefik.http.routers.ollama-secure.tls.certresolver=le-dns
+    #   - traefik.http.routers.ollama-secure.tls.certresolver=${CERT_RESOLVER}
     #   - traefik.http.routers.ollama-secure.service=ollama
     #   - traefik.http.routers.ollama-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
     #   - traefik.http.services.ollama.loadbalancer.server.port=11434

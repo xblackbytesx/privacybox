@@ -1,8 +1,17 @@
-docker run -it --name my-running-irssi -e TERM -u $(id -u):$(id -g) \
-    --log-driver=none \
-    -v $HOME/.irssi:/home/user/.irssi:ro \
-    -v /etc/localtime:/etc/localtime:ro \
-    irssi
+########################################
+########## DEPRECATION NOTICE ##########
+########################################
+# This app will be deprecated soon.
+# Reasons: 
+#   - Config has not been tested properly
+#   - Of questionable use as-is
+#   - Might be integrated again after testing and rework
+
+# docker run -it --name my-running-irssi -e TERM -u $(id -u):$(id -g) \
+#     --log-driver=none \
+#     -v $HOME/.irssi:/home/user/.irssi:ro \
+#     -v /etc/localtime:/etc/localtime:ro \
+#     irssi
 
 version: '3.3'
 
@@ -44,7 +53,7 @@ volumes:
       - traefik.http.routers.irssi-app-secure.entrypoints=websecure
       - traefik.http.routers.irssi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.irssi-app-secure.tls=true
-      - traefik.http.routers.irssi-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.irssi-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.irssi-app-secure.service=irssi-app
       - traefik.http.routers.irssi-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.irssi-app.loadbalancer.server.port=3000

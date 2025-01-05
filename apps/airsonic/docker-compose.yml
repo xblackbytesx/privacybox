@@ -1,4 +1,4 @@
-version: '3'
+name: airsonic
 
 networks:
   proxy:
@@ -40,7 +40,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       # - CONTEXT_PATH=${SUBDOMAIN}.${DOMAIN} #optional
       # - JAVA_OPTS=<options> #optional
     volumes:
@@ -56,7 +56,7 @@ services:
       - traefik.http.routers.airsonic-secure.entrypoints=websecure
       - traefik.http.routers.airsonic-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.airsonic-secure.tls=true
-      - traefik.http.routers.airsonic-secure.tls.certresolver=le-dns
+      - traefik.http.routers.airsonic-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.airsonic-secure.service=airsonic
       - traefik.http.routers.airsonic-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.airsonic.loadbalancer.server.port=4040

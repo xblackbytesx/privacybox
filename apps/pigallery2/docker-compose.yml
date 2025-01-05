@@ -1,4 +1,4 @@
-version: '3'
+name: pigallery2
 
 networks:
   proxy:
@@ -53,7 +53,7 @@ services:
       - traefik.http.routers.pigallery-app-secure.entrypoints=websecure
       - traefik.http.routers.pigallery-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.pigallery-app-secure.tls=true
-      - traefik.http.routers.pigallery-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.pigallery-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.pigallery-app-secure.service=pigallery-app
       - traefik.http.routers.pigallery-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.pigallery-app.loadbalancer.server.port=80

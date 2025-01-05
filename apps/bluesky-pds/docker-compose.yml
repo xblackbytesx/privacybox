@@ -32,7 +32,7 @@ services:
       - traefik.http.routers.bluesky-pds-secure.entrypoints=websecure
       - traefik.http.routers.bluesky-pds-secure.rule=Host(`${PDS_DOMAIN}`) && PathPrefix(`/xrpc`)
       - traefik.http.routers.bluesky-pds-secure.tls=true
-      - traefik.http.routers.bluesky-pds-secure.tls.certresolver=cf-dns
+      - traefik.http.routers.bluesky-pds-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.bluesky-pds-secure.service=bluesky-pds
       - traefik.http.routers.bluesky-pds-secure.priority=1000
       - traefik.http.routers.bluesky-pds-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,bluesky-pds-header
@@ -40,7 +40,7 @@ services:
       - traefik.http.routers.bluesky-did-secure.entrypoints=websecure
       - traefik.http.routers.bluesky-did-secure.rule=Host(`${HANDLE_DOMAIN}`) && Path(`/.well-known/atproto-did`)
       - traefik.http.routers.bluesky-did-secure.tls=true
-      - traefik.http.routers.bluesky-did-secure.tls.certresolver=cf-dns
+      - traefik.http.routers.bluesky-did-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.bluesky-did-secure.priority=1000
       - traefik.http.routers.bluesky-did-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,bluesky-pds-header
       
@@ -48,7 +48,7 @@ services:
       - traefik.http.routers.bluesky-did-secure.entrypoints=websecure
       - traefik.http.routers.bluesky-did-secure.rule=Host(`${MAIN_HANDLE}.${HANDLE_DOMAIN}`) && Path(`/.well-known/atproto-did`)
       - traefik.http.routers.bluesky-did-secure.tls=true
-      - traefik.http.routers.bluesky-did-secure.tls.certresolver=cf-dns
+      - traefik.http.routers.bluesky-did-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.bluesky-did-secure.priority=1000
       - traefik.http.routers.bluesky-did-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,bluesky-pds-header
 

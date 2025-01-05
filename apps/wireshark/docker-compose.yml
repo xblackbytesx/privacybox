@@ -1,4 +1,4 @@
-version: '3'
+name: wireshark
 
 networks:
   proxy:
@@ -25,7 +25,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - wireshark-config:/config
       - /etc/localtime:/etc/localtime:ro

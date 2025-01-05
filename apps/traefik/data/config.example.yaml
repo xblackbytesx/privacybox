@@ -52,7 +52,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-homeassistant"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-jellyfin:
   #     entryPoints:
   #       - "https"
@@ -64,7 +64,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-jellyfin"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-transmission:
   #     entryPoints:
   #       - "https"
@@ -76,7 +76,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-transmission"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-nzbget:
   #     entryPoints:
   #       - "https"
@@ -88,7 +88,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-nzbget"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-jackett:
   #     entryPoints:
   #       - "https"
@@ -100,7 +100,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-jackett"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-prowlarr:
   #     entryPoints:
   #       - "https"
@@ -112,7 +112,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-prowlarr"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-sonarr:
   #     entryPoints:
   #       - "https"
@@ -124,7 +124,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-sonarr"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-radarr:
   #     entryPoints:
   #       - "https"
@@ -136,7 +136,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-radarr"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-readarr:
   #     entryPoints:
   #       - "https"
@@ -148,7 +148,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-readarr"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-lidarr:
   #     entryPoints:
   #       - "https"
@@ -160,7 +160,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-lidarr"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
   #   router-spotweb:
   #     entryPoints:
   #       - "https"
@@ -172,7 +172,7 @@ http:
   #       - "gzip_compress@file"
   #     service: "service-spotweb"
   #     tls:
-  #       certResolver: "le-dns"
+  #       certResolver: "transip-dns"
 
   # services:
   #   service-homeassistant:

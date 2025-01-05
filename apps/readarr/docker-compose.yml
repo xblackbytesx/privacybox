@@ -1,4 +1,4 @@
-version: '3'
+name: readarr
 
 networks:
   proxy:
@@ -34,7 +34,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
       - UMASK_SET=022 #optional
     volumes:
       - readarr-config:/config
@@ -46,7 +46,7 @@ services:
       - traefik.http.routers.readarr-secure.entrypoints=websecure
       - traefik.http.routers.readarr-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.readarr-secure.tls=true
-      - traefik.http.routers.readarr-secure.tls.certresolver=le-dns
+      - traefik.http.routers.readarr-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.readarr-secure.service=readarr
       - traefik.http.routers.readarr-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.readarr.loadbalancer.server.port=8787

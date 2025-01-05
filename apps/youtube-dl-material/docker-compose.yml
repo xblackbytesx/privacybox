@@ -1,4 +1,4 @@
-version: "2"
+name: youtube-dl-material
 
 networks:
   proxy:
@@ -88,7 +88,7 @@ services:
       - traefik.http.routers.youtube-dl-material-secure.entrypoints=websecure
       - traefik.http.routers.youtube-dl-material-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.youtube-dl-material-secure.tls=true
-      - traefik.http.routers.youtube-dl-material-secure.tls.certresolver=le-dns
+      - traefik.http.routers.youtube-dl-material-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.youtube-dl-material-secure.service=youtube-dl-material
       - traefik.http.routers.youtube-dl-material-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.youtube-dl-material.loadbalancer.server.port=17442

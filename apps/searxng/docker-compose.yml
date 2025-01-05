@@ -1,4 +1,4 @@
-version: '3'
+name: searcx-ng
 
 networks:
   proxy:
@@ -31,7 +31,7 @@ services:
       - traefik.http.routers.searxng-app-secure.entrypoints=websecure
       - traefik.http.routers.searxng-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.searxng-app-secure.tls=true
-      - traefik.http.routers.searxng-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.searxng-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.searxng-app-secure.service=searxng-app
       - traefik.http.routers.searxng-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.searxng-app.loadbalancer.server.port=8080

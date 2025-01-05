@@ -1,4 +1,4 @@
-version: "3.4"
+name: chat-with-gpt
 
 networks:
   proxy:
@@ -27,7 +27,7 @@ services:
       - traefik.http.routers.chat-with-gpt-app-secure.entrypoints=websecure
       - traefik.http.routers.chat-with-gpt-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.chat-with-gpt-app-secure.tls=true
-      - traefik.http.routers.chat-with-gpt-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.chat-with-gpt-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.chat-with-gpt-app-secure.service=chat-with-gpt-app
       - traefik.http.routers.chat-with-gpt-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.chat-with-gpt-app.loadbalancer.server.port=3000

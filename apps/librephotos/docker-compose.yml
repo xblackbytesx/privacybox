@@ -1,4 +1,4 @@
-version: '3.8'
+name: librephotos
 
 networks:
   proxy:
@@ -57,7 +57,7 @@ services:
       - traefik.http.routers.librephotos-proxy-secure.entrypoints=websecure
       - traefik.http.routers.librephotos-proxy-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.librephotos-proxy-secure.tls=true
-      - traefik.http.routers.librephotos-proxy-secure.tls.certresolver=le-dns
+      - traefik.http.routers.librephotos-proxy-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.librephotos-proxy-secure.service=librephotos-proxy
       - traefik.http.routers.librephotos-proxy-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.librephotos-proxy.loadbalancer.server.port=80

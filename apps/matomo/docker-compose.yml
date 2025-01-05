@@ -1,4 +1,4 @@
-version: "3.3"
+name: matomo
 
 networks:
   proxy:
@@ -88,7 +88,7 @@ services:
       - traefik.http.routers.matomo-nginx-secure.entrypoints=websecure
       - traefik.http.routers.matomo-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.matomo-nginx-secure.tls=true
-      - traefik.http.routers.matomo-nginx-secure.tls.certresolver=le-dns
+      - traefik.http.routers.matomo-nginx-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.matomo-nginx-secure.service=matomo-nginx
       - traefik.http.routers.matomo-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.matomo-nginx.loadbalancer.server.port=80

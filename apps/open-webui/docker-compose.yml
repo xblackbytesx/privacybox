@@ -31,7 +31,7 @@ services:
       - traefik.http.routers.open-webui-secure.entrypoints=websecure
       - traefik.http.routers.open-webui-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.open-webui-secure.tls=true
-      - traefik.http.routers.open-webui-secure.tls.certresolver=le-dns
+      - traefik.http.routers.open-webui-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.open-webui-secure.service=open-webui
       - traefik.http.routers.open-webui-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.open-webui.loadbalancer.server.port=8080

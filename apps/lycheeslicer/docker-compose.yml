@@ -1,4 +1,4 @@
-name: lycheeslicer
+name: lychee-slicer
 
 networks:
   proxy:
@@ -34,7 +34,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=${TIMEZONE}
     networks:
       - proxy
     labels:
@@ -42,7 +42,7 @@ services:
       - traefik.http.routers.lycheeslicer-app-secure.entrypoints=websecure
       - traefik.http.routers.lycheeslicer-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.lycheeslicer-app-secure.tls=true
-      - traefik.http.routers.lycheeslicer-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.lycheeslicer-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.lycheeslicer-app-secure.service=lycheeslicer-app
       - traefik.http.routers.lycheeslicer-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.lycheeslicer-app.loadbalancer.server.port=3000

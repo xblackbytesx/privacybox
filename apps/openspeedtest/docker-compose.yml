@@ -1,4 +1,5 @@
-version: "3.3"
+name: openspeedtest
+
 networks:
   proxy:
     name: proxy
@@ -19,7 +20,7 @@ services:
       - traefik.http.routers.openspeedtest-secure.entrypoints=websecure
       - traefik.http.routers.openspeedtest-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.openspeedtest-secure.tls=true
-      - traefik.http.routers.openspeedtest-secure.tls.certresolver=le-dns
+      - traefik.http.routers.openspeedtest-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.openspeedtest-secure.service=openspeedtest
       - traefik.http.routers.openspeedtest-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.openspeedtest.loadbalancer.server.port=8080

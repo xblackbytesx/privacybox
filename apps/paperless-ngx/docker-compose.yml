@@ -1,4 +1,4 @@
-version: "3.4"
+name: paperless-ngx
 
 networks:
   proxy:
@@ -109,7 +109,7 @@ services:
       - traefik.http.routers.paperless-ngx-app-secure.entrypoints=websecure
       - traefik.http.routers.paperless-ngx-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.paperless-ngx-app-secure.tls=true
-      - traefik.http.routers.paperless-ngx-app-secure.tls.certresolver=le-dns
+      - traefik.http.routers.paperless-ngx-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.paperless-ngx-app-secure.service=paperless-ngx-app
       - traefik.http.routers.paperless-ngx-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.paperless-ngx-app.loadbalancer.server.port=8000

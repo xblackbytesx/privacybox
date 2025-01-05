@@ -1,4 +1,4 @@
-version: '3'
+name: homeassistant
 
 volumes:
   ha-mariadb:
@@ -29,19 +29,19 @@ volumes:
       o: bind
       device: ${DOCKER_ROOT}/homeassistant/zigbee2mqtt/data
 
-  ha-whisper-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DOCKER_ROOT}/homeassistant/whisper/data
+  # ha-whisper-data:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${DOCKER_ROOT}/homeassistant/whisper/data
 
-  ha-piper-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DOCKER_ROOT}/homeassistant/piper/data
+  # ha-piper-data:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${DOCKER_ROOT}/homeassistant/piper/data
 
   ha-config:
     driver: local
@@ -61,7 +61,7 @@ services:
       - MYSQL_DATABASE=homeassistant
       - MYSQL_USER=homeassistant
       - MYSQL_PASSWORD=${DB_USER_PASS}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - ha-mariadb:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
@@ -88,7 +88,7 @@ services:
     ports:
       - "1883:1883"
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
@@ -101,7 +101,7 @@ services:
     depends_on:
       - ha-mqtt
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - ha-zigbee2mqtt-data:/app/data
       - /etc/localtime:/etc/localtime:ro
@@ -114,35 +114,35 @@ services:
       - "8099:8099"
     restart: unless-stopped
 
-  ha-whisper:
-    container_name: ha-whisper
-    image: rhasspy/wyoming-whisper:latest
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - ha-whisper-data:/data
-      - /etc/localtime:/etc/localtime:ro
-    command: [ "--model", "tiny-int8", "--language", "en" ]
-    labels:
-      - "traefik.enable=false"
-    ports:
-      - "10300:10300"
-    restart: unless-stopped
+  # ha-whisper:
+  #   container_name: ha-whisper
+  #   image: rhasspy/wyoming-whisper:latest
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   volumes:
+  #     - ha-whisper-data:/data
+  #     - /etc/localtime:/etc/localtime:ro
+  #   command: [ "--model", "tiny-int8", "--language", "en" ]
+  #   labels:
+  #     - "traefik.enable=false"
+  #   ports:
+  #     - "10300:10300"
+  #   restart: unless-stopped
 
-  ha-piper:
-    container_name: ha-piper
-    image: rhasspy/wyoming-piper:latest
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - ha-piper-data:/data
-      - /etc/localtime:/etc/localtime:ro
-    command: [ "--voice", "en_US-lessac-medium" ]
-    labels:
-      - "traefik.enable=false"
-    ports:
-      - "10200:10200"
-    restart: unless-stopped
+  # ha-piper:
+  #   container_name: ha-piper
+  #   image: rhasspy/wyoming-piper:latest
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   volumes:
+  #     - ha-piper-data:/data
+  #     - /etc/localtime:/etc/localtime:ro
+  #   command: [ "--voice", "en_US-lessac-medium" ]
+  #   labels:
+  #     - "traefik.enable=false"
+  #   ports:
+  #     - "10200:10200"
+  #   restart: unless-stopped
 
   ha-app:
     container_name: ha-app
@@ -150,7 +150,7 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     # Map local /dev mountpoint to docker
     devices:
       - ${RFX_DEVICE_MOUNT}:/dev/ttyRFXtrx

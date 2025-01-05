@@ -1,4 +1,4 @@
-version: '3'
+name: thelounge
 
 networks:
   proxy:
@@ -22,7 +22,7 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=Europe/Amsterdam
+      - TZ=${TIMEZONE}
     volumes:
       - thelounge-config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -31,7 +31,7 @@ services:
       - traefik.http.routers.thelounge-secure.entrypoints=websecure
       - traefik.http.routers.thelounge-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.thelounge-secure.tls=true
-      - traefik.http.routers.thelounge-secure.tls.certresolver=le-dns
+      - traefik.http.routers.thelounge-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.thelounge-secure.service=thelounge
       - traefik.http.routers.thelounge-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.thelounge.loadbalancer.server.port=9000

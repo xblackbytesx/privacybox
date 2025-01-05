@@ -1,4 +1,4 @@
-version: "3"
+name: navidrome
 
 networks:
   proxy:
@@ -42,7 +42,7 @@ services:
       - traefik.http.routers.navidrome-secure.entrypoints=websecure
       - traefik.http.routers.navidrome-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.navidrome-secure.tls=true
-      - traefik.http.routers.navidrome-secure.tls.certresolver=le-dns
+      - traefik.http.routers.navidrome-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.navidrome-secure.service=navidrome
       - traefik.http.routers.navidrome-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.navidrome.loadbalancer.server.port=4533
