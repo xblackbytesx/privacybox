@@ -61,6 +61,8 @@ services:
       - immich-uploads:/usr/src/app/upload
       - immich-stories:/usr/src/app/stories:ro
       - /etc/localtime:/etc/localtime:ro
+    devices:
+      - /dev/dri:/dev/dri
     healthcheck:
       disable: false
     env_file:
@@ -82,9 +84,6 @@ services:
       - proxy
     devices:
       - /dev/dri:/dev/dri
-    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
-    #   file: hwaccel.ml.yml
-    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
     volumes:
       - immich-model-cache:/cache
       - /etc/localtime:/etc/localtime:ro
