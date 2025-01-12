@@ -1,0 +1,61 @@
+name: ddns-updater
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  ddns-updater-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/ddns-updater/config
+
+services:
+  ddns-updater:
+    container_name: ddns-updater
+    image: qmcgaw/ddns-updater
+    security_opt:
+      - no-new-privileges:true
+    network_mode: bridge
+    volumes:
+      - ddns-updater-data:/updater/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - CONFIG=
+      - PERIOD=5m
+      - UPDATE_COOLDOWN_PERIOD=5m
+      - PUBLICIP_FETCHERS=all
+      - PUBLICIP_HTTP_PROVIDERS=all
+      - PUBLICIPV4_HTTP_PROVIDERS=all
+      - PUBLICIPV6_HTTP_PROVIDERS=all
+      - PUBLICIP_DNS_PROVIDERS=all
+      - PUBLICIP_DNS_TIMEOUT=3s
+      - HTTP_TIMEOUT=10s
+
+      # Web UI
+      - LISTENING_ADDRESS=:8000
+      - ROOT_URL=/
+
+      # Backup
+      - BACKUP_PERIOD=0 # 0 to disable
+      - BACKUP_DIRECTORY=/updater/data
+
+      # Other
+      - LOG_LEVEL=info
+      - LOG_CALLER=hidden
+      - SHOUTRRR_ADDRESSES=
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ddns-updater-secure.entrypoints=websecure
+      - traefik.http.routers.ddns-updater-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ddns-updater-secure.tls=true
+      - traefik.http.routers.ddns-updater-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.ddns-updater-secure.service=ddns-updater
+      - traefik.http.routers.ddns-updater-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.ddns-updater.loadbalancer.server.port=8000
+    networks:
+      - proxy
+    restart: always
