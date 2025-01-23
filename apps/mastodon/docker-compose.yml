@@ -163,7 +163,7 @@ services:
       - traefik.http.routers.mastodon-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.mastodon-app-secure.service=mastodon-app
       - traefik.http.routers.mastodon-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.mastodon-app.loadbalancer.serverstransport=ignorecert
+      - traefik.http.services.mastodon-app.loadbalancer.serverstransport=ignorecert@file
       - traefik.http.services.mastodon-app.loadbalancer.server.scheme=https
       - traefik.http.services.mastodon-app.loadbalancer.server.port=443
     networks:
