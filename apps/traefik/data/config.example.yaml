@@ -39,6 +39,10 @@ http:
         - https-redirect
       service: noop@internal
 
+  serversTransports:
+      ignorecert:
+      insecureSkipVerify: true
+
   # # Example of using Traefik to statically route and proxy network endpoints outside Traefik control.
   # # This is useful for proxying routers, nas-drives or even host-mode docker containers on localhost.
   #   router-homeassistant:
