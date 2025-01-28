@@ -95,7 +95,7 @@ services:
 
   immich-redis:
     container_name: immich-redis
-    image: docker.io/redis:6.2-alpine@sha256:e3b17ba9479deec4b7d1eeec1548a253acc5374d68d3b27937fcfe4df8d18c7e
+    image: docker.io/redis:6.2-alpine@sha256:905c4ee67b8e0aa955331960d2aa745781e6bd89afc44a8584bfd13bc890f0ae
     security_opt:
       - no-new-privileges:true
     networks:
