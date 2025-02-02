@@ -111,7 +111,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TIMEZONE}
-      - LOCAL_DOMAIN=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+      - LOCAL_DOMAIN=${DOMAIN}
       - REDIS_HOST=mastodon-redis
       - REDIS_PORT=6379
       - DB_HOST=mastodon-db
@@ -133,22 +133,22 @@ services:
       - SMTP_LOGIN=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASS}
       - SMTP_FROM_ADDRESS=${SMTP_FROM_MAIL}
-      - S3_ENABLED=false
-      - WEB_DOMAIN=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
-      - ES_HOST=es #optional
-      - ES_PORT=9200 #optional
-      - ES_USER=elastic #optional
-      - ES_PASS=elastic #optional
-      - S3_BUCKET= #optional
-      - AWS_ACCESS_KEY_ID= #optional
-      - AWS_SECRET_ACCESS_KEY= #optional
-      - S3_ALIAS_HOST= #optional
-      - SIDEKIQ_ONLY=false #optional
-      - SIDEKIQ_QUEUE= #optional
-      - SIDEKIQ_DEFAULT=false #optional
-      - SIDEKIQ_THREADS=5 #optional
-      - DB_POOL=5 #optional
-      - NO_CHOWN= #optional
+      # - WEB_DOMAIN=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+      # - S3_ENABLED=false
+      # - ES_HOST=es #optional
+      # - ES_PORT=9200 #optional
+      # - ES_USER=elastic #optional
+      # - ES_PASS=elastic #optional
+      # - S3_BUCKET= #optional
+      # - AWS_ACCESS_KEY_ID= #optional
+      # - AWS_SECRET_ACCESS_KEY= #optional
+      # - S3_ALIAS_HOST= #optional
+      # - SIDEKIQ_ONLY=false #optional
+      # - SIDEKIQ_QUEUE=default,push,mailers,pull,ingress,scheduler
+      # - SIDEKIQ_DEFAULT=true
+      # - SIDEKIQ_THREADS=5 #optional
+      # - DB_POOL=10 #optional
+      # - NO_CHOWN= #optional
     depends_on:
       - mastodon-db
       - mastodon-redis
@@ -158,7 +158,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.mastodon-app-secure.entrypoints=websecure
-      - traefik.http.routers.mastodon-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.mastodon-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)${SUBDOMAIN:+ || Host(`${DOMAIN}`)}
       - traefik.http.routers.mastodon-app-secure.tls=true
       - traefik.http.routers.mastodon-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.mastodon-app-secure.service=mastodon-app
@@ -170,3 +170,4 @@ services:
       - internal
       - proxy
     restart: unless-stopped
+
