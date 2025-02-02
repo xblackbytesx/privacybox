@@ -1,86 +1,174 @@
 name: pixelfed
 
-# In order to set configuration, please use a .env file in
-# your compose project directory (the same directory as your
-# docker-compose.yml), and set database options, application
-# name, key, and other settings there.
-# A list of available settings is available in .env.example
-#
-# The services should scale properly across a swarm cluster
-# if the volumes are properly shared between cluster members.
-
-services:
-## App and Worker
-    app:
-    # Comment to use dockerhub image
-    build:
-        context: .
-        dockerfile: contrib/docker/Dockerfile.apache
-    image: pixelfed
-    restart: unless-stopped
-    env_file:
-        - .env.docker
-    volumes:
-        - app-storage:/var/www/storage
-        - app-bootstrap:/var/www/bootstrap
-    networks:
-        - external
-        - internal
-    ports:
-        - "8080:80"
-    depends_on:
-        - db
-        - redis
-
-    worker:
-    build:
-        context: .
-        dockerfile: contrib/docker/Dockerfile.apache
-    image: pixelfed
-    restart: unless-stopped
-    env_file:
-        - .env.docker
-    volumes:
-        - app-storage:/var/www/storage
-        - app-bootstrap:/var/www/bootstrap
-    networks:
-        - external
-        - internal
-    command: gosu www-data php artisan horizon
-    depends_on:
-        - db
-        - redis
-
-## DB and Cache
-    db:
-    image: mysql:8.0
-    restart: unless-stopped
-    networks:
-        - internal
-    command: --default-authentication-plugin=mysql_native_password
-    env_file:
-        - .env.docker
-    volumes:
-        - "db-data:/var/lib/mysql"
-
-    redis:
-    image: redis:5-alpine
-    restart: unless-stopped
-    env_file:
-        - .env.docker
-    volumes:
-        - "redis-data:/data"
-    networks:
-        - internal
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
 
 volumes:
-    db-data:
-    redis-data:
-    app-storage:
-    app-bootstrap:
+  pixelfed-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pixelfed/database
+  pixelfed-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pixelfed/cache
+  pixelfed-overrides:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pixelfed/overrides
+  pixelfed-redis-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pixelfed/redis/data
+  pixelfed-redis-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pixelfed/redis/config
+  pixelfed-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/pixelfed/storage
 
-networks:
-    internal:
-    internal: true
-    external:
-    driver: bridge
+services:
+  pixelfed-web:
+    container_name: pixelfed-web
+    image: "${DOCKER_APP_IMAGE}:${DOCKER_APP_TAG}"
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      # Used by Pixelfed Docker init script
+      DOCKER_SERVICE_NAME: "pixelfed-web"
+      DOCKER_APP_ENTRYPOINT_DEBUG: ${DOCKER_APP_ENTRYPOINT_DEBUG:-0}
+      ENTRYPOINT_SKIP_SCRIPTS: ${ENTRYPOINT_SKIP_SCRIPTS:-}
+    volumes:
+      - "./.env:/var/www/.env"
+      - "pixelfed-cache:/var/www/bootstrap/cache"
+      - "pixelfed-overrides:/docker/overrides:ro"
+      - "pixelfed-storage:/var/www/storage"
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pixelfed-web-secure.entrypoints=websecure
+      - traefik.http.routers.pixelfed-web-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.pixelfed-web-secure.tls=true
+      - traefik.http.routers.pixelfed-web-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.pixelfed-web-secure.service=pixelfed-web
+      - traefik.http.routers.pixelfed-web-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.pixelfed-web.loadbalancer.server.port=80
+    depends_on:
+      - pixelfed-db
+      - pixelfed-redis
+    healthcheck:
+      test: 'curl --header "Host: ${APP_DOMAIN}" --fail http://localhost/api/service/health-check'
+      interval: 10s
+      retries: 2
+      timeout: 5s
+    restart: unless-stopped
+
+  pixelfed-worker:
+    container_name: pixelfed-worker
+    image: "${DOCKER_APP_IMAGE}:${DOCKER_APP_TAG}"
+    security_opt:
+      - no-new-privileges:true
+    command: gosu www-data php artisan horizon
+    stop_signal: SIGTERM
+    environment:
+      # Used by Pixelfed Docker init script
+      DOCKER_SERVICE_NAME: "pixelfed-worker"
+      DOCKER_APP_ENTRYPOINT_DEBUG: ${DOCKER_APP_ENTRYPOINT_DEBUG:-0}
+      ENTRYPOINT_SKIP_SCRIPTS: ${ENTRYPOINT_SKIP_SCRIPTS:-}
+    volumes:
+      - "./.env:/var/www/.env"
+      - "pixelfed-cache:/var/www/bootstrap/cache"
+      - "pixelfed-overrides:/docker/overrides:ro"
+      - "pixelfed-storage:/var/www/storage"
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    labels:
+      - traefik.enable=false
+    depends_on:
+      - pixelfed-db
+      - pixelfed-redis
+    healthcheck:
+      test: gosu www-data php artisan horizon:status | grep running
+      interval: 10s
+      timeout: 5s
+      retries: 2
+    restart: unless-stopped
+
+  pixelfed-db:
+    container_name: pixelfed-db
+    image: ${DOCKER_DB_IMAGE:?error}
+    security_opt:
+      - no-new-privileges:true
+    command: ${DOCKER_DB_COMMAND:-}
+    environment:
+      TZ: "${TZ:?error}"
+      MARIADB_ROOT_PASSWORD: "${DOCKER_DB_ROOT_PASSWORD:?error}"
+      MARIADB_USER: "${DB_USERNAME:?error}"
+      MARIADB_PASSWORD: "${DB_PASSWORD:?error}"
+      MARIADB_DATABASE: "${DB_DATABASE:?error}"
+    volumes:
+      - "pixelfed-database:${DOCKER_DB_CONTAINER_DATA_PATH:?error}"
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    labels:
+      - traefik.enable=false
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--su-mysql",
+          "--connect",
+          "--innodb_initialized",
+        ]
+      interval: 10s
+      retries: 2
+      timeout: 5s
+    restart: unless-stopped
+
+  pixelfed-redis:
+    container_name: pixelfed-redis
+    image: redis:${DOCKER_REDIS_VERSION}
+    security_opt:
+      - no-new-privileges:true
+    command: "${DOCKER_REDIS_CONFIG_FILE:-} --requirepass '${REDIS_PASSWORD:-}'"
+    environment:
+      TZ: "${TZ:?error}"
+      REDISCLI_AUTH: ${REDIS_PASSWORD:-}
+    volumes:
+      - "pixelfed-redis-config:/etc/redis"
+      - "pixelfed-redis-data:/data"
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    labels:
+      - traefik.enable=false
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 10s
+      retries: 2
+      timeout: 5s
+    restart: unless-stopped
