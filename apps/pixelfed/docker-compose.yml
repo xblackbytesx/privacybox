@@ -68,7 +68,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.pixelfed-web-secure.entrypoints=websecure
-      - traefik.http.routers.pixelfed-web-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.pixelfed-web-secure.rule=Host(`${INSTANCE_DOMAIN}`)
       - traefik.http.routers.pixelfed-web-secure.tls=true
       - traefik.http.routers.pixelfed-web-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.pixelfed-web-secure.service=pixelfed-web
