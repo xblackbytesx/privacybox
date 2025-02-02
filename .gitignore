@@ -2,6 +2,7 @@
 *.env.production
 *.key
 *.bak
+*.tar.gz
 acme.json
 apps/traefik/data/traefik.yml
 apps/traefik/data/config.yml
