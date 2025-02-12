@@ -1,0 +1,156 @@
+name: synapse
+
+networks:
+  proxy:
+    external: true
+    name: proxy
+  internal:
+    internal: true
+
+volumes:
+  synapse-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/synapse/database
+  synapse-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/synapse/data
+  synapse-media:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/synapse/media
+  synapse-coturn:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/synapse/coturn
+
+services:
+  synapse-db:
+    container_name: synapse-db
+    image: postgres:16-alpine
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - synapse-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_DB=synapse
+    networks:
+      - internal
+    restart: unless-stopped
+
+  synapse-redis:
+    container_name: synapse-redis
+    image: redis:7-alpine
+    security_opt:
+      - no-new-privileges:true
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - ./redis:/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    restart: unless-stopped
+
+  synapse-coturn:
+    container_name: synapse-coturn
+    image: coturn/coturn:latest
+    security_opt:
+      - no-new-privileges:true
+    network_mode: host  # Required for TURN server to work properly
+    volumes:
+      - synapse-coturn:/etc/coturn
+      - /etc/localtime:/etc/localtime:ro
+    command: [
+      "-n",
+      "--log-file=stdout",
+      "--external-ip",
+      "--realm=turn.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}",
+      "--listening-port=3478",
+      "--min-port=49152",
+      "--max-port=49252",
+      "--use-auth-secret",
+      "--static-auth-secret=${TURN_SECRET}",
+      "--no-tcp",
+      "--no-tls",
+      "--no-dtls"
+    ]
+    restart: unless-stopped
+
+  synapse-well-known:
+    container_name: synapse-well-known
+    image: nginx:1-alpine
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./well-known:/usr/share/nginx/html/.well-known
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.synapse-well-known.entrypoints=web
+      - traefik.http.routers.synapse-well-known.rule=Host(`${DOMAIN}`) && PathPrefix(`/.well-known`)
+      - traefik.http.routers.synapse-well-known-secure.entrypoints=websecure
+      - traefik.http.routers.synapse-well-known-secure.rule=Host(`${DOMAIN}`) && PathPrefix(`/.well-known`)
+      - traefik.http.routers.synapse-well-known-secure.tls=true
+      - traefik.http.routers.synapse-well-known-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.synapse-well-known-secure.service=synapse-well-known
+      - traefik.http.routers.synapse-well-known-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.synapse-well-known.loadbalancer.server.port=80
+    restart: unless-stopped
+
+  synapse-app:
+    container_name: synapse-app
+    image: matrixdotorg/synapse:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - synapse-data:/data
+      - synapse-media:/media_store
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - UID=${PUID}
+      - GID=${PGID}
+      - TZ=${TIMEZONE}
+      - SYNAPSE_SERVER_NAME=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+      - SYNAPSE_REPORT_STATS=no
+      - POSTGRES_HOST=synapse-db
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_DB=synapse
+      - SYNAPSE_REDIS_HOST=synapse-redis
+      - SYNAPSE_REDIS_PORT=6379
+      - SYNAPSE_FEDERATION_ALLOW_FROM_LOOPBACK=true
+      - SYNAPSE_FEDERATION_ALLOW_FROM=*
+      - SYNAPSE_ENABLE_REGISTRATION=false
+    depends_on:
+      - synapse-db
+      - synapse-redis
+      - synapse-coturn
+      - synapse-well-known
+    networks:
+      - proxy
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.synapse-app-secure.entrypoints=websecure
+      - traefik.http.routers.synapse-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)${SUBDOMAIN:+ || Host(`${DOMAIN}`)}
+      - traefik.http.routers.synapse-app-secure.tls=true
+      - traefik.http.routers.synapse-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.synapse-app-secure.service=synapse-app
+      - traefik.http.routers.synapse-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.synapse-app.loadbalancer.server.port=8008
+    restart: unless-stopped
