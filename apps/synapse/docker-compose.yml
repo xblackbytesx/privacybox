@@ -36,7 +36,7 @@ volumes:
 services:
   synapse-db:
     container_name: synapse-db
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     security_opt:
       - no-new-privileges:true
     volumes:
