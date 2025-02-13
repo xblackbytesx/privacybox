@@ -157,7 +157,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.synapse-app-secure.entrypoints=websecure
-      - traefik.http.routers.synapse-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)${SUBDOMAIN:+ || Host(`${DOMAIN}`)}
+      - traefik.http.routers.synapse-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && (PathPrefix(`/_matrix`) || PathPrefix(`/_synapse`))
       - traefik.http.routers.synapse-app-secure.tls=true
       - traefik.http.routers.synapse-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.synapse-app-secure.service=synapse-app
