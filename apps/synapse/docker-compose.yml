@@ -2,8 +2,8 @@ name: synapse
 
 networks:
   proxy:
-    external: true
     name: proxy
+    external: true
   internal:
     internal: true
 
@@ -43,9 +43,10 @@ services:
       - synapse-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - POSTGRES_USER=synapse
-      - POSTGRES_PASSWORD=${DB_USER_PASS}
-      - POSTGRES_DB=synapse
+        - POSTGRES_USER=synapse
+        - POSTGRES_PASSWORD=${DB_USER_PASS}
+        - POSTGRES_DB=synapse
+        - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     networks:
       - internal
     restart: unless-stopped
@@ -76,7 +77,7 @@ services:
       "-n",
       "--log-file=stdout",
       "--external-ip",
-      "--realm=turn.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}",
+      "--realm=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}",
       "--listening-port=3478",
       "--min-port=49152",
       "--max-port=49252",
@@ -100,16 +101,14 @@ services:
       - proxy
       - internal
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.synapse-well-known.entrypoints=web
-      - traefik.http.routers.synapse-well-known.rule=Host(`${DOMAIN}`) && PathPrefix(`/.well-known`)
-      - traefik.http.routers.synapse-well-known-secure.entrypoints=websecure
-      - traefik.http.routers.synapse-well-known-secure.rule=Host(`${DOMAIN}`) && PathPrefix(`/.well-known`)
-      - traefik.http.routers.synapse-well-known-secure.tls=true
-      - traefik.http.routers.synapse-well-known-secure.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.routers.synapse-well-known-secure.service=synapse-well-known
-      - traefik.http.routers.synapse-well-known-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.synapse-well-known.loadbalancer.server.port=80
+        - traefik.enable=true
+        - traefik.http.routers.synapse-well-known-secure.entrypoints=websecure
+        - traefik.http.routers.synapse-well-known-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && PathPrefix(`/.well-known`)
+        - traefik.http.routers.synapse-well-known-secure.tls=true
+        - traefik.http.routers.synapse-well-known-secure.tls.certresolver=${CERT_RESOLVER}
+        - traefik.http.routers.synapse-well-known-secure.service=synapse-well-known
+        - traefik.http.routers.synapse-well-known-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+        - traefik.http.services.synapse-well-known.loadbalancer.server.port=80
     restart: unless-stopped
 
   synapse-app:

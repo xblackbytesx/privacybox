@@ -1,0 +1,102 @@
+# Configuration file for Synapse.
+#
+# This is a YAML file: see [1] for a quick introduction. Note in particular
+# that *indentation is important*: all the elements of a list or dictionary
+# should have the same indentation.
+#
+# [1] https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html
+#
+# For more information on how to configure Synapse, including a complete accounting of
+# each option, go to docs/usage/configuration/config_documentation.md or
+# https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html
+server_name: "synapse.privacy.box"
+pid_file: /data/homeserver.pid
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# Redis configuration
+redis:
+  enabled: true
+  host: synapse-redis
+  port: 6379
+
+# Turn server configuration
+turn_uris: ["turn:synapse.privacy.box:3478?transport=udp"]
+turn_shared_secret: "secret"
+turn_user_lifetime: 86400000
+turn_allow_guests: true
+
+# Cache configuration
+cache:
+  enabled: true
+  sync_response_cache_duration: 2m
+  cache_factors:
+    presence: 0.1
+
+# Database configuration (should already be there but verify)
+database:
+  name: psycopg2
+  args:
+    user: synapse
+    password: secret
+    database: synapse
+    host: synapse-db
+    cp_min: 5
+    cp_max: 10
+
+# Federation settings
+federation_domain_whitelist:
+  - matrix.org
+  - vector.im
+
+# Media store path
+media_store_path: /media_store
+
+# Enable registration if you want
+enable_registration: true
+registration_shared_secret: "secret"
+registration_requires_token: true
+
+email:
+  enabled: true
+  smtp_host: "smtp.privacy.box"
+  smtp_port: 587
+  smtp_user: "john.doe@privacy.box"
+  smtp_pass: "secret"
+  require_transport_security: true
+  notif_from: "Privacybox | Matrix <noreply@synapse.privacy.box>"
+
+# Rate limiting
+rc_messages_per_second: 0.2
+rc_message_burst_count: 10.0
+
+# Other recommended settings
+allow_guest_access: false
+url_preview_enabled: true
+url_preview_ip_range_blacklist:
+  - '127.0.0.0/8'
+  - '10.0.0.0/8'
+  - '172.16.0.0/12'
+  - '192.168.0.0/16'
+  - '169.254.0.0/16'
+  - '::1/128'
+  - 'fe80::/64'
+  - 'fc00::/7'
+max_upload_size: 50M
+
+log_config: "/data/synapse.privacy.box.log.config"
+report_stats: false
+macaroon_secret_key: "secret"
+form_secret: "secret"
+signing_key_path: "/data/synapse.privacy.box.signing.key"
+trusted_key_servers:
+  - server_name: "matrix.org"
+suppress_key_server_warning: true
+
+# vim:ft=yaml
