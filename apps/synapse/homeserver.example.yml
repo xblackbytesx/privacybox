@@ -47,8 +47,8 @@ database:
     password: secret
     database: synapse
     host: synapse-db
-    cp_min: 5
-    cp_max: 10
+    cp_min: 10
+    cp_max: 20
 
 # Federation settings
 federation_domain_whitelist:
@@ -58,10 +58,18 @@ federation_domain_whitelist:
 # Media store path
 media_store_path: /media_store
 
+# # Only uncomment if you plan to host your own identity server
+# experimental_features:
+#   msc3861_enabled: true
+#   msc3861_client_auth:
+#     method: "org.matrix.msc2965.client_secret_basic"
+#     secrets:
+#       - "secret"
+
 # Enable registration if you want
-enable_registration: true
+enable_registration: false
 registration_shared_secret: "secret"
-registration_requires_token: true
+# registration_requires_token: true
 
 email:
   enabled: true

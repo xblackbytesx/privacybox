@@ -1,0 +1,9 @@
+{
+  "m.homeserver": {
+    "base_url": "https://synapse.privacy.box"
+  },
+  "org.matrix.msc3861.authentication_service": {
+    "base_url": "https://mas.synapse.privacy.box"
+  }
+}
+

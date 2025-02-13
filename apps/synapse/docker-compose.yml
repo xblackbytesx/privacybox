@@ -49,6 +49,11 @@ services:
         - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     networks:
       - internal
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "synapse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   synapse-redis:
@@ -62,6 +67,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
     restart: unless-stopped
 
   synapse-coturn:
@@ -136,10 +143,14 @@ services:
       - SYNAPSE_FEDERATION_ALLOW_FROM=*
       - SYNAPSE_ENABLE_REGISTRATION=false
     depends_on:
-      - synapse-db
-      - synapse-redis
-      - synapse-coturn
-      - synapse-well-known
+      synapse-db:
+        condition: service_healthy
+      synapse-redis:
+        condition: service_healthy
+      synapse-coturn:
+        condition: service_started
+      synapse-well-known:
+        condition: service_started
     networks:
       - proxy
       - internal
@@ -153,3 +164,54 @@ services:
       - traefik.http.routers.synapse-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.synapse-app.loadbalancer.server.port=8008
     restart: unless-stopped
+
+  # # Only uncomment if you plan to host your own authentication server (not well tested)
+  # synapse-mas:
+  #   container_name: synapse-mas
+  #   image: ghcr.io/matrix-org/matrix-authentication-service:latest
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   environment:
+  #     # MAS Server Settings
+  #     MAS_BASE_URL: "https://mas.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}"
+  #     MAS_LOG_LEVEL: "info"
+  #     MAS_SERVER_NAME: "${DOMAIN}"
+
+  #     # synapse Connectivity
+  #     MAS_MATRIX_HOMESERVER: "http://synapse-app:8008"
+  #     MAS_MATRIX_SERVER: "https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}"
+  #     MAS_MATRIX_SECRET: "${MAS_MATRIX_SECRET}"
+
+  #     # Database Connection
+  #     MAS_DATABASE__ENGINE: "postgresql"
+  #     MAS_DATABASE__HOST: "synapse-db"
+  #     MAS_DATABASE__NAME: "synapse-mas"
+  #     MAS_DATABASE__USER: "synapse-mas"
+  #     MAS_DATABASE__PASSWORD: "${MAS_DB_USER_PASS}"
+  #     MAS_DATABASE__PORT: "5432"
+
+  #     # Encryption Settings
+  #     MAS_SECRETS_ENCRYPTION: "${MAS_SECRETS}"
+
+  #     # Rate Limits
+  #     MAS_CLIENT_REGISTRATION_LIFETIME: "2h"
+  #     MAS_TOKEN__ACCESS_LIFETIME: "15m"
+  #     MAS_TOKEN__REFRESH_LIFETIME: "24h"
+  #   depends_on:
+  #     synapse-app:
+  #       condition: service_started
+  #     synapse-db:
+  #       condition: service_healthy
+  #   networks:
+  #     - internal
+  #     - proxy
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.synapse-mas-secure.entrypoints=websecure
+  #     - traefik.http.routers.synapse-mas-secure.rule=Host(`mas.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+  #     - traefik.http.routers.synapse-mas-secure.tls=true
+  #     - traefik.http.routers.synapse-mas-secure.tls.certresolver=${CERT_RESOLVER}
+  #     - traefik.http.routers.synapse-mas-secure.service=synapse-mas
+  #     - traefik.http.routers.synapse-mas-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+  #     - traefik.http.services.synapse-mas.loadbalancer.server.port=9000
+  #   restart: unless-stopped
