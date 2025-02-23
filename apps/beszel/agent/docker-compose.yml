@@ -1,10 +1,5 @@
 name: beszel-agent
 
-networks:
-  proxy:
-    name: proxy
-    external: true
-
 services:
   beszel-agent:
     container_name: beszel-agent
@@ -17,15 +12,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.beszel-agent-secure.entrypoints=websecure
-      - traefik.http.routers.beszel-agent-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
-      - traefik.http.routers.beszel-agent-secure.tls=true
-      - traefik.http.routers.beszel-agent-secure.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.routers.beszel-agent-secure.service=beszel-agent
-      - traefik.http.routers.beszel-agent-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.beszel-agent.loadbalancer.server.port=45876
-    networks:
-      - proxy
+    ports:
+      - "45876:45876/tcp"
     restart: unless-stopped
