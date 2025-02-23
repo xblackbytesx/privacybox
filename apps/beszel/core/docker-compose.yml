@@ -1,0 +1,36 @@
+name: beszel-core
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  beszel-core-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/beszel/core/data
+
+services:
+  beszel-core:
+    container_name: beszel-core
+    image: henrygd/beszel:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - beszel-core-data:/beszel_data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.beszel-core-secure.entrypoints=websecure
+      - traefik.http.routers.beszel-core-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.beszel-core-secure.tls=true
+      - traefik.http.routers.beszel-core-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.beszel-core-secure.service=beszel-core
+      - traefik.http.routers.beszel-core-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.beszel-core.loadbalancer.server.port=8090
+    networks:
+      - proxy
+    restart: unless-stopped
