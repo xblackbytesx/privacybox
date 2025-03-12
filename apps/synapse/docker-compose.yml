@@ -139,9 +139,6 @@ services:
       - POSTGRES_DB=synapse
       - SYNAPSE_REDIS_HOST=synapse-redis
       - SYNAPSE_REDIS_PORT=6379
-      - SYNAPSE_FEDERATION_ALLOW_FROM_LOOPBACK=true
-      - SYNAPSE_FEDERATION_ALLOW_FROM=*
-      - SYNAPSE_ENABLE_REGISTRATION=false
     depends_on:
       synapse-db:
         condition: service_healthy
