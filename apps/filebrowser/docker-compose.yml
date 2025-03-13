@@ -1,0 +1,39 @@
+name: filebrowser
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  filebrowser-data-root:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/filebrowser/data
+
+services:
+  filebrowser:
+    container_name: filebrowser
+    image: filebrowser/filebrowser
+    security_opt:
+      - no-new-privileges:true
+    user: "${PUID}:${PGID}"
+    volumes:
+      - filebrowser-data-root:/srv
+      - ${DOCKER_ROOT}/filebrowser/database/database.db:/database.db
+      - ${DOCKER_ROOT}/filebrowser/config/.filebrowser.json:/.filebrowser.json
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.filebrowser-secure.entrypoints=websecure
+      - traefik.http.routers.filebrowser-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.filebrowser-secure.tls=true
+      - traefik.http.routers.filebrowser-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.filebrowser-secure.service=filebrowser
+      - traefik.http.routers.filebrowser-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.filebrowser.loadbalancer.server.port=80
+    networks:
+      - proxy
+    restart: unless-stopped
