@@ -1,0 +1,99 @@
+name: litellm
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  litellm-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/litellm/database
+  litellm-prometheus-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/litellm/prometheus-data
+
+services:
+  litellm-db:
+    container_name: litellm-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${DB_USER_PASS}
+    volumes:
+      - litellm-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d litellm -U litellm"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  
+  litellm-prometheus:
+    image: prom/prometheus
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - litellm-prometheus-data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=false
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      - internal
+    restart: unless-stopped
+
+  litellm-app:
+    container_name: litellm-app
+    image: ghcr.io/berriai/litellm:main-stable
+    security_opt:
+      - no-new-privileges:true
+    #########################################
+    ## Uncomment these lines to start proxy with a config.yaml file ##
+    # volumes:
+    #  - ./config.yaml:/app/config.yaml <<- this is missing in the docker-compose file currently
+    # command:
+    #  - "--config=/app/config.yaml"
+    ##############################################
+    environment:
+        DATABASE_URL: "postgresql://litellm:${DB_USER_PASS}@litellm-db:5432/litellm"
+        STORE_MODEL_IN_DB: "True"
+    env_file:
+      - .env
+    depends_on:
+      - litellm-db
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.litellm-app-secure.entrypoints=websecure
+      - traefik.http.routers.litellm-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.litellm-app-secure.tls=true
+      - traefik.http.routers.litellm-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.litellm-app-secure.service=litellm-app
+      - traefik.http.routers.litellm-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.litellm-app.loadbalancer.server.port=4000
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped
