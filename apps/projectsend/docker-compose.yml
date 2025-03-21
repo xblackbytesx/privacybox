@@ -4,6 +4,8 @@ networks:
   proxy:
     name: proxy
     external: true
+  internal:
+    internal: true
 
 volumes:
   projectsend-config:
@@ -12,6 +14,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/projectsend/config
+  projectsend-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/projectsend/database
   projectsend-data:
     driver: local
     driver_opts:
@@ -20,6 +28,31 @@ volumes:
       device: ${DOCKER_ROOT}/projectsend/data
 
 services:
+  projectsend-db:
+    container_name: projectsend-db
+    image: mariadb:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+      - MYSQL_DATABASE=projectsend
+      - MYSQL_USER=projectsend
+      - MYSQL_PASSWORD=${DB_USER_PASS}
+    volumes:
+      - projectsend-database:/var/lib/mysql:rw,delegated
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=false"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      interval: 15s
+      retries: 30
+    restart: unless-stopped
+
   projectsend-app:
     container_name: projectsend-app
     image: ghcr.io/linuxserver/projectsend
@@ -43,5 +76,6 @@ services:
       - traefik.http.routers.projectsend-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.projectsend-app.loadbalancer.server.port=80
     networks:
+      - internal
       - proxy
     restart: unless-stopped
