@@ -1,0 +1,47 @@
+name: projectsend
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  projectsend-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/projectsend/config
+  projectsend-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/projectsend/data
+
+services:
+  projectsend-app:
+    container_name: projectsend-app
+    image: ghcr.io/linuxserver/projectsend
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - projectsend-config:/config
+      - projectsend-dat:/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.projectsend-app-secure.entrypoints=websecure
+      - traefik.http.routers.projectsend-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.projectsend-app-secure.tls=true
+      - traefik.http.routers.projectsend-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.projectsend-app-secure.service=projectsend-app
+      - traefik.http.routers.projectsend-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.projectsend-app.loadbalancer.server.port=80
+    networks:
+      - proxy
+    restart: unless-stopped
