@@ -1,0 +1,43 @@
+name: openhands
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  openhands-state:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/openhands/state
+
+services:
+  openhands-app:
+    container_name: openhands-app
+    image: docker.all-hands.dev/all-hands-ai/openhands:0.29
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      SANDBOX_RUNTIME_CONTAINER_IMAGE: docker.all-hands.dev/all-hands-ai/runtime:0.29-nikolaik
+      # SANDBOX_RUNTIME_BINDING_ADDRESS: 127.0.0.1
+      LOG_ALL_EVENTS: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - openhands-state:/.openhands-state
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.openhands-app-secure.entrypoints=websecure
+      - traefik.http.routers.openhands-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.openhands-app-secure.tls=true
+      - traefik.http.routers.openhands-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.openhands-app-secure.service=openhands-app
+      - traefik.http.routers.openhands-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.openhands-app.loadbalancer.server.port=3000
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    networks:
+      - proxy
+    restart: unless-stopped
