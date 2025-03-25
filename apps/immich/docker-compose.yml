@@ -62,6 +62,7 @@ services:
       - immich-stories:/usr/src/app/stories:ro
       - /etc/localtime:/etc/localtime:ro
     devices:
+      - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri
     healthcheck:
       disable: false
@@ -83,6 +84,7 @@ services:
       - internal
       - proxy
     devices:
+      - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri
     volumes:
       - immich-model-cache:/cache
