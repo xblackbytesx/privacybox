@@ -1,0 +1,48 @@
+name: gokapi
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  gokapi-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/gokapi/config
+  gokapi-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/gokapi/data
+
+services:
+  gokapi-app:
+    container_name: gokapi-app
+    image: f0rc3/gokapi:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - TZ=${TIMEZONE}
+    volumes:
+      - gokapi-data:/app/data
+      - gokapi-config:/app/config
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.gokapi-app-secure.entrypoints=websecure
+      - traefik.http.routers.gokapi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.gokapi-app-secure.tls=true
+      - traefik.http.routers.gokapi-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.gokapi-app-secure.service=gokapi-app
+      - traefik.http.routers.gokapi-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.gokapi-app.loadbalancer.server.port=53842
+    restart: unless-stopped
