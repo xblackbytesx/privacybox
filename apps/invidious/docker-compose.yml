@@ -18,7 +18,7 @@ volumes:
 services:
   invidious-db:
     container_name: invidious-db
-    image: postgres:12-alpine
+    image: postgres:14-alpine
     security_opt:
       - no-new-privileges:true
     environment:
@@ -39,11 +39,36 @@ services:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
     restart: unless-stopped
 
+  invidious-signature-helper:
+    container_name: invidious-signature-helper
+    image: quay.io/invidious/inv-sig-helper:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    init: true
+    command: ["--tcp", "0.0.0.0:12999"]
+    environment:
+      - RUST_LOG=info
+    cap_drop:
+      - ALL
+    read_only: true
+    restart: unless-stopped
+
   invidious-app:
     container_name: invidious-app
     image: quay.io/invidious/invidious:latest
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - invidious-db
+    networks:
+      - internal
+      - proxy
     labels:
       - traefik.enable=true
       - traefik.http.routers.invidious-app-secure.entrypoints=websecure
@@ -53,34 +78,29 @@ services:
       - traefik.http.routers.invidious-app-secure.service=invidious-app
       - traefik.http.routers.invidious-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.invidious-app.loadbalancer.server.port=3000
-    networks:
-      - internal
-      - proxy
-    mem_limit: 1024M
-    cpus: 0.5
     environment:
       INVIDIOUS_CONFIG: |
-        channel_threads: 1
-        check_tables: true
-        feed_threads: 1
         db:
           dbname: invidious
           user: kemal
           password: ${DB_USER_PASS}
           host: invidious-db
           port: 5432
-        full_refresh: false
+        check_tables: true
+        signature_server: invidious-signature-helper:12999
+        visitor_data: ${VISITOR_DATA}
+        po_token: ${PO_TOKEN}
         https_only: true
         domain: ${SUBDOMAIN}.${DOMAIN}
-    depends_on:
-      - invidious-db
+        statistics_enabled: false
+        hmac_key: ${HMAC_KEY}
+    logging:
+      options:
+        max-size: "1G"
+        max-file: "4"
+    healthcheck:
+      test: wget -nv --tries=1 --spider http://127.0.0.1:3000/api/v1/trending || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 2
     restart: unless-stopped
-
-  # invidious-autoheal:
-  #   container_name: invidious-autoheal
-  #   image: willfarrell/autoheal
-  #   environment:
-  #     - AUTOHEAL_CONTAINER_LABEL=all
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   restart: always
