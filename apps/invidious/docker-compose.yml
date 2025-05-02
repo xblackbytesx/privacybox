@@ -48,6 +48,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
+      - proxy
     init: true
     command: ["--tcp", "0.0.0.0:12999"]
     environment:
@@ -59,7 +60,7 @@ services:
 
   invidious-app:
     container_name: invidious-app
-    image: quay.io/invidious/invidious:latest
+    image: quay.io/invidious/invidious:latest${ARCH_TAG}
     security_opt:
       - no-new-privileges:true
     volumes:
