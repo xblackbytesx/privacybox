@@ -36,7 +36,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     environment:
       - POSTGRES_DB=gitea
-      - PGUSER=gitea
+      - POSTGRES_USER=gitea
       - POSTGRES_PASSWORD=${DB_USER_PASS}
     shm_size: 1g
     healthcheck:
