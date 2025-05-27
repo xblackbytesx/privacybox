@@ -1,5 +1,12 @@
 name: homeassistant
 
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
 volumes:
   ha-mariadb:
     driver: local
