@@ -53,6 +53,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "3306:3306"
+    networks:
+      - internal
     labels:
       - "traefik.enable=false"
     healthcheck:
@@ -73,6 +75,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "1883:1883"
+    networks:
+      - internal
     environment:
       - TZ=${TIMEZONE}
     labels:
@@ -94,10 +98,20 @@ services:
     # Map local /dev mountpoint to docker
     devices:
       - ${ZIGBEE_DEVICE_MOUNT}:/dev/ttyZigbee
-    labels:
-      - "traefik.enable=false"
     ports:
       - "8099:8099"
+    networks:
+      - internal
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ha-zigbee2mqtt-secure.entrypoints=websecure
+      - traefik.http.routers.ha-zigbee2mqtt-secure.rule=Host(`zigbee.hass.${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ha-zigbee2mqtt-secure.tls=true
+      - traefik.http.routers.ha-zigbee2mqtt-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.ha-zigbee2mqtt-secure.service=ha-zigbee2mqtt
+      - traefik.http.routers.ha-zigbee2mqtt-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.ha-zigbee2mqtt.loadbalancer.server.port=8099
     restart: unless-stopped
 
   ha-app:
@@ -114,11 +128,20 @@ services:
       - ha-config:/config
       - /sys/class/thermal:/sys/class/thermal
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - "traefik.enable=false"
     depends_on:
       - ha-mariadb
       - ha-mqtt
       - ha-zigbee2mqtt
-    network_mode: host
+    networks:
+      - internal
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ha-app-secure.entrypoints=websecure
+      - traefik.http.routers.ha-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ha-app-secure.tls=true
+      - traefik.http.routers.ha-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.ha-app-secure.service=ha-app
+      - traefik.http.routers.ha-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.ha-app.loadbalancer.server.port=8123
     restart: unless-stopped
