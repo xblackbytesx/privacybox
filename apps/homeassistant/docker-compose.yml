@@ -58,8 +58,6 @@ services:
     volumes:
       - ha-mariadb:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "3306:3306"
     networks:
       - internal
     labels:
@@ -80,8 +78,6 @@ services:
       - ha-mosquitto-config:/mosquitto/config
       - ha-mosquitto-data:/mosquitto/data
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "1883:1883"
     networks:
       - internal
     environment:
@@ -105,15 +101,13 @@ services:
     # Map local /dev mountpoint to docker
     devices:
       - ${ZIGBEE_DEVICE_MOUNT}:/dev/ttyZigbee
-    ports:
-      - "8099:8099"
     networks:
       - internal
       - proxy
     labels:
       - traefik.enable=true
       - traefik.http.routers.ha-zigbee2mqtt-secure.entrypoints=websecure
-      - traefik.http.routers.ha-zigbee2mqtt-secure.rule=Host(`zigbee.hass.${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.ha-zigbee2mqtt-secure.rule=Host(`zigbee.${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.ha-zigbee2mqtt-secure.tls=true
       - traefik.http.routers.ha-zigbee2mqtt-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.ha-zigbee2mqtt-secure.service=ha-zigbee2mqtt
