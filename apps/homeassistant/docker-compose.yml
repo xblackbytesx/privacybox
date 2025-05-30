@@ -8,12 +8,19 @@ networks:
     internal: true
 
 volumes:
-  ha-mariadb:
+  ha-postgres:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/homeassistant/database      
+      device: ${DOCKER_ROOT}/homeassistant/database/postgres
+
+  # ha-mariadb:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${DOCKER_ROOT}/homeassistant/database/mariadb
 
   ha-mosquitto-config:
     driver: local
@@ -44,30 +51,102 @@ volumes:
       device: ${DOCKER_ROOT}/homeassistant/config
 
 services:
-  ha-mariadb:
-    container_name: ha-mariadb
-    image: mariadb:latest
+  ha-postgres:
+    container_name: ha-postgres
+    image: postgres:17-alpine
     security_opt:
       - no-new-privileges:true
-    environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=homeassistant
-      - MYSQL_USER=homeassistant
-      - MYSQL_PASSWORD=${DB_USER_PASS}
-      - TZ=${TIMEZONE}
-    volumes:
-      - ha-mariadb:/var/lib/mysql
-      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
     labels:
       - "traefik.enable=false"
+    volumes:
+      - ha-postgres:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - POSTGRES_DB=homeassistant
+      - POSTGRES_USER=homeassistant
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=8
+      -c max_parallel_workers_per_gather=4
+      -c max_parallel_workers=8
+      -c max_parallel_maintenance_workers=4
+    shm_size: 1g
     healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      timeout: 20s
-      interval: 15s
-      retries: 30
+      test:
+        - CMD-SHELL
+        - pg_isready -U homeassistant -d homeassistant
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
+
+  # ha-mariadb:
+  #   container_name: ha-mariadb
+  #   image: mariadb:latest
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+  #     - MYSQL_DATABASE=homeassistant
+  #     - MYSQL_USER=homeassistant
+  #     - MYSQL_PASSWORD=${DB_USER_PASS}
+  #     - TZ=${TIMEZONE}
+  #   command: >
+  #     mariadbd
+  #     --innodb-buffer-pool-size=512M
+  #     --innodb-log-file-size=256M
+  #     --innodb-flush-log-at-trx-commit=2
+  #     --innodb-doublewrite=0
+  #     --innodb-io-capacity=1000
+  #     --innodb-io-capacity-max=2000
+  #     --max-connections=100
+  #     --wait-timeout=600
+  #     --interactive-timeout=600
+  #     --query-cache-type=1
+  #     --query-cache-size=64M
+  #     --table-open-cache=4000
+  #     --tmp-table-size=64M
+  #     --max-heap-table-size=64M
+  #     --sort-buffer-size=2M
+  #     --read-buffer-size=128K
+  #     --read-rnd-buffer-size=256K
+  #     --join-buffer-size=128K
+  #     --thread-cache-size=50
+  #     --key-buffer-size=32M
+  #     --myisam-sort-buffer-size=64M
+  #     --innodb-lock-wait-timeout=50
+  #     --skip-name-resolve
+  #     --sql-mode=ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+  #   volumes:
+  #     - ha-mariadb:/var/lib/mysql
+  #     - /etc/localtime:/etc/localtime:ro
+  #   networks:
+  #     - internal
+  #   labels:
+  #     - "traefik.enable=false"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "mariadb -u root -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' || exit 1"]
+  #     timeout: 30s
+  #     interval: 60s
+  #     retries: 5
+  #     start_period: 60s
+  #   restart: unless-stopped
 
   ha-mqtt:
     container_name: ha-mqtt
@@ -130,9 +209,14 @@ services:
       - /sys/class/thermal:/sys/class/thermal
       - /etc/localtime:/etc/localtime:ro
     depends_on:
-      - ha-mariadb
-      - ha-mqtt
-      - ha-zigbee2mqtt
+      # ha-mariadb:
+      #   condition: service_healthy
+      ha-postgres:
+        condition: service_healthy
+      ha-mqtt:
+        condition: service_started
+      ha-zigbee2mqtt:
+        condition: service_started
     networks:
       - internal
       - proxy
@@ -145,4 +229,10 @@ services:
       - traefik.http.routers.ha-app-secure.service=ha-app
       - traefik.http.routers.ha-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.ha-app.loadbalancer.server.port=8123
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
+
