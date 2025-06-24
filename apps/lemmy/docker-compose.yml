@@ -47,24 +47,29 @@ services:
     logging: *default-logging
     command: >
       postgres
-        -c shared_buffers=1GB
-        -c effective_cache_size=4GB
-        -c work_mem=16MB
-        -c maintenance_work_mem=256MB
-        -c wal_buffers=64MB
-        -c max_connections=150
-        -c max_worker_processes=8
-        -c max_parallel_workers=8
-        -c max_parallel_workers_per_gather=4
+        -c max_connections=200
+        -c shared_buffers=4GB
+        -c effective_cache_size=12GB
+        -c maintenance_work_mem=1GB
+        -c checkpoint_completion_target=0.9
+        -c checkpoint_timeout=86400
+        -c wal_buffers=16MB
+        -c default_statistics_target=100
         -c random_page_cost=1.1
         -c effective_io_concurrency=200
-        -c checkpoint_completion_target=0.9
-        -c min_wal_size=2GB
-        -c max_wal_size=4GB
-        -c autovacuum_naptime=30s
-        -c autovacuum_vacuum_scale_factor=0.1
-        -c autovacuum_analyze_scale_factor=0.05
-    shm_size: 2g
+        -c work_mem=5242kB
+        -c min_wal_size=1GB
+        -c max_wal_size=30GB
+        -c max_worker_processes=4
+        -c max_parallel_workers_per_gather=2
+        -c max_parallel_workers=4
+        -c max_parallel_maintenance_workers=2
+        -c synchronous_commit=off
+        -c listen_addresses='*'
+        -c shared_preload_libraries='auto_explain,pg_stat_statements'
+        -c auto_explain.log_min_duration=5000ms
+        -c pg_stat_statements.track=all
+    shm_size: 4g
     healthcheck:
       test:
         - CMD-SHELL

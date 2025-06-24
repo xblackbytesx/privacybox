@@ -13,6 +13,7 @@ apps/nginx-static/deployments
 apps/wordpress/deployments
 apps/matrix-synapse/well-known
 apps/bluesky-pds/admin-tools
+apps/lemmy/lemmy.hjson
 **/update-jellyfin.sh
 **/redis
 logs
