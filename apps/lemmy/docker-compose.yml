@@ -170,7 +170,6 @@ services:
 
   lemmy-pictrs:
     container_name: lemmy-pictrs
-    platform: linux/amd64
     image: asonix/pictrs:0.5.19
     security_opt:
       - no-new-privileges:true
