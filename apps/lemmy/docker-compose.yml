@@ -97,6 +97,39 @@ services:
     networks:
       - internal
       - proxy
+    labels:
+      - traefik.enable=true
+      
+      # Backend API routes - highest priority
+      - traefik.http.routers.lemmy-api.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/pictrs`) || PathPrefix(`/feeds`) || PathPrefix(`/nodeinfo`) || PathPrefix(`/.well-known`) || PathPrefix(`/version`) || Path(`/sitemap.xml`))
+      - traefik.http.routers.lemmy-api.entrypoints=websecure
+      - traefik.http.routers.lemmy-api.tls=true
+      - traefik.http.routers.lemmy-api.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.lemmy-api.priority=100
+      - traefik.http.routers.lemmy-api.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.lemmy-api.service=lemmy-backend
+      
+      # ActivityPub requests (GET/HEAD with activity+json or ld+json)
+      - traefik.http.routers.lemmy-activitypub.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (Method(`GET`) || Method(`HEAD`)) && (HeadersRegexp(`Accept`, `.*application/(activity|ld)\+json.*`))
+      - traefik.http.routers.lemmy-activitypub.entrypoints=websecure
+      - traefik.http.routers.lemmy-activitypub.tls=true
+      - traefik.http.routers.lemmy-activitypub.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.lemmy-activitypub.priority=90
+      - traefik.http.routers.lemmy-activitypub.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.lemmy-activitypub.service=lemmy-backend
+      
+      # Non-GET/HEAD requests (POST, PUT, DELETE, etc.)
+      - traefik.http.routers.lemmy-write.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && !(Method(`GET`) || Method(`HEAD`))
+      - traefik.http.routers.lemmy-write.entrypoints=websecure
+      - traefik.http.routers.lemmy-write.tls=true
+      - traefik.http.routers.lemmy-write.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.lemmy-write.priority=80
+      - traefik.http.routers.lemmy-write.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.lemmy-write.service=lemmy-backend
+      
+      # Backend service
+      - traefik.http.services.lemmy-backend.loadbalancer.server.port=8536
+
     logging: *default-logging
     restart: unless-stopped
 
@@ -117,32 +150,21 @@ services:
     networks:
       - internal
       - proxy
-    logging: *default-logging
-    restart: unless-stopped
-
-  lemmy-nginx:
-    container_name: lemmy-nginx
-    image: nginx:1-alpine
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      - lemmy-pictrs
-      - lemmy-ui
-    volumes:
-      - ./nginx_internal.conf:/etc/nginx/nginx.conf:ro,Z
-      - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.lemmy-nginx-secure.entrypoints=websecure
-      - traefik.http.routers.lemmy-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.lemmy-nginx-secure.tls=true
-      - traefik.http.routers.lemmy-nginx-secure.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.routers.lemmy-nginx-secure.service=lemmy-nginx
-      - traefik.http.routers.lemmy-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.lemmy-nginx.loadbalancer.server.port=8536
-    networks:
-      - internal
-      - proxy
+      
+      # Default route for UI (lowest priority - catches everything else)
+      - traefik.http.routers.lemmy-ui.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.lemmy-ui.entrypoints=websecure
+      - traefik.http.routers.lemmy-ui.tls=true
+      - traefik.http.routers.lemmy-ui.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.lemmy-ui.priority=10
+      - traefik.http.routers.lemmy-ui.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.lemmy-ui.service=lemmy-frontend
+      
+      # Frontend service
+      - traefik.http.services.lemmy-frontend.loadbalancer.server.port=1234
+      
     logging: *default-logging
     restart: unless-stopped
 
@@ -153,8 +175,6 @@ services:
     security_opt:
       - no-new-privileges:true
     hostname: lemmy-pictrs
-    # we can set options to pictrs like this, here we set max. image size and forced format for conversion
-    # entrypoint: /sbin/tini -- /usr/local/bin/pict-rs -p /mnt -m 4 --image-format webp
     environment:
       - PICTRS__API_KEY=${PICTRS_API_KEY}
       - RUST_LOG=info
