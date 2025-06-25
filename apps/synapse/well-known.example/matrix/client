@@ -1,6 +1,9 @@
 {
   "m.homeserver": {
     "base_url": "https://synapse.privacy.box"
+  },
+  "io.element.call": {
+    "url": "https://call.synapse.privacy.box"
   }
 }
 

@@ -14,6 +14,7 @@ apps/wordpress/deployments
 apps/matrix-synapse/well-known
 apps/bluesky-pds/admin-tools
 apps/lemmy/lemmy.hjson
+apps/synapse/element-call-config.json
 **/update-jellyfin.sh
 **/redis
 logs
