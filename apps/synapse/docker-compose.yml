@@ -73,7 +73,7 @@ services:
 
   synapse-coturn:
     container_name: synapse-coturn
-    image: coturn/coturn:latest
+    image: coturn/coturn:edge-alpine
     security_opt:
       - no-new-privileges:true
     network_mode: host  # Required for TURN server to work properly
@@ -83,7 +83,7 @@ services:
     command: [
       "-n",
       "--log-file=stdout",
-      "--external-ip",
+      "--external-ip=${EXTERNAL_IP}",
       "--realm=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}",
       "--listening-port=3478",
       "--min-port=49152",
@@ -117,6 +117,33 @@ services:
         - traefik.http.routers.synapse-well-known-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
         - traefik.http.services.synapse-well-known.loadbalancer.server.port=80
     restart: unless-stopped
+
+  # # This part needs more testing but it's a work in progress
+  # element-call:
+  #   container_name: element-call
+  #   image: ghcr.io/element-hq/element-call:latest
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   volumes:
+  #     - ./element-call-config.json:/usr/share/nginx/html/config.json:ro
+  #     - /etc/localtime:/etc/localtime:ro
+  #   environment:
+  #     - VITE_DEFAULT_HOMESERVER_URL=https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+  #     - VITE_DEFAULT_HOMESERVER_NAME=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+  #     - PUBLIC_BASE_URL=https://call.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+  #   networks:
+  #     - internal
+  #     - proxy
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.element-call-secure.entrypoints=websecure
+  #     - traefik.http.routers.element-call-secure.rule=Host(`call.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+  #     - traefik.http.routers.element-call-secure.tls=true
+  #     - traefik.http.routers.element-call-secure.tls.certresolver=${CERT_RESOLVER}
+  #     - traefik.http.routers.element-call-secure.service=element-call
+  #     - traefik.http.routers.element-call-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+  #     - traefik.http.services.element-call.loadbalancer.server.port=8080
+  #   restart: unless-stopped
 
   synapse-app:
     container_name: synapse-app

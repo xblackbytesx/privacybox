@@ -26,6 +26,21 @@ redis:
   host: synapse-redis
   port: 6379
 
+# Element Call configuration
+experimental_features:
+  msc3266_enabled: true  # Room summary API
+  msc3401_enabled: true  # Native Group VoIP signaling
+  msc3779_enabled: true
+  msc3912_enabled: true
+
+# Widget configuration for Element Call
+app_service_config_files: []
+
+# Allow Element Call domain
+content_repository:
+  url_preview_enabled: true
+  url_preview_url_blacklist: []
+
 # Turn server configuration
 turn_uris: ["turn:synapse.privacy.box:3478?transport=udp"]
 turn_shared_secret: "secret"

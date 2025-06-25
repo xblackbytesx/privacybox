@@ -8,7 +8,7 @@ networks:
     internal: true
 
 volumes:
-  joplin-database:
+  joplin-postgres:
     driver: local
     driver_opts:
       type: none
@@ -16,33 +16,71 @@ volumes:
       device: ${DOCKER_ROOT}/joplin/database
 
 services:
-  joplin-db:
-    container_name: joplin-db
-    image: arm64v8/postgres:13-alpine
+  joplin-postgres:
+    container_name: joplin-postgres
+    image: postgres:17-alpine
     security_opt:
       - no-new-privileges:true
-    environment:
-      - POSTGRES_DB=joplin
-      - POSTGRES_USER=joplin
-      - POSTGRES_PASSWORD=${DB_USER_PASS}
-    volumes:
-      - joplin-database:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
     labels:
       - "traefik.enable=false"
+    volumes:
+      - joplin-postgres:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_DB=joplin
+      - POSTGRES_USER=joplin
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c work_mem=8MB
+      -c maintenance_work_mem=128MB
+      -c max_connections=50
+      -c temp_buffers=32MB
+      -c max_wal_size=4GB
+      -c min_wal_size=1GB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c seq_page_cost=1.0
+      -c effective_io_concurrency=200
+      -c max_locks_per_transaction=256
+      -c log_min_duration_statement=1000
+      -c track_activity_query_size=2048
+      -c synchronous_commit=off
+      -c fsync=on
+      -c full_page_writes=on
+    deploy:
+      resources:
+        limits:
+          memory: 1GB
+          cpus: '1.0'
+        reservations:
+          memory: 512MB
+    shm_size: 512MB  # Moved out of deploy block and increased
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test:
+        - CMD-SHELL
+        - pg_isready -U joplin -d joplin
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   joplin-app:
-    platform: linux/amd64
     image: joplin/server:latest
     security_opt:
       - no-new-privileges:true
     depends_on:
-      - joplin-db
+      - joplin-postgres
     environment:
       - APP_PORT=22300
       - APP_BASE_URL=https://${SUBDOMAIN}.${DOMAIN}
@@ -51,7 +89,7 @@ services:
       - POSTGRES_DATABASE=joplin
       - POSTGRES_USER=joplin
       - POSTGRES_PORT=5432
-      - POSTGRES_HOST=joplin-db
+      - POSTGRES_HOST=joplin-postgres
     labels:
       - traefik.enable=true
       - traefik.http.routers.joplin-app-secure.entrypoints=websecure
@@ -65,3 +103,4 @@ services:
       - internal
       - proxy
     restart: unless-stopped
+

@@ -30,7 +30,7 @@ volumes:
 services:
   lemmy-postgres:
     container_name: lemmy-postgres
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     security_opt:
       - no-new-privileges:true
     hostname: lemmy-postgres
@@ -38,19 +38,51 @@ services:
       - POSTGRES_USER=lemmy
       - POSTGRES_PASSWORD=${DB_USER_PASS}
       - POSTGRES_DB=lemmy
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
     volumes:
       - lemmy-database:/var/lib/postgresql/data:Z
-      - ./customPostgresql.conf:/etc/postgresql.conf
       - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
     logging: *default-logging
+    command: >
+      postgres
+        -c max_connections=200
+        -c shared_buffers=4GB
+        -c effective_cache_size=12GB
+        -c maintenance_work_mem=1GB
+        -c checkpoint_completion_target=0.9
+        -c checkpoint_timeout=86400
+        -c wal_buffers=16MB
+        -c default_statistics_target=100
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c work_mem=5242kB
+        -c min_wal_size=1GB
+        -c max_wal_size=30GB
+        -c max_worker_processes=4
+        -c max_parallel_workers_per_gather=2
+        -c max_parallel_workers=4
+        -c max_parallel_maintenance_workers=2
+        -c synchronous_commit=off
+        -c listen_addresses='*'
+        -c shared_preload_libraries='auto_explain,pg_stat_statements'
+        -c auto_explain.log_min_duration=5000ms
+        -c pg_stat_statements.track=all
+    shm_size: 4g
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U lemmy -d lemmy
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   lemmy-app:
     container_name: lemmy-app
-    # platform: linux/amd64
-    image: dessalines/lemmy:0.19.3
+    image: dessalines/lemmy:0.19.12
     security_opt:
       - no-new-privileges:true
     hostname: lemmy
@@ -65,13 +97,45 @@ services:
     networks:
       - internal
       - proxy
+    labels:
+      - traefik.enable=true
+      
+      # Backend API routes - highest priority
+      - traefik.http.routers.lemmy-api.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/pictrs`) || PathPrefix(`/feeds`) || PathPrefix(`/nodeinfo`) || PathPrefix(`/.well-known`) || PathPrefix(`/version`) || Path(`/sitemap.xml`))
+      - traefik.http.routers.lemmy-api.entrypoints=websecure
+      - traefik.http.routers.lemmy-api.tls=true
+      - traefik.http.routers.lemmy-api.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.lemmy-api.priority=100
+      - traefik.http.routers.lemmy-api.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.lemmy-api.service=lemmy-backend
+      
+      # ActivityPub requests (GET/HEAD with activity+json or ld+json)
+      - traefik.http.routers.lemmy-activitypub.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (Method(`GET`) || Method(`HEAD`)) && (HeadersRegexp(`Accept`, `.*application/(activity|ld)\+json.*`))
+      - traefik.http.routers.lemmy-activitypub.entrypoints=websecure
+      - traefik.http.routers.lemmy-activitypub.tls=true
+      - traefik.http.routers.lemmy-activitypub.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.lemmy-activitypub.priority=90
+      - traefik.http.routers.lemmy-activitypub.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.lemmy-activitypub.service=lemmy-backend
+      
+      # Non-GET/HEAD requests (POST, PUT, DELETE, etc.)
+      - traefik.http.routers.lemmy-write.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && !(Method(`GET`) || Method(`HEAD`))
+      - traefik.http.routers.lemmy-write.entrypoints=websecure
+      - traefik.http.routers.lemmy-write.tls=true
+      - traefik.http.routers.lemmy-write.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.lemmy-write.priority=80
+      - traefik.http.routers.lemmy-write.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.lemmy-write.service=lemmy-backend
+      
+      # Backend service
+      - traefik.http.services.lemmy-backend.loadbalancer.server.port=8536
+
     logging: *default-logging
     restart: unless-stopped
 
   lemmy-ui:
     container_name: lemmy-ui
-    # platform: linux/amd64
-    image: dessalines/lemmy-ui:0.19.3
+    image: dessalines/lemmy-ui:0.19.12
     security_opt:
       - no-new-privileges:true
     environment:
@@ -86,49 +150,33 @@ services:
     networks:
       - internal
       - proxy
-    logging: *default-logging
-    restart: unless-stopped
-
-  lemmy-nginx:
-    container_name: lemmy-nginx
-    image: nginx:1-alpine
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      - lemmy-pictrs
-      - lemmy-ui
-    volumes:
-      - ./nginx_internal.conf:/etc/nginx/nginx.conf:ro,Z
-      - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true
-      - traefik.http.routers.lemmy-nginx-secure.entrypoints=websecure
-      - traefik.http.routers.lemmy-nginx-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.lemmy-nginx-secure.tls=true
-      - traefik.http.routers.lemmy-nginx-secure.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.routers.lemmy-nginx-secure.service=lemmy-nginx
-      - traefik.http.routers.lemmy-nginx-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.lemmy-nginx.loadbalancer.server.port=8536
-    networks:
-      - internal
-      - proxy
+      
+      # Default route for UI (lowest priority - catches everything else)
+      - traefik.http.routers.lemmy-ui.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.lemmy-ui.entrypoints=websecure
+      - traefik.http.routers.lemmy-ui.tls=true
+      - traefik.http.routers.lemmy-ui.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.lemmy-ui.priority=10
+      - traefik.http.routers.lemmy-ui.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.lemmy-ui.service=lemmy-frontend
+      
+      # Frontend service
+      - traefik.http.services.lemmy-frontend.loadbalancer.server.port=1234
+      
     logging: *default-logging
     restart: unless-stopped
 
   lemmy-pictrs:
     container_name: lemmy-pictrs
-    platform: linux/amd64
-    image: asonix/pictrs:0.4.0
+    image: asonix/pictrs:0.5.19
     security_opt:
       - no-new-privileges:true
-    # this needs to match the pictrs url in lemmy.hjson
     hostname: lemmy-pictrs
-    # we can set options to pictrs like this, here we set max. image size and forced format for conversion
-    # entrypoint: /sbin/tini -- /usr/local/bin/pict-rs -p /mnt -m 4 --image-format webp
     environment:
-      - PICTRS_OPENTELEMETRY_URL=http://otel:4137
       - PICTRS__API_KEY=${PICTRS_API_KEY}
-      - RUST_LOG=debug
+      - RUST_LOG=info
       - RUST_BACKTRACE=full
       - PICTRS__MEDIA__VIDEO_CODEC=vp9
       - PICTRS__MEDIA__GIF__MAX_WIDTH=256

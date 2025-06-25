@@ -15,5 +15,13 @@
     smtp_server: "lemmy-postfix:25"
     smtp_from_address: "noreply@{{ SUBDOMAIN.DOMAIN }}"
     tls_type: "none"
-  }
+  # }
+  # rate_limit: {
+  #   message: 999999
+  #   post: 999999
+  #   register: 999999
+  #   image: 999999
+  #   comment: 999999
+  #   search: 999999
+  # }
 }
