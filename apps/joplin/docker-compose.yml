@@ -18,7 +18,7 @@ volumes:
 services:
   joplin-db:
     container_name: joplin-db
-    image: arm64v8/postgres:13-alpine
+    image: postgres:13-alpine
     security_opt:
       - no-new-privileges:true
     environment:
@@ -37,7 +37,6 @@ services:
     restart: unless-stopped
 
   joplin-app:
-    platform: linux/amd64
     image: joplin/server:latest
     security_opt:
       - no-new-privileges:true
