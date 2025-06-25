@@ -97,7 +97,7 @@ services:
 
   immich-redis:
     container_name: immich-redis
-    image: docker.io/redis:6.2-alpine@sha256:148bb5411c184abd288d9aaed139c98123eeb8824c5d3fce03cf721db58066d8
+    image: docker.io/valkey/valkey:8-bookworm@sha256:fec42f399876eb6faf9e008570597741c87ff7662a54185593e74b09ce83d177
     security_opt:
       - no-new-privileges:true
     networks:
@@ -110,7 +110,7 @@ services:
 
   immich-database:
     container_name: immich-postgres
-    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:739cdd626151ff1f796dc95a6591b55a714f341c737e27f045019ceabf8e8c52
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:5f6a838e4e44c8e0e019d0ebfe3ee8952b69afc2809b2c25f7b0119641978e91
     security_opt:
       - no-new-privileges:true
     networks:
@@ -123,10 +123,6 @@ services:
     volumes:
       - immich-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
-    healthcheck:
-      test: pg_isready --dbname=immich --username=immich || exit 1; Chksum="$$(psql --dbname=immich --username=immich --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
-      interval: 5m
-      start_interval: 30s
-      start_period: 5m
-    command: ["postgres", "-c", "shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    shm_size: 128mb
     restart: unless-stopped
+
