@@ -1,0 +1,45 @@
+name: wallos
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  wallos-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/wallos/database
+  wallos-logos:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/wallos/logos
+
+services:
+  wallos-app:
+    container_name: wallos-app
+    image: bellamy/wallos:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TIMEZONE}
+    volumes:
+      - wallos-database:/var/www/html/db
+      - wallos-logos:/var/www/html/images/uploads/logos
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.wallos-app-secure.entrypoints=websecure
+      - traefik.http.routers.wallos-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.wallos-app-secure.tls=true
+      - traefik.http.routers.wallos-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.wallos-app-secure.service=wallos-app
+      - traefik.http.routers.wallos-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.wallos-app.loadbalancer.server.port=80
+    restart: unless-stopped
