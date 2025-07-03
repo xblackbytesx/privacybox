@@ -1,0 +1,39 @@
+name: homepage
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  homepage-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/homepage/config
+
+services:
+  homepage-app:
+    container_name: homepage-app
+    image: ghcr.io/gethomepage/homepage:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - homepage-config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: ${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.homepage-app-secure.entrypoints=websecure
+      - traefik.http.routers.homepage-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.homepage-app-secure.tls=true
+      - traefik.http.routers.homepage-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.homepage-app-secure.service=homepage-app
+      - traefik.http.routers.homepage-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.homepage-app.loadbalancer.server.port=3000
+    restart: unless-stopped
