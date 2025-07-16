@@ -1,0 +1,50 @@
+name: n8n
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  n8n-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/n8n/data
+  n8n-local-files:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/n8n/local-files
+
+services:
+  n8n-app:
+    container_name: n8n-app
+    image: docker.n8n.io/n8nio/n8n:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - N8N_HOST=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}/
+      - GENERIC_TIMEZONE=${TIMEZONE}
+    volumes:
+      - n8n-data:/home/node/.n8n
+      - n8n-local-files:/files
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.n8n-app-secure.entrypoints=websecure
+      - traefik.http.routers.n8n-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.n8n-app-secure.tls=true
+      - traefik.http.routers.n8n-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.n8n-app-secure.service=n8n-app
+      - traefik.http.routers.n8n-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.n8n-app.loadbalancer.server.port=5678
+    restart: unless-stopped
