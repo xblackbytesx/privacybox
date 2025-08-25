@@ -8,7 +8,7 @@ networks:
 services:
   traefik:
     container_name: "traefik"
-    image: "traefik:v3.4"
+    image: "traefik:v3.5"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
