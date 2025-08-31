@@ -6,6 +6,13 @@ networks:
     external: true
 
 volumes:
+  filebrowser-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/filebrowser/config
+
   filebrowser-data-root:
     driver: local
     driver_opts:
@@ -16,15 +23,17 @@ volumes:
 services:
   filebrowser:
     container_name: filebrowser
-    image: filebrowser/filebrowser
+    image: ghcr.io/gtsteffaniak/filebrowser:latest
     security_opt:
       - no-new-privileges:true
-    user: "${PUID}:${PGID}"
     volumes:
-      - filebrowser-data-root:/srv
-      - ${DOCKER_ROOT}/filebrowser/database/database.db:/database.db
-      - ${DOCKER_ROOT}/filebrowser/config/.filebrowser.json:/.filebrowser.json
+      - filebrowser-config:/home/filebrowser/data
+      - filebrowser-data-root:/data
       - /etc/localtime:/etc/localtime:ro
+    environment:
+      FILEBROWSER_CONFIG: "data/config.yaml"
+      FILEBROWSER_ADMIN_PASSWORD: ${FILEBROWSER_ADMIN_PASS}
+      TZ: ${TIMEZONE}
     labels:
       - traefik.enable=true
       - traefik.http.routers.filebrowser-secure.entrypoints=websecure
