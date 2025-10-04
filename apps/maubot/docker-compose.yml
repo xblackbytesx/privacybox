@@ -15,7 +15,7 @@ volumes:
 
 services:
   maubot:
-    image: dock.mau.fi/maubot/maubot:latest
+    image: dock.mau.dev/maubot/maubot:latest
     security_opt:
       - no-new-privileges:true
     volumes:
