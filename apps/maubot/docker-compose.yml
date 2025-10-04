@@ -31,5 +31,5 @@ services:
       - traefik.http.routers.maubot-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.maubot-app-secure.service=maubot-app
       - traefik.http.routers.maubot-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.maubot-app.loadbalancer.server.port=29328
+      - traefik.http.services.maubot-app.loadbalancer.server.port=29316
     restart: unless-stopped
