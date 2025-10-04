@@ -1,0 +1,35 @@
+name: maubot
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  maubot-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/maubot/data
+
+services:
+  maubot:
+    image: dock.mau.fi/maubot/maubot:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - maubot-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.maubot-app-secure.entrypoints=websecure
+      - traefik.http.routers.maubot-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.maubot-app-secure.tls=true
+      - traefik.http.routers.maubot-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.maubot-app-secure.service=maubot-app
+      - traefik.http.routers.maubot-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.maubot-app.loadbalancer.server.port=29328
+    restart: unless-stopped
