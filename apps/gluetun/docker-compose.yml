@@ -1,0 +1,58 @@
+name: gluetun
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  gluetun-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/gluetun/config
+
+services:
+  gluetun:
+    container_name: gluetun
+    image: qmcgaw/gluetun
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - NET_ADMIN
+    expose:
+      - "8888"
+    volumes:
+      - gluetun-config:/gluetun
+      - /etc/localtime:/etc/localtime:ro
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=custom
+      - VPN_TYPE=wireguard
+      - VPN_ENDPOINT_IP=${VPN_ENDPOINT_IP}
+      - VPN_ENDPOINT_PORT=${VPN_ENDPOINT_PORT}
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
+      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+      - WIREGUARD_ALLOWED_IPS=${WIREGUARD_ALLOWED_IPS}
+      - HTTPPROXY=${HTTP_PROXY}
+      - DNS_ADDRESS=${DNS_ADDRESS}
+      - TZ=${TIMEZONE}
+    networks:
+      - proxy
+    restart: unless-stopped
+
+  gluetun-custom-proxy:
+    container_name: gluetun-custom-proxy
+    image: nginx:alpine
+    security_opt:
+      - no-new-privileges:true
+    network_mode: "service:gluetun"
+    volumes:
+      - ./nginx-custom-proxy.conf:/etc/nginx/nginx.conf:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - gluetun
+    restart: unless-stopped
