@@ -1,0 +1,65 @@
+# docker-compose.yml
+
+name: lancache
+
+networks:
+  lancache-net:
+    internal: false
+
+volumes:
+  lancache-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/lancache/data
+  lancache-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/lancache/logs
+
+services:
+  lancache-dns:
+    container_name: lancache-dns
+    image: lancachenet/lancache-dns:latest
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    environment:
+      # Respond to all known services, not just ones detected from the cache.
+      - USE_GENERIC_CACHE=true
+      - LANCACHE_IP=${HOST_IP}
+      - UPSTREAM_DNS=${UPSTREAM_DNS}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=false
+    networks:
+      - lancache-net
+    restart: unless-stopped
+
+  lancache-app:
+    container_name: lancache-app
+    image: lancachenet/monolithic:latest
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+    environment:
+      - UPSTREAM_DNS=${UPSTREAM_DNS}
+      - CACHE_DISK_SIZE=${CACHE_DISK_SIZE}
+      - TZ=${TIMEZONE}
+    volumes:
+      - lancache-data:/data/cache
+      - lancache-logs:/data/logs
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=false
+    networks:
+      - lancache-net
+    restart: unless-stopped
