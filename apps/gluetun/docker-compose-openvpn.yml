@@ -1,0 +1,77 @@
+name: gluetun
+
+volumes:
+  gluetun-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/gluetun/config
+
+services:
+  gluetun:
+    container_name: gluetun
+    image: qmcgaw/gluetun:latest
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - gluetun-config:/gluetun
+      - /etc/localtime:/etc/localtime:ro
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      # qBittorrent WebUI
+      - "8486:8080"
+      # qBittorrent connection ports
+      - "6881:6881"
+      - "6881:6881/udp"
+      # Prowlarr WebUI
+      - "9696:9696"
+      # FlareSolverr API
+      - "8191:8191"
+    environment:
+      # === VPN Provider ===
+      - VPN_SERVICE_PROVIDER=${VPN_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE}
+
+      # === OpenVPN Settings ===
+      - OPENVPN_VERSION=2.6
+      - OPENVPN_PROTOCOL=udp # UDP is faster, TCP is more reliable (use TCP if UDP has issues)
+      - OPENVPN_CIPHER=AES-256-GCM # Strongest cipher, hardware accelerated
+
+      # === ExpressVPN Credentials ===
+      - OPENVPN_USER=${OPENVPN_USERNAME}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+
+      # === Server Selection ===
+      - SERVER_COUNTRIES=${VPN_COUNTRIES}
+
+      # === Kill Switch (CRITICAL) ===
+      - FIREWALL_OUTBOUND_SUBNETS=${HOME_SUBNET}
+
+      # === DNS ===
+      - DOT=off
+      - DNS_PLAINTEXT_ADDRESS=${UPSTREAM_DNS_ADDRESS}
+
+      # === Health Check ===
+      - HEALTH_VPN_DURATION_INITIAL=30s
+      - HEALTH_VPN_DURATION_ADDITION=10s
+
+      # === Logging ===
+      - LOG_LEVEL=info
+
+      # === Timezone ===
+      - TZ=${TIMEZONE}
+
+      # === Port Forwarding (Optional - if VPN Provider supports it) ===
+      # - VPN_PORT_FORWARDING=on
+      # - VPN_PORT_FORWARDING_PROVIDER=protonvpn
+
+    healthcheck:
+      test: ["CMD", "ping", "-c", "1", "1.1.1.1"]
+      interval: 60s
+      timeout: 10s
+      start_period: 30s
+    restart: unless-stopped
