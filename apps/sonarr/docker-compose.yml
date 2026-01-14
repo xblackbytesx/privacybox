@@ -40,7 +40,6 @@ services:
       - sonarr-config:/config
       - sonarr-series-dir:/tv
       - sonarr-downloads-dir:/downloads
-      - ./scripts:/scripts
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=true

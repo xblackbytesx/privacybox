@@ -1,0 +1,48 @@
+name: qbittorrent
+
+volumes:
+  qbittorrent-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/qbittorrent/config
+  qbittorrent-downloads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/downloads
+
+services:
+  qbittorrent:
+    container_name: qbittorrent
+    image: lscr.io/linuxserver/qbittorrent:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+      - WEBUI_PORT=${WEBUI_PORT}
+      - TORRENTING_PORT=6881
+    volumes:
+      - qbittorrent-config:/config
+      - qbittorrent-downloads:/downloads
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.qbittorrent-secure.entrypoints=websecure
+      - traefik.http.routers.qbittorrent-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.qbittorrent-secure.tls=true
+      - traefik.http.routers.qbittorrent-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.qbittorrent-secure.service=qbittorrent
+      - traefik.http.routers.qbittorrent-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.qbittorrent.loadbalancer.server.port=${WEBUI_PORT}
+    networks:
+      - proxy
+    ports:
+      - ${WEBUI_PORT}:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped

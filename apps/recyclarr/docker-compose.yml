@@ -1,0 +1,22 @@
+name: recyclarr
+
+volumes:
+  recyclarr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/recyclarr/config
+
+services:
+  recyclarr:
+    container_name: recyclarr
+    image: ghcr.io/recyclarr/recyclarr
+    security_opt:
+      - no-new-privileges:true
+    user: ${PUID}:${PGID}
+    environment:
+      - TZ=${TIMEZONE}
+    volumes:
+      - recyclarr-config:/config
+      - /etc/localtime:/etc/localtime:ro

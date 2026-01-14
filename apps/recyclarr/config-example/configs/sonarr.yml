@@ -1,0 +1,259 @@
+sonarr:
+  main-sonarr:
+    base_url: !secret sonarr_url
+    api_key: !secret sonarr_apikey
+
+    delete_old_custom_formats: true
+    replace_existing_custom_formats: true
+
+    media_naming:
+      series: default
+      season: default
+      episodes:
+        rename: true
+        standard: default
+        daily: default
+        anime: default
+
+    include:
+      - template: sonarr-quality-definition-series
+      # WEB-2160P
+      - template: sonarr-v4-quality-profile-web-2160p-alternative
+      - template: sonarr-v4-custom-formats-web-2160p
+      # WEB-1080P
+      - template: sonarr-v4-quality-profile-web-1080p-alternative
+      - template: sonarr-v4-custom-formats-web-1080p
+      # HD ANIME: Include formats only (not the profile template)
+      # - template: sonarr-v4-quality-profile-anime
+      - template: sonarr-v4-custom-formats-anime
+
+    # --------------------------------------------------------
+    # MANUAL QUALITY PROFILE DEFINITIONS
+    # --------------------------------------------------------
+    quality_profiles:
+      - name: UHD Anime
+        upgrade:
+          allowed: true
+          until_quality: Bluray-2160p
+        min_format_score: 0
+        quality_sort: top
+        qualities:
+          - name: Bluray-2160p Remux
+            enabled: false
+          - name: Bluray-2160p
+          - name: WEB 2160p
+            qualities:
+              - WEBDL-2160p
+              - WEBRip-2160p
+              - HDTV-2160p
+          - name: Bluray-1080p Remux
+            enabled: false
+          - name: Bluray-1080p
+          - name: WEB 1080p
+            qualities:
+              - WEBDL-1080p
+              - WEBRip-1080p
+              - HDTV-1080p
+          - name: Bluray-720p
+          - name: WEB 720p
+            qualities:
+              - WEBDL-720p
+              - WEBRip-720p
+              - HDTV-720p
+
+      - name: HD Anime
+        upgrade:
+          allowed: true
+          until_quality: Bluray-1080p
+        min_format_score: 0
+        quality_sort: top
+        qualities:
+          - name: Bluray-1080p Remux
+            enabled: false
+          - name: Bluray-1080p
+          - name: WEB 1080p
+            qualities:
+              - WEBDL-1080p
+              - WEBRip-1080p
+              - HDTV-1080p
+          - name: Bluray-720p
+          - name: WEB 720p
+            qualities:
+              - WEBDL-720p
+              - WEBRip-720p
+              - HDTV-720p
+
+    custom_formats:
+      # ========================================================
+      # WEB-2160p OVERRIDES
+      # ========================================================
+      # HDR Formats
+      - trash_ids:
+          - 9b27ab6498ec0f31a3353992e19434ca # DV (w/o HDR fallback)
+          # - 0c4b99df9206d2cfac3c05ab897dd62a # HDR10+ Boost
+          # - 7c3a61a9c6cb04f52f1544be6d44a026 # DV Boost
+        assign_scores_to:
+          - name: WEB-2160p
+
+      # Optional
+      - trash_ids:
+          # - 32b367365729d530ca1c124a0b180c64 # Bad Dual Groups
+          # - 82d40da2bc6923f41e14394075dd4b03 # No-RlsGroup
+          # - e1a997ddb54e3ecbfe06341ad323c458 # Obfuscated
+          # - 06d66ab109d4d2eddb2794d21526d140 # Retags
+          # - 1b3994c551cbb92a2c781af061f4ab44 # Scene
+        assign_scores_to:
+          - name: WEB-2160p
+
+      # x265 Handling
+      - trash_ids:
+          # - 47435ece6b99a0b477caf360e79ba0bb # x265 (HD)
+          # - 9b64dff695c2115facf1b6ea59c9bd07 # x265 (no HDR/DV)
+        assign_scores_to:
+          - name: WEB-2160p
+
+      # Optional SDR
+      - trash_ids:
+          - 2016d1676f5ee13a5b7257ff86ac9a93 # SDR
+          # - 83304f261cf516bb208c18c54c0adf97 # SDR (no WEBDL)
+        assign_scores_to:
+          - name: WEB-2160p
+
+      # ========================================================
+      # WEB-1080p OVERRIDES
+      # ========================================================
+      - trash_ids:
+          # - 32b367365729d530ca1c124a0b180c64 # Bad Dual Groups
+          # - 82d40da2bc6923f41e14394075dd4b03 # No-RlsGroup
+          # - e1a997ddb54e3ecbfe06341ad323c458 # Obfuscated
+          # - 06d66ab109d4d2eddb2794d21526d140 # Retags
+          # - 1b3994c551cbb92a2c781af061f4ab44 # Scene
+        assign_scores_to:
+          - name: WEB-1080p
+
+      - trash_ids:
+        # Uncomment the next six lines to allow x265 HD releases with HDR/DV
+        # - 47435ece6b99a0b477caf360e79ba0bb # x265 (HD)
+        # assign_scores_to:
+        # - name: WEB-1080p
+        # score: 0
+        # - trash_ids:
+        # - 9b64dff695c2115facf1b6ea59c9bd07 # x265 (no HDR/DV)
+        assign_scores_to:
+          - name: WEB-1080p
+
+      # ========================================================
+      # UHD ANIME
+      # ========================================================
+      - trash_ids:
+          # Anime BD Tiers
+          - 949c16fe0a8147f50ba82cc2df9411c9 # Anime BD Tier 01 (Top SeaDex Muxers)
+          - ed7f1e315e000aef424a58517fa48727 # Anime BD Tier 02 (SeaDex Muxers)
+          - 096e406c92baa713da4a72d88030b815 # Anime BD Tier 03 (SeaDex Muxers)
+          - 30feba9da3030c5ed1e0f7d610bcadc4 # Anime BD Tier 04 (SeaDex Muxers)
+          # - 545a76b14ddc349b8b185a6344e28b04 # Anime BD Tier 05 (Remuxes)
+          - 25d2afecab632b1582eaf03b63055f72 # Anime BD Tier 06 (FanSubs)
+          - 0329044e3d9137b08502a9f84a7e58db # Anime BD Tier 07 (P2P/Scene)
+          - c81bbfb47fed3d5a3ad027d077f889de # Anime BD Tier 08 (Mini Encodes)
+          # Anime Web Tiers
+          - e0014372773c8f0e1bef8824f00c7dc4 # Anime Web Tier 01 (Muxers)
+          - 19180499de5ef2b84b6ec59aae444696 # Anime Web Tier 02 (Top FanSubs)
+          # NOTE: Tier 03/04 (SubsPlease, Erai-raws) are Japanese-only - block via Sonarr Release Profile
+          # - c27f2ae6a4e82373b0f1da094e2489ad # Anime Web Tier 03 (Official Subs)
+          # - 4fd5528a3a8024e6b49f9c67053ea5f3 # Anime Web Tier 04 (Official Subs)
+          - 29c2a13d091144f63307e4a8ce963a39 # Anime Web Tier 05 (FanSubs)
+          - dc262f88d74c651b12e9d90b39f6c753 # Anime Web Tier 06 (FanSubs)
+          # Anime Misc
+          - b4a1b3d705159cdca36d71e57ca86871 # Anime Raws
+          - e3515e519f3b1360cbfc17651944354c # Anime LQ Groups
+          # Versions
+          - d2d7b8a9d39413da5f44054080e028a3 # v0
+          - 273bd326df95955e1b6c26527d1df89b # v1
+          - 228b8ee9aa0a609463efca874524a6b8 # v2
+          - 0e5833d3af2cc5fa96a0c29cd4477feb # v3
+          - 4fc15eeb8f2f9a749f918217d4234ad8 # v4
+          # Preferences
+          - 026d5aadd1a6b4e550b134cb6c72b3ca # Uncensored
+          - b2550eb333d27b75833e25b8c2557b38 # 10bit
+          # - 9c14d194486c4014d422adc64092d794 # Dubs Only
+        assign_scores_to:
+          - name: UHD Anime
+
+      # Optional: Penalize DV without HDR fallback (some players can't handle it)
+      - trash_ids:
+          - 9b27ab6498ec0f31a3353992e19434ca # DV (w/o HDR fallback)
+        assign_scores_to:
+          - name: UHD Anime
+            score: -10000 # Block if your devices don't support it
+
+      # Allow x265 for UHD (neutral score)
+      - trash_ids:
+          - 47435ece6b99a0b477caf360e79ba0bb # x265 (HD)
+        assign_scores_to:
+          - name: UHD Anime
+            score: 0
+
+      # Override Dual Audio - Preferred (bonus points, but dubs-only acceptable)
+      - trash_ids:
+          - 418f50b10f1907201b6cfdf881f467b7 # Anime Dual Audio
+        assign_scores_to:
+          - name: UHD Anime
+            score: 1000 # Changed from 11000 - prefer dual audio but don't force it
+
+      # Dubs Only - Acceptable (neutral score, allowed as fallback)
+      - trash_ids:
+          - 9c14d194486c4014d422adc64092d794 # Dubs Only
+        assign_scores_to:
+          - name: UHD Anime
+            score: 0 # Was implicitly default, now explicit - English dubs OK
+
+      # ========================================================
+      # HD ANIME
+      # ========================================================
+      - trash_ids:
+          # Anime BD Tiers
+          - 949c16fe0a8147f50ba82cc2df9411c9 # Anime BD Tier 01 (Top SeaDex Muxers)
+          - ed7f1e315e000aef424a58517fa48727 # Anime BD Tier 02 (SeaDex Muxers)
+          - 096e406c92baa713da4a72d88030b815 # Anime BD Tier 03 (SeaDex Muxers)
+          - 30feba9da3030c5ed1e0f7d610bcadc4 # Anime BD Tier 04 (SeaDex Muxers)
+          # - 545a76b14ddc349b8b185a6344e28b04 # Anime BD Tier 05 (Remuxes)
+          - 25d2afecab632b1582eaf03b63055f72 # Anime BD Tier 06 (FanSubs)
+          - 0329044e3d9137b08502a9f84a7e58db # Anime BD Tier 07 (P2P/Scene)
+          - c81bbfb47fed3d5a3ad027d077f889de # Anime BD Tier 08 (Mini Encodes)
+          # Anime Web Tiers
+          - e0014372773c8f0e1bef8824f00c7dc4 # Anime Web Tier 01 (Muxers)
+          - 19180499de5ef2b84b6ec59aae444696 # Anime Web Tier 02 (Top FanSubs)
+          # NOTE: Tier 03/04 (SubsPlease, Erai-raws) are Japanese-only - block via Sonarr Release Profile
+          # - c27f2ae6a4e82373b0f1da094e2489ad # Anime Web Tier 03 (Official Subs) - REMOVED
+          # - 4fd5528a3a8024e6b49f9c67053ea5f3 # Anime Web Tier 04 (Official Subs) - REMOVED
+          - 29c2a13d091144f63307e4a8ce963a39 # Anime Web Tier 05 (FanSubs)
+          - dc262f88d74c651b12e9d90b39f6c753 # Anime Web Tier 06 (FanSubs)
+          # Anime Misc
+          - b4a1b3d705159cdca36d71e57ca86871 # Anime Raws
+          - e3515e519f3b1360cbfc17651944354c # Anime LQ Groups
+          # Versions
+          - d2d7b8a9d39413da5f44054080e028a3 # v0
+          - 273bd326df95955e1b6c26527d1df89b # v1
+          - 228b8ee9aa0a609463efca874524a6b8 # v2
+          - 0e5833d3af2cc5fa96a0c29cd4477feb # v3
+          - 4fc15eeb8f2f9a749f918217d4234ad8 # v4
+          # Preferences
+          - 026d5aadd1a6b4e550b134cb6c72b3ca # Uncensored
+          - b2550eb333d27b75833e25b8c2557b38 # 10bit
+          # - 9c14d194486c4014d422adc64092d794 # Dubs Only
+        assign_scores_to:
+          - name: HD Anime
+
+      # Override Dual Audio - Preferred (bonus points, but dubs-only acceptable)
+      - trash_ids:
+          - 418f50b10f1907201b6cfdf881f467b7 # Anime Dual Audio
+        assign_scores_to:
+          - name: HD Anime
+            score: 1000 # Changed from 11000 - prefer dual audio but don't force it
+
+      # Dubs Only - Acceptable (neutral score, allowed as fallback)
+      - trash_ids:
+          - 9c14d194486c4014d422adc64092d794 # Dubs Only
+        assign_scores_to:
+          - name: HD Anime
+            score: 0 # Neutral - English dubs acceptable

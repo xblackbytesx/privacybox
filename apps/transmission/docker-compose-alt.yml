@@ -1,0 +1,45 @@
+name: transmission
+
+volumes:
+  transmission-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/transmission/config
+  transmission-downloads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_ROOT}/downloads
+  transmission-watchdir:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/transmission/watch
+
+services:
+  transmission:
+    container_name: transmission
+    image: ghcr.io/linuxserver/transmission:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+      # - TRANSMISSION_WEB_HOME=/combustion-release/
+      - USER=${TRANSMISSION_USER}
+      - PASS=${TRANSMISSION_PASS}
+    volumes:
+      - transmission-config:/config
+      - transmission-downloads:/downloads
+      - transmission-watchdir:/watch
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
+    restart: unless-stopped

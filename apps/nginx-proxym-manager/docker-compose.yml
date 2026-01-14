@@ -1,0 +1,33 @@
+name: nginx-proxy-manager
+
+volumes:
+  npm-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/nginx-proxy-manager/data
+  npm-letsencrypt:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/nginx-proxy-manager/letsencrypt
+
+services:
+  nginx-proxy-manager:
+    container_name: nginx-proxy-manager
+    image: jc21/nginx-proxy-manager:latest
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 80:80
+      - 443:443
+      - 81:81
+    environment:
+      - DISABLE_IPV6=true
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
