@@ -1,0 +1,28 @@
+name: prowlarr
+
+volumes:
+  prowlarr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/prowlarr/config
+
+services:
+  prowlarr:
+    container_name: prowlarr
+    image: ghcr.io/linuxserver/prowlarr:develop
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - prowlarr-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: "container:gluetun"
+    # Ports exposed on the Gluetun side instead
+    # ports:
+    #   - 9696:9696
+    restart: unless-stopped

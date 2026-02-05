@@ -1,0 +1,88 @@
+name: scrutiny
+
+volumes:
+  scrutiny-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/scrutiny/config
+  scrutiny-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/scrutiny/database
+
+services:
+  scrutiny-influxdb:
+    container_name: scrutiny-influxdb
+    image: influxdb:2.2
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "${DB_PORT}:8086"
+    volumes:
+      - scrutiny-database:/var/lib/influxdb2
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+    restart: unless-stopped
+
+  scrutiny-web:
+    container_name: scrutiny-web
+    image: "ghcr.io/analogj/scrutiny:master-web"
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "${WEBUI_PORT}:8080"
+    volumes:
+      - scrutiny-config:/opt/scrutiny/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      SCRUTINY_WEB_INFLUXDB_HOST: "scrutiny-influxdb"
+      SCRUTINY_NOTIFY_URLS: "${NOTIFY_URLS}"
+    depends_on:
+      scrutiny-influxdb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  scrutiny-collector:
+    container_name: scrutiny-collector
+    image: "ghcr.io/analogj/scrutiny:master-collector"
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - SYS_RAWIO
+    volumes:
+      - /run/udev:/run/udev:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      COLLECTOR_API_ENDPOINT: "http://scrutiny-web:8080"
+      COLLECTOR_HOST_ID: "truenas-scale"
+      COLLECTOR_RUN_STARTUP: true
+    depends_on:
+      scrutiny-web:
+        condition: service_healthy
+    devices:
+      # TRUENAS SPECIFIC: You must list every drive you want to monitor here.
+      # TrueNAS Scale may shift sdX letters on reboot.
+      # While /dev/disk/by-id/ is safer on bare metal,
+      # Docker device mapping usually requires the resolved path.
+      # If you have NVMe, list those too.
+      - "/dev/sda:/dev/sda"
+      - "/dev/sdb:/dev/sdb"
+      - "/dev/sdc:/dev/sdc"
+      - "/dev/nvme0n1:/dev/nvme0n1"
+      - "/dev/nvme1n1:/dev/nvme1n1"
+      - "/dev/nvme2n1:/dev/nvme2n1"
+    restart: unless-stopped

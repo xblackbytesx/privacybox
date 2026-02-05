@@ -30,19 +30,10 @@ services:
       - qbittorrent-config:/config
       - qbittorrent-downloads:/downloads
       - /etc/localtime:/etc/localtime:ro
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.qbittorrent-secure.entrypoints=websecure
-      - traefik.http.routers.qbittorrent-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.qbittorrent-secure.tls=true
-      - traefik.http.routers.qbittorrent-secure.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.routers.qbittorrent-secure.service=qbittorrent
-      - traefik.http.routers.qbittorrent-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.qbittorrent.loadbalancer.server.port=${WEBUI_PORT}
-    networks:
-      - proxy
-    ports:
-      - ${WEBUI_PORT}:8080
-      - 6881:6881
-      - 6881:6881/udp
+    network_mode: "container:gluetun"
+    # Ports exposed on the Gluetun side instead
+    # ports:
+    #   - 8486:8080
+    #   - 6881:6881
+    #   - 6881:6881/udp
     restart: unless-stopped

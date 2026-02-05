@@ -1,0 +1,36 @@
+name: slskd
+
+volumes:
+  slskd-app:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/slskd/app
+  slskd-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/slskd/data
+
+services:
+  slskd-app:
+    container_name: slskd-app
+    image: slskd/slskd
+    security_opt:
+      - no-new-privileges:true
+    user: ${PUID}:${PGID}
+    environment:
+      - TZ=${TIMEZONE}
+      - SLSKD_REMOTE_CONFIGURATION=true
+    volumes:
+      - slskd-app:/app
+      - slskd-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: "container:gluetun"
+    # Ports exposed on the Gluetun side instead
+    # ports:
+    #   - "5030:5030"
+    #   - "50300:50300"
+    restart: unless-stopped

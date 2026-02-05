@@ -23,6 +23,8 @@ services:
   slskd-app:
     container_name: slskd-app
     image: slskd/slskd
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "50300:50300"
     user: ${PUID}:${PGID}
@@ -32,6 +34,7 @@ services:
     volumes:
       - slskd-app:/app
       - slskd-data:/data
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - proxy
     labels:
@@ -43,4 +46,4 @@ services:
       - traefik.http.routers.slskd-app-secure.service=slskd-app
       - traefik.http.routers.slskd-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.slskd-app.loadbalancer.server.port=5030
-    restart: always
+    restart: unless-stopped
