@@ -1,0 +1,50 @@
+name: llamacpp
+
+volumes:
+  llamacpp-models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/llamacpp/models
+
+services:
+  llamacpp:
+    container_name: llamacpp
+    image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+    security_opt:
+      - no-new-privileges:true
+      - label:disable
+    ipc: host
+    shm_size: 4g
+    volumes:
+      - llamacpp-models:/models
+      - /etc/localtime:/etc/localtime:ro
+    devices:
+      - /dev/dri:/dev/dri
+    # environment:
+    #   - VK_LOADER_DEBUG=error
+    ports:
+      - "11435:8080"
+    command:
+      [
+        "-m",
+        "/models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8080",
+        "-ngl",
+        "99",
+        "-c",
+        "8192",
+        "-b",
+        "512",
+        "--no-mmap",
+      ]
+    deploy:
+      resources:
+        limits:
+          cpus: "10.0"
+          memory: 32G
+    restart: unless-stopped

@@ -31,6 +31,10 @@ services:
       - "9696:9696"
       # FlareSolverr API
       - "8191:8191"
+      # Slskd WebUI
+      - "5030:5030"
+      # Slskd connection ports
+      - "50300:50300"
     environment:
       # === VPN Provider ===
       - VPN_SERVICE_PROVIDER=${VPN_PROVIDER}
@@ -59,10 +63,7 @@ services:
       - HEALTH_VPN_DURATION_INITIAL=30s
       - HEALTH_VPN_DURATION_ADDITION=10s
 
-      # === Logging ===
       - LOG_LEVEL=info
-
-      # === Timezone ===
       - TZ=${TIMEZONE}
 
       # === Port Forwarding (Optional - if VPN Provider supports it) ===

@@ -37,6 +37,11 @@ services:
       - PGID=${PGID}
       - TZ=Europe/Amsterdam
       - JELLYFIN_PublishedServerUrl=https://${SUBDOMAIN}.${DOMAIN}
+      # # Enable Intel Arc OpenCL drivers for HDR Tone Mapping
+      # - DOCKER_MODS=linuxserver/mods:jellyfin-opencl-intel
+      # # Force use of Level Zero driver for Arc
+      # - ONEAPI_DEVICE_SELECTOR=level_zero:0
+
     volumes:
       - jellyfin-config:/config
       - jellyfin-series-dir:/data/tvshows
@@ -49,7 +54,7 @@ services:
       - 8096:8096
       - 7359:7359/udp #optional
       # - 1900:1900/udp #optional
-    # Optional devices for HW Acceleration
-    devices:
-      - /dev/dri:/dev/dri
+    # # Optional GPU devices for HW Acceleration
+    # devices:
+    #   - /dev/dri:/dev/dri
     restart: unless-stopped
