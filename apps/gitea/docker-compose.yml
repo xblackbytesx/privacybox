@@ -112,11 +112,12 @@ services:
     depends_on:
       - gitea-app
     environment:
-      - GITEA_INSTANCE_URL=http://gitea-app:3000
+      - GITEA_INSTANCE_URL=https://${SUBDOMAIN}.${DOMAIN}
       - GITEA_RUNNER_REGISTRATION_TOKEN=${GITEA_RUNNER_TOKEN}
       - GITEA_RUNNER_NAME=docker-runner
     networks:
       - internal
+      - proxy
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
