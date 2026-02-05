@@ -20,6 +20,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/gitea/data
+  gitea-runner-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/gitea/runner
 
 services:
   gitea-db:
@@ -75,6 +81,9 @@ services:
       - GITEA__mailer__SMTP_PORT=${SMTP_PORT}
       - GITEA__mailer__USER=${SMTP_USER}
       - GITEA__mailer__PASSWD=${SMTP_PASS}
+      # Enable Gitea Actions
+      - GITEA__actions__ENABLED=true
+      - GITEA__actions__DEFAULT_ACTIONS_URL=github
     labels:
       - traefik.enable=true
       - traefik.http.routers.gitea-app-secure.entrypoints=websecure
@@ -89,4 +98,25 @@ services:
       - internal
     ports:
       - "222:22"
+    restart: unless-stopped
+
+  gitea-runner:
+    container_name: gitea-runner
+    image: gitea/act_runner:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - gitea-runner-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - gitea-app
+    environment:
+      - GITEA_INSTANCE_URL=http://gitea-app:3000
+      - GITEA_RUNNER_REGISTRATION_TOKEN=${GITEA_RUNNER_TOKEN}
+      - GITEA_RUNNER_NAME=docker-runner
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
     restart: unless-stopped
