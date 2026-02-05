@@ -1,0 +1,76 @@
+name: comfyui
+
+volumes:
+  comfyui-root:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/storage
+  comfyui-models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/model-storage/models
+  comfyui-hf-hub:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/model-storage/hf-hub
+  comfyui-torch-hub:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/model-storage/torch-hub
+  comfyui-input:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/user-storage/input
+  comfyui-output:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/user-storage/output
+  comfyui-workflows:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/user-storage/workflows
+
+services:
+  comfyui:
+    container_name: comfyui-cpu
+    image: yanwk/comfyui-boot:${IMAGE_ARCHITECTURE}
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "8188:8188"
+    environment:
+      - CLI_ARGS=--cpu
+    volumes:
+      - comfyui-root:/root
+      - comfyui-models:/root/ComfyUI/models
+      - comfyui-hf-hub:/root/.cache/huggingface/hub
+      - comfyui-torch-hub:/root/.cache/torch/hub
+      - comfyui-input:/root/ComfyUI/input
+      - comfyui-output:/root/ComfyUI/output
+      - comfyui-workflows:/root/ComfyUI/user/default/workflows
+      - /etc/localtime:/etc/localtime:ro
+
+    deploy:
+      resources:
+        limits:
+          # leave at least 2 threads to ensure your OS processes keep operating normally while generating.
+          cpus: "10.0"
+
+          # 32GB is plenty for almost any current model.
+          # Be sure to leave enough for your OS and potentially your ZFS ARC cache.
+          memory: 32G
+    restart: unless-stopped

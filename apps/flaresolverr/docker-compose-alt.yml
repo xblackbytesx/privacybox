@@ -1,0 +1,20 @@
+name: flaresolverr
+
+services:
+  flaresolverr:
+    container_name: flaresolverr
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=${TIMEZONE}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: "container:gluetun"
+    # Exposed through Gluetun instead
+    # ports:
+    #   - 8191:8191
+    restart: unless-stopped
