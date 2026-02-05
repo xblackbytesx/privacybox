@@ -30,7 +30,7 @@ volumes:
 services:
   zipline-db:
     container_name: zipline-db
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     security_opt:
       - no-new-privileges:true
     environment:
