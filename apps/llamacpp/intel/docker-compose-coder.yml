@@ -1,7 +1,7 @@
-name: llamacpp
+name: llamacpp-coder
 
 volumes:
-  llamacpp-models:
+  llamacpp-coder-models:
     driver: local
     driver_opts:
       type: none
@@ -9,8 +9,8 @@ volumes:
       device: ${DOCKER_ROOT}/llamacpp/models
 
 services:
-  llamacpp:
-    container_name: llamacpp
+  llamacpp-coder:
+    container_name: llamacpp-coder
     image: ghcr.io/ggml-org/llama.cpp:server-vulkan
     security_opt:
       - no-new-privileges:true
@@ -18,29 +18,34 @@ services:
     ipc: host
     shm_size: 4g
     volumes:
-      - llamacpp-models:/models
+      - llamacpp-coder-models:/models
       - /etc/localtime:/etc/localtime:ro
     devices:
       - /dev/dri:/dev/dri
     # environment:
     #   - VK_LOADER_DEBUG=error
     ports:
-      - "11435:8080"
-    command:
-      [
+      - "11436:8080"
+    command: [
         "-m",
-        "/models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
+        "/models/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
         "--host",
         "0.0.0.0",
         "--port",
         "8080",
         "-ngl",
-        "99",
+        "40",
+        # Unload model after 300 seconds (5 minutes) of inactivity
+        "--timeout",
+        "300",
         "-c",
         "8192",
         "-b",
         "512",
+        # --no-mmap can help with stability on Vulkan
         "--no-mmap",
+        "-fa",
+        "off",
       ]
     deploy:
       resources:
