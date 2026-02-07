@@ -1,0 +1,132 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    error_log /dev/stderr warn;
+    access_log /dev/stdout combined;
+
+    # Global settings
+    proxy_buffering off;
+    proxy_request_buffering off;
+    client_max_body_size 100M;
+
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
+    }
+
+    # Example: forward your local Ollama instance
+    server {
+        listen 11434;
+        server_name localhost;
+
+        location / {
+	    proxy_pass http://10.0.221.7:11434;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_http_version 1.1;
+
+            # LLM-appropriate timeouts
+            proxy_connect_timeout 300s;    # 5 minutes
+            proxy_send_timeout 600s;       # 10 minutes
+            proxy_read_timeout 1800s;      # 30 minutes
+
+            # Streaming support
+            proxy_cache off;
+        }
+
+        location /health {
+            access_log off;
+            return 200 "nginx proxy healthy\n";
+            add_header Content-Type text/plain;
+        }
+    }
+
+    # Example: forward your local llama.cpp (generalist) instance
+    server {
+        listen 11435;
+        server_name localhost;
+
+        location / {
+	    proxy_pass http://10.0.221.7:11435;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_http_version 1.1;
+
+            # LLM-appropriate timeouts
+            proxy_connect_timeout 300s;    # 5 minutes
+            proxy_send_timeout 600s;       # 10 minutes
+            proxy_read_timeout 1800s;      # 30 minutes
+
+            # Streaming support
+            proxy_cache off;
+        }
+
+        location /health {
+            access_log off;
+            return 200 "nginx proxy healthy\n";
+            add_header Content-Type text/plain;
+        }
+    }
+
+    # Example: forward your local llama.cpp (coder) instance
+    server {
+        listen 11436;
+        server_name localhost;
+
+        location / {
+	    proxy_pass http://10.0.221.7:11436;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_http_version 1.1;
+
+            # LLM-appropriate timeouts
+            proxy_connect_timeout 300s;    # 5 minutes
+            proxy_send_timeout 600s;       # 10 minutes
+            proxy_read_timeout 1800s;      # 30 minutes
+
+            # Streaming support
+            proxy_cache off;
+        }
+
+        location /health {
+            access_log off;
+            return 200 "nginx proxy healthy\n";
+            add_header Content-Type text/plain;
+        }
+    }
+
+    # Example: forward your local ComfyUI instance
+    server {
+        listen 8188;
+        server_name localhost;
+
+        location / {
+            proxy_pass http://10.0.221.7:8188;
+
+            # Standard Headers
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+            # Critical websocket support
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+
+            # ComfyUI needs long timeouts for big generations
+            proxy_read_timeout 1800s;
+            proxy_send_timeout 1800s;
+
+            # Disable buffering so progress bars work smoothly
+            proxy_cache off;
+        }
+    }
+}
