@@ -16,6 +16,7 @@ apps/synapse/well-known
 apps/bluesky-pds/admin-tools
 apps/lemmy/lemmy.hjson
 apps/synapse/element-call-config.json
+apps/gluetun/nginx-custom-proxy.conf
 **/update-jellyfin.sh
 **/redis
 logs

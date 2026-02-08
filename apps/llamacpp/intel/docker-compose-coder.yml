@@ -26,26 +26,49 @@ services:
     #   - VK_LOADER_DEBUG=error
     ports:
       - "11436:8080"
+    # # Smarter but slower model
+    # command: [
+    #     "-m",
+    #     "/models/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+    #     "--host",
+    #     "0.0.0.0",
+    #     "--port",
+    #     "8080",
+    #     "-ngl",
+    #     "40",
+    #     # Unload model after 300 seconds (5 minutes) of inactivity
+    #     "--timeout",
+    #     "300",
+    #     "-c",
+    #     "8192",
+    #     "-b",
+    #     "512",
+    #     # --no-mmap can help with stability on Vulkan
+    #     "--no-mmap",
+    #     "-fa",
+    #     "off",
+    #   ]
+    # Slightly dumber but super fast model
     command: [
         "-m",
-        "/models/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+        "/models/Qwen2.5.1-Coder-7B-Instruct-Q6_K.gguf",
         "--host",
         "0.0.0.0",
         "--port",
         "8080",
         "-ngl",
-        "40",
+        "99",
         # Unload model after 300 seconds (5 minutes) of inactivity
         "--timeout",
         "300",
         "-c",
-        "8192",
+        "16384",
         "-b",
-        "512",
+        "2048",
         # --no-mmap can help with stability on Vulkan
         "--no-mmap",
         "-fa",
-        "off",
+        "on",
       ]
     deploy:
       resources:
