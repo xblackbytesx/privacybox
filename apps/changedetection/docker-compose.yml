@@ -4,6 +4,8 @@ networks:
   proxy:
     name: proxy
     external: true
+  internal:
+    internal: true
 
 volumes:
   changedetection-config:
@@ -14,8 +16,28 @@ volumes:
       device: ${DOCKER_ROOT}/changedetection/config
 
 services:
-  changedetection:
-    container_name: changedetection
+  changedetection-sockpuppet:
+    container_name: changedetection-sockpuppet
+    image: dgtlmoon/sockpuppetbrowser:latest
+    security_opt:
+      - no-new-privileges:true
+    hostname: browser-sockpuppet-chrome
+    # cap_add:
+    #     - SYS_ADMIN # See if absolutely neccesary https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#running-puppeteer-on-gitlabci
+    environment:
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1024
+      - SCREEN_DEPTH=16
+      - MAX_CONCURRENT_CHROME_PROCESSES=10
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped
+
+  changedetection-app:
+    container_name: changedetection-app
     image: lscr.io/linuxserver/changedetection.io:latest
     security_opt:
       - no-new-privileges:true
@@ -25,10 +47,13 @@ services:
       - TZ=${TIMEZONE}
       - UMASK_SET=022 #optional
       - BASE_URL= https://${SUBDOMAIN}.${DOMAIN}
-      # - PLAYWRIGHT_DRIVER_URL= #optional
+      - PLAYWRIGHT_DRIVER_URL=ws://changedetection-sockpuppet:3000
     volumes:
       - changedetection-config:/config
       - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      changedetection-sockpuppet:
+        condition: service_started
     labels:
       - traefik.enable=true
       - traefik.http.routers.changedetection-secure.entrypoints=websecure
@@ -39,5 +64,6 @@ services:
       - traefik.http.routers.changedetection-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.changedetection.loadbalancer.server.port=5000
     networks:
+      - internal
       - proxy
     restart: unless-stopped
