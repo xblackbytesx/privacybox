@@ -8,43 +8,88 @@ networks:
     internal: true
 
 volumes:
-  dawarich-gem-cache:
-  dawarich-shared-data:
+  dawarich-shared:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/dawarich/shared
+
   dawarich-public:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/dawarich/public
+
+  dawarich-watched:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/dawarich/watched
+
+  dawarich-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/dawarich/storage
+
   dawarich-database:
     driver: local
     driver_opts:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/dawarich/database
-  
+
 services:
   dawarich-redis:
     container_name: dawarich-redis
-    image: redis:7.0-alpine
+    image: redis:7.4-alpine
     security_opt:
       - no-new-privileges:true
     command: redis-server
     networks:
       - internal
     volumes:
-      - dawarich-shared-data:/var/shared/redis
+      - dawarich-shared:/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
     restart: unless-stopped
 
   dawarich-db:
     container_name: dawarich-db
-    image: postgres:14-alpine
+    image: postgis/postgis:17-3.5-alpine
+    # image: imresamu/postgis:17-3.5-alpin # If you're on ARM architecture, use this image instead
+    shm_size: 1G
     security_opt:
       - no-new-privileges:true
     volumes:
       - dawarich-database:/var/lib/postgresql/data
-      - dawarich-shared-data:/var/shared
+      - dawarich-shared:/var/shared
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
     environment:
-      POSTGRES_DB: dawarich
-      POSTGRES_USER: dawarich
+      POSTGRES_USER: ${POSTGRES_USER:-dawarich}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-dawarich}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-dawarich} -d ${POSTGRES_DB:-dawarich}",
+        ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
     restart: unless-stopped
 
   dawarich-app:
@@ -53,8 +98,11 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - dawarich-gem-cache:/usr/local/bundle/gems
-      - dawarich-public:/var/app/dawarich-public
+      - dawarich-public:/var/app/public
+      - dawarich-watched:/var/app/tmp/imports/watched
+      - dawarich-storage:/var/app/storage
+      - dawarich-database:/dawarich_db_data
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
       - proxy
@@ -69,49 +117,87 @@ services:
       - traefik.http.services.dawarich-app.loadbalancer.server.port=3000
     stdin_open: true
     tty: true
-    entrypoint: dev-entrypoint.sh
-    command: ['bin/dev']
+    entrypoint: web-entrypoint.sh
+    command: ["bin/rails", "server", "-p", "3000", "-b", "::"]
     environment:
-      RAILS_ENV: development
-      REDIS_URL: redis://dawarich-redis:6379/0
+      RAILS_ENV: ${RAILS_ENV:-development}
+      REDIS_URL: redis://dawarich-redis:6379
       DATABASE_HOST: dawarich-db
-      DATABASE_USERNAME: dawarich
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: ${POSTGRES_USER:-dawarich}
       DATABASE_PASSWORD: ${DB_PASSWORD}
-      DATABASE_NAME: dawarich
-      MIN_MINUTES_SPENT_IN_CITY: 60
-      APPLICATION_HOST: ${SUBDOMAIN}.${DOMAIN}
-      TIME_ZONE: Europe/London
+      DATABASE_NAME: ${POSTGRES_DB:-dawarich}
+      APPLICATION_HOSTS: ${SUBDOMAIN}.${DOMAIN},localhost,::1,127.0.0.1
+      TIME_ZONE: ${TIMEZONE:-Europe/Amsterdam}
+      APPLICATION_PROTOCOL: http
+      SECRET_KEY_BASE: ${SECRET_KEY:-"changeme"}
+      RAILS_LOG_TO_STDOUT: "true"
+      SELF_HOSTED: "true"
+      STORE_GEODATA: "true"
+      DISABLE_TELEMETRY: "true"
     depends_on:
-      - dawarich-db
-      - dawarich-redis
+      dawarich-db:
+        condition: service_healthy
+      dawarich-redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO - http://127.0.0.1:3000/api/v1/health | grep -q '\"status\"\\s*:\\s*\"ok\"'",
+        ]
+      interval: 10s
+      retries: 30
+      start_period: 30s
+      timeout: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: ${APP_CPU_LIMIT:-0.50}
+          memory: ${APP_MEMORY_LIMIT:-4G}
     restart: unless-stopped
 
-  dawarich_sidekiq:
+  dawarich-sidekiq:
     container_name: dawarich-sidekiq
     image: freikin/dawarich:latest
     security_opt:
       - no-new-privileges:true
     volumes:
-      - dawarich-gem-cache:/usr/local/bundle/gems
-      - dawarich-public:/var/app/dawarich-public
+      - dawarich-public:/var/app/public
+      - dawarich-watched:/var/app/tmp/imports/watched
+      - dawarich-storage:/var/app/storage
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
-      - proxy
     stdin_open: true
     tty: true
-    entrypoint: dev-entrypoint.sh
-    command: ['sidekiq']
+    entrypoint: sidekiq-entrypoint.sh
+    command: ["sidekiq"]
     environment:
-      RAILS_ENV: development
-      REDIS_URL: redis://dawarich-redis:6379/0
+      RAILS_ENV: ${RAILS_ENV:-development}
+      REDIS_URL: redis://dawarich-redis:6379
       DATABASE_HOST: dawarich-db
-      DATABASE_USERNAME: dawarich
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: ${POSTGRES_USER:-dawarich}
       DATABASE_PASSWORD: ${DB_PASSWORD}
-      DATABASE_NAME: dawarich
-      APPLICATION_HOST: ${SUBDOMAIN}.${DOMAIN}
-      BACKGROUND_PROCESSING_CONCURRENCY: 10
+      DATABASE_NAME: ${POSTGRES_DB:-dawarich}
+      APPLICATION_HOSTS: ${SUBDOMAIN}.${DOMAIN},localhost,::1,127.0.0.1
+      BACKGROUND_PROCESSING_CONCURRENCY: ${BACKGROUND_PROCESSING_CONCURRENCY:-10}
+      SECRET_KEY_BASE: ${SECRET_KEY:-"changeme"}
+      RAILS_LOG_TO_STDOUT: "true"
+      SELF_HOSTED: "true"
+      STORE_GEODATA: "true"
     depends_on:
-      - dawarich-db
-      - dawarich-redis
-      - dawarich-app
+      dawarich-db:
+        condition: service_healthy
+      dawarich-redis:
+        condition: service_healthy
+      dawarich-app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f sidekiq"]
+      interval: 10s
+      retries: 30
+      start_period: 30s
+      timeout: 10s
     restart: unless-stopped
