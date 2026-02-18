@@ -1,0 +1,46 @@
+name: seerr
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  seerr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/seerr/config
+
+services:
+  seerr-app:
+    container_name: seerr-app
+    image: ghcr.io/seerr-team/seerr:latest
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=${TIMEZONE}
+    volumes:
+      - seerr-config:/app/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.seerr-app-secure.entrypoints=websecure
+      - traefik.http.routers.seerr-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.seerr-app-secure.tls=true
+      - traefik.http.routers.seerr-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.seerr-app-secure.service=seerr-app
+      - traefik.http.routers.seerr-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.seerr-app.loadbalancer.server.port=5055
+    networks:
+      - proxy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped

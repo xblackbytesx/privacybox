@@ -1,0 +1,33 @@
+name: seerr
+
+volumes:
+  seerr-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/seerr/config
+
+services:
+  seerr-app:
+    container_name: seerr-app
+    image: ghcr.io/seerr-team/seerr:latest
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=${TIMEZONE}
+      # - PORT=5055
+    ports:
+      - 5055:5055
+    volumes:
+      - seerr-config:/app/config
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
