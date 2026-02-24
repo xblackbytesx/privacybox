@@ -35,6 +35,11 @@ services:
       - "5030:5030"
       # Slskd connection ports
       - "50300:50300"
+      # Bitmagnet WebUI
+      - "3333:3333"
+      # Bitmagnet torrent ports:
+      - "3334:3334/tcp"
+      - "3334:3334/udp"
     environment:
       # === VPN Provider ===
       - VPN_SERVICE_PROVIDER=${VPN_PROVIDER}
