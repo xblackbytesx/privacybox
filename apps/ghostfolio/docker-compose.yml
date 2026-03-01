@@ -1,0 +1,101 @@
+name: ghostfolio
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  ghostfolio-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/ghostfolio/database/
+
+services:
+  ghostfolio-app:
+    container_name: ghostfolio-app
+    image: docker.io/ghostfolio/ghostfolio:latest
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    cap_drop:
+      - ALL
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ghostfolio-app-secure.entrypoints=websecure
+      - traefik.http.routers.ghostfolio-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.ghostfolio-app-secure.tls=true
+      - traefik.http.routers.ghostfolio-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.ghostfolio-app-secure.service=ghostfolio-app
+      - traefik.http.routers.ghostfolio-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.ghostfolio-app.loadbalancer.server.port=3333
+    depends_on:
+      ghostfolio-db:
+        condition: service_healthy
+      ghostfolio-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3333/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  ghostfolio-db:
+    container_name: ghostfolio-db
+    image: docker.io/library/postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - FOWNER
+      - SETGID
+      - SETUID
+    volumes:
+      - ghostfolio-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    healthcheck:
+      test:
+        ["CMD-SHELL", 'pg_isready -d "$${POSTGRES_DB}" -U $${POSTGRES_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  ghostfolio-redis:
+    container_name: ghostfolio-redis
+    image: docker.io/library/redis:alpine
+    security_opt:
+      - no-new-privileges:true
+    user: "999:1000"
+    cap_drop:
+      - ALL
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}"
+    healthcheck:
+      test:
+        ["CMD-SHELL", 'redis-cli --pass "$${REDIS_PASSWORD}" ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
