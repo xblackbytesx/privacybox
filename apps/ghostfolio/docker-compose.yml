@@ -21,6 +21,8 @@ services:
     image: docker.io/ghostfolio/ghostfolio:latest
     security_opt:
       - no-new-privileges:true
+    env_file:
+      - ./.env
     init: true
     cap_drop:
       - ALL
@@ -55,6 +57,8 @@ services:
     image: docker.io/library/postgres:17-alpine
     security_opt:
       - no-new-privileges:true
+    env_file:
+      - ./.env
     cap_drop:
       - ALL
     cap_add:
@@ -81,6 +85,8 @@ services:
     image: docker.io/library/redis:alpine
     security_opt:
       - no-new-privileges:true
+    env_file:
+      - ./.env
     user: "999:1000"
     cap_drop:
       - ALL
