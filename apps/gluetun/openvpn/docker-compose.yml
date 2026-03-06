@@ -71,6 +71,9 @@ services:
       - LOG_LEVEL=info
       - TZ=${TIMEZONE}
 
+      # === Update server lists ===
+      - UPDATER_PERIOD=24h
+
       # === Port Forwarding (Optional - if VPN Provider supports it) ===
       # - VPN_PORT_FORWARDING=on
       # - VPN_PORT_FORWARDING_PROVIDER=protonvpn
