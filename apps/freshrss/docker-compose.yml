@@ -24,27 +24,37 @@ volumes:
 services:
   freshrss-db:
     container_name: freshrss-db
-    image: mariadb:latest
+    hostname: freshrss-db
+    image: postgres:18-alpine
     security_opt:
       - no-new-privileges:true
     networks:
       - internal
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
-    environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=freshrss
-      - MYSQL_USER=freshrss
-      - MYSQL_PASSWORD=${DB_USER_PASS}
+    logging:
+      options:
+        max-size: 10m
     volumes:
-      - freshrss-database:/var/lib/mysql
+      - freshrss-database:/var/lib/postgresql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
+    environment:
+      POSTGRES_DB: freshrss
+      POSTGRES_USER: freshrss
+      POSTGRES_PASSWORD: ${DB_PASS}
+    command:
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - work_mem=32MB
     healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      timeout: 20s
-      interval: 15s
-      retries: 30
+      test:
+        - CMD-SHELL
+        - pg_isready -U freshrss -d freshrss
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   freshrss-app:
@@ -69,11 +79,9 @@ services:
       - traefik.http.routers.freshrss-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.freshrss-app.loadbalancer.server.port=80
     depends_on:
-      - freshrss-db
-    networks: 
+      freshrss-db:
+        condition: service_healthy
+    networks:
       - internal
       - proxy
-    # # Used for SSH remoteForward
-    # ports:
-    #   - 4007:80
     restart: unless-stopped
