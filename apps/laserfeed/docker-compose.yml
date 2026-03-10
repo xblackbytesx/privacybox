@@ -1,0 +1,70 @@
+name: laserfeed
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  laserfeed-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/laserfeed/database
+
+services:
+  laserfeed-db:
+    container_name: laserfeed-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    environment:
+      POSTGRES_USER: laserfeed
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: laserfeed
+    volumes:
+      - laserfeed-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laserfeed"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  laserfeed-app:
+    container_name: laserfeed-app
+    image: ghcr.io/xblackbytesx/laserfeed:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+      - proxy
+    environment:
+      DATABASE_URL: postgres://laserfeed:${DB_PASSWORD}@laserfeed-db:5432/laserfeed?sslmode=disable
+      CSRF_AUTH_KEY: ${CSRF_AUTH_KEY}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      PORT: "8080"
+      SECURE_COOKIES: ${SECURE_COOKIES:-true}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.laserfeed-app-secure.entrypoints=websecure
+      - traefik.http.routers.laserfeed-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.laserfeed-app-secure.tls=true
+      - traefik.http.routers.laserfeed-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.laserfeed-app-secure.service=laserfeed-app
+      - traefik.http.routers.laserfeed-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.laserfeed-app.loadbalancer.server.port=8080
+    depends_on:
+      laserfeed-db:
+        condition: service_healthy
+    restart: unless-stopped
+
