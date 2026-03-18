@@ -37,6 +37,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   laserfeed-app:
     container_name: laserfeed-app
@@ -67,4 +68,3 @@ services:
       laserfeed-db:
         condition: service_healthy
     restart: unless-stopped
-

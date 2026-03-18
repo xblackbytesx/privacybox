@@ -1,0 +1,77 @@
+name: tabidachi
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  tabidachi-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/tabidachi/database
+  tabidachi-uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/tabidachi/uploads
+
+services:
+  tabidachi-db:
+    container_name: tabidachi-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    environment:
+      POSTGRES_USER: tabidachi
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: tabidachi
+    volumes:
+      - tabidachi-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tabidachi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  tabidachi-app:
+    container_name: tabidachi-app
+    image: ghcr.io/xblackbytesx/tabidachi:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+      - proxy
+    environment:
+      DATABASE_URL: postgres://tabidachi:${DB_PASSWORD}@tabidachi-db:5432/tabidachi?sslmode=disable
+      CSRF_AUTH_KEY: ${CSRF_AUTH_KEY}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      PORT: "8080"
+      SECURE_COOKIES: ${SECURE_COOKIES:-true}
+    volumes:
+      - tabidachi-uploads:/app/data/uploads
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.tabidachi-app-secure.entrypoints=websecure
+      - traefik.http.routers.tabidachi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.tabidachi-app-secure.tls=true
+      - traefik.http.routers.tabidachi-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.tabidachi-app-secure.service=tabidachi-app
+      - traefik.http.routers.tabidachi-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.tabidachi-app.loadbalancer.server.port=8080
+    depends_on:
+      tabidachi-db:
+        condition: service_healthy
+    restart: unless-stopped
