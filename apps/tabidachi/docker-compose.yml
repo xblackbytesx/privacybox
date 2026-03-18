@@ -55,10 +55,13 @@ services:
       - proxy
     environment:
       DATABASE_URL: postgres://tabidachi:${DB_PASSWORD}@tabidachi-db:5432/tabidachi?sslmode=disable
+      SESSION_SECRET: ${SESSION_SECRET}
       CSRF_AUTH_KEY: ${CSRF_AUTH_KEY}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
       PORT: "8080"
       SECURE_COOKIES: ${SECURE_COOKIES:-true}
+      PEXELS_API_KEY: ${PEXELS_API_KEY:-}
+      UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY:-}
     volumes:
       - tabidachi-uploads:/app/data/uploads
       - /etc/localtime:/etc/localtime:ro
@@ -68,7 +71,7 @@ services:
       - traefik.http.routers.tabidachi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.tabidachi-app-secure.tls=true
       - traefik.http.routers.tabidachi-app-secure.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.routers.tabidachi-app-secure.service=tabidachi-app
+      - traefik.http.routers# generate using `openssl rand -base64 32`.tabidachi-app-secure.service=tabidachi-app
       - traefik.http.routers.tabidachi-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.tabidachi-app.loadbalancer.server.port=8080
     depends_on:
