@@ -71,7 +71,7 @@ services:
       - traefik.http.routers.tabidachi-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.tabidachi-app-secure.tls=true
       - traefik.http.routers.tabidachi-app-secure.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.routers# generate using `openssl rand -base64 32`.tabidachi-app-secure.service=tabidachi-app
+      - traefik.http.routers.tabidachi-app-secure.service=tabidachi-app
       - traefik.http.routers.tabidachi-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.tabidachi-app.loadbalancer.server.port=8080
     depends_on:
