@@ -1,0 +1,39 @@
+name: opencode
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  opencode-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/opencode/config
+
+  opencode-workspace:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/opencode/workspace
+
+services:
+  opencode:
+    container_name: opencode
+    image: ghcr.io/anomalyco/opencode:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - opencode-config:/config
+      - opencode-workspace:/workspace
+      - /etc/localtime:/etc/localtime:ro
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
