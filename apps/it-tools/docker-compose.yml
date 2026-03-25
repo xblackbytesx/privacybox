@@ -25,11 +25,7 @@ services:
       - traefik.http.routers.it-tools-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.it-tools.loadbalancer.server.port=80
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --quiet --spider http://localhost:${APP_PORT} || exit 1",
-        ]
+      test: ["CMD-SHELL", "wget --quiet --spider http://localhost:80 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
