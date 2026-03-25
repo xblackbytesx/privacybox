@@ -1,0 +1,41 @@
+name: gost
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+services:
+  gost:
+    container_name: gost
+    image: gogost/gost:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      # TCP instead of HTTP
+      - "traefik.tcp.routers.gost-secure.entrypoints=websecure"
+      # TCP routers with TLS require HostSNI instead of Host
+      - "traefik.tcp.routers.gost-secure.rule=HostSNI(`${SUBDOMAIN}.${DOMAIN}`)"
+      - "traefik.tcp.routers.gost-secure.tls=true"
+      - "traefik.tcp.routers.gost-secure.tls.certresolver=${CERT_RESOLVER}"
+      - "traefik.tcp.routers.gost-secure.service=gost"
+      - "traefik.tcp.services.gost.loadbalancer.server.port=${PROXY_PORT}"
+    command:
+      - "-L=http://${PROXY_USER}:${PROXY_PASS}@:${PROXY_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 ${PROXY_PORT} || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE}"
+        max-file: "${LOG_MAX_FILE}"
+    restart: unless-stopped
