@@ -1,0 +1,37 @@
+name: it-tools
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+services:
+  it-tools:
+    container_name: it-tools
+    image: ghcr.io/corentinth/it-tools:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.it-tools-secure.entrypoints=websecure
+      - traefik.http.routers.it-tools-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.it-tools-secure.tls=true
+      - traefik.http.routers.it-tools-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.it-tools-secure.service=it-tools
+      - traefik.http.routers.it-tools-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.it-tools.loadbalancer.server.port=80
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --spider http://localhost:${APP_PORT} || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
