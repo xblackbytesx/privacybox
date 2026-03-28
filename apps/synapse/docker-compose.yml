@@ -32,6 +32,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/synapse/coturn
+  synapse-redis:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/synapse/redis
 
 services:
   synapse-db:
@@ -43,10 +49,10 @@ services:
       - synapse-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
     environment:
-        - POSTGRES_USER=synapse
-        - POSTGRES_PASSWORD=${DB_USER_PASS}
-        - POSTGRES_DB=synapse
-        - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_DB=synapse
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     networks:
       - internal
     healthcheck:
@@ -63,12 +69,12 @@ services:
       - no-new-privileges:true
     command: redis-server --save 60 1 --loglevel warning
     volumes:
-      - ./redis:/data
+      - synapse-redis:/data
       - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
     restart: unless-stopped
 
   synapse-coturn:
@@ -76,24 +82,25 @@ services:
     image: coturn/coturn:edge-alpine
     security_opt:
       - no-new-privileges:true
-    network_mode: host  # Required for TURN server to work properly
+    network_mode: host # Required for TURN server to work properly
     volumes:
       - synapse-coturn:/etc/coturn
       - /etc/localtime:/etc/localtime:ro
-    command: [
-      "-n",
-      "--log-file=stdout",
-      "--external-ip=${EXTERNAL_IP}",
-      "--realm=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}",
-      "--listening-port=3478",
-      "--min-port=49152",
-      "--max-port=49252",
-      "--use-auth-secret",
-      "--static-auth-secret=${TURN_SECRET}",
-      "--no-tcp",
-      "--no-tls",
-      "--no-dtls"
-    ]
+    command:
+      [
+        "-n",
+        "--log-file=stdout",
+        "--external-ip=${EXTERNAL_IP}",
+        "--realm=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}",
+        "--listening-port=3478",
+        "--min-port=49152",
+        "--max-port=49252",
+        "--use-auth-secret",
+        "--static-auth-secret=${TURN_SECRET}",
+        "--no-tcp",
+        "--no-tls",
+        "--no-dtls",
+      ]
     restart: unless-stopped
 
   synapse-well-known:
@@ -103,19 +110,20 @@ services:
       - no-new-privileges:true
     volumes:
       - ./well-known:/usr/share/nginx/html/.well-known
+      - ./well-known/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
       - proxy
       - internal
     labels:
-        - traefik.enable=true
-        - traefik.http.routers.synapse-well-known-secure.entrypoints=websecure
-        - traefik.http.routers.synapse-well-known-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && PathPrefix(`/.well-known`)
-        - traefik.http.routers.synapse-well-known-secure.tls=true
-        - traefik.http.routers.synapse-well-known-secure.tls.certresolver=${CERT_RESOLVER}
-        - traefik.http.routers.synapse-well-known-secure.service=synapse-well-known
-        - traefik.http.routers.synapse-well-known-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-        - traefik.http.services.synapse-well-known.loadbalancer.server.port=80
+      - traefik.enable=true
+      - traefik.http.routers.synapse-well-known-secure.entrypoints=websecure
+      - traefik.http.routers.synapse-well-known-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && PathPrefix(`/.well-known`)
+      - traefik.http.routers.synapse-well-known-secure.tls=true
+      - traefik.http.routers.synapse-well-known-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.synapse-well-known-secure.service=synapse-well-known
+      - traefik.http.routers.synapse-well-known-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.synapse-well-known.loadbalancer.server.port=80
     restart: unless-stopped
 
   # # This part needs more testing but it's a work in progress
@@ -144,6 +152,64 @@ services:
   #     - traefik.http.routers.element-call-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
   #     - traefik.http.services.element-call.loadbalancer.server.port=8080
   #   restart: unless-stopped
+
+  synapse-livekit:
+    container_name: synapse-livekit
+    image: livekit/livekit-server:latest
+    security_opt:
+      - no-new-privileges:true
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "7881:7881/tcp" # WebRTC control (direct — not via Traefik)
+      - "51000-52000:51000-52000/udp" # Media relay (must bypass Traefik — UDP)
+    networks:
+      - proxy
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.synapse-livekit-secure.entrypoints=websecure
+      - traefik.http.routers.synapse-livekit-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && PathPrefix(`/livekit/sfu`)
+      - traefik.http.routers.synapse-livekit-secure.tls=true
+      - traefik.http.routers.synapse-livekit-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.synapse-livekit-secure.service=synapse-livekit-svc
+      - traefik.http.middlewares.synapse-livekit-strip.stripprefix.prefixes=/livekit/sfu
+      - traefik.http.routers.synapse-livekit-secure.middlewares=https-redirect@file,secure-headers@file,synapse-livekit-strip
+      - traefik.http.services.synapse-livekit-svc.loadbalancer.server.port=7880
+    restart: unless-stopped
+
+  synapse-lk-jwt:
+    container_name: synapse-lk-jwt
+    image: ghcr.io/element-hq/lk-jwt-service:latest
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - LIVEKIT_URL=wss://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}/livekit/sfu
+      - LIVEKIT_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_SECRET=${LIVEKIT_API_SECRET}
+      - LIVEKIT_JWT_BIND=0.0.0.0:8080
+      - LIVEKIT_FULL_ACCESS_HOMESERVERS=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      synapse-livekit:
+        condition: service_started
+    networks:
+      - proxy
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.synapse-lk-jwt-secure.entrypoints=websecure
+      - traefik.http.routers.synapse-lk-jwt-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && PathPrefix(`/livekit/jwt`)
+      - traefik.http.routers.synapse-lk-jwt-secure.tls=true
+      - traefik.http.routers.synapse-lk-jwt-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.synapse-lk-jwt-secure.service=synapse-lk-jwt-svc
+      - traefik.http.middlewares.synapse-lk-jwt-strip.stripprefix.prefixes=/livekit/jwt
+      - traefik.http.routers.synapse-lk-jwt-secure.middlewares=https-redirect@file,secure-headers@file,gzip-compress@file,synapse-lk-jwt-strip
+      - traefik.http.services.synapse-lk-jwt-svc.loadbalancer.server.port=8080
+    restart: unless-stopped
 
   synapse-app:
     container_name: synapse-app
