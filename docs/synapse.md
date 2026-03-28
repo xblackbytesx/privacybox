@@ -17,12 +17,34 @@ sudo vim /media/storage/docker/synapse/data/homeserver.yml
 
 Keep all the generated keys and tokens but replace most of the config with the one found in `homeserver.example.yml`.
 
-## DNS Settings
-| Name                             | TTL | TYPE | VALUE                          |
-|----------------------------------|-----|------|--------------------------------|
-| synapse.privacy.box              |     | A    | <ipv4>                         |
-| mas.synapse.privacy.box          |     | A    | <ipv4>                         |
-| _matrix._tcp.synapse.privacy.box |     | SRV  | 10 5 8448 synapse.privacy.box. |
+# DNS & Firewall Configuration
+
+Replace `matrix.example.com` with your actual domain.
+
+## DNS Records
+
+| Hostname | Type | Value |
+|----------|------|-------|
+| `matrix.example.com` | A | `<your-server-ip>` |
+| `matrix.example.com` | AAAA | `<your-ipv6>` *(if applicable)* |
+
+## Firewall Inbound Rules
+
+| Port | Protocol | Service |
+|------|----------|---------|
+| 80 | TCP | Traefik HTTP→HTTPS redirect |
+| 443 | TCP | Traefik HTTPS (Synapse, well-known, LiveKit WS, lk-jwt) |
+| 3478 | UDP | coturn TURN relay |
+| 49152–49252 | UDP | coturn media relay |
+| 7881 | TCP | LiveKit WebRTC control |
+| 51000–52000 | UDP | LiveKit media relay |
+
+## Notes
+
+- All HTTPS traffic routes through port 443 via Traefik — no extra ports needed for Synapse or the LiveKit/JWT services.
+- Ports 51000–52000 UDP and 7881 TCP go directly to the LiveKit container, bypassing Traefik (Traefik cannot proxy UDP, and 7881 is a direct TCP fallback path for WebRTC).
+- Ports 3478 UDP and 49152–49252 UDP go directly to the host — coturn runs with `network_mode: host` so no Docker port mapping is needed, just open them in your firewall.
+- No SRV record is needed. Federation is handled by `/.well-known/matrix/server`.
 
 ## Create users (including admin)
 ```

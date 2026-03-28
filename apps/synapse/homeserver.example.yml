@@ -9,7 +9,7 @@
 # For more information on how to configure Synapse, including a complete accounting of
 # each option, go to docs/usage/configuration/config_documentation.md or
 # https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html
-server_name: "synapse.privacy.box"
+server_name: "matrix.privacy.box"
 pid_file: /data/homeserver.pid
 listeners:
   - port: 8008
@@ -26,30 +26,29 @@ redis:
   host: synapse-redis
   port: 6379
 
-# Element Call configuration
+# Enable native MatrixRTC support (MSC4143)
+matrix_rtc:
+  enabled: true
+
+# Element Call / MatrixRTC configuration
 experimental_features:
-  msc3266_enabled: true  # Room summary API
-  msc3401_enabled: true  # Native Group VoIP signaling
-  msc3779_enabled: true
-  msc3912_enabled: true
+  msc3266_enabled: true
+  msc4222_enabled: true
 
 # Widget configuration for Element Call
 app_service_config_files: []
 
-# Allow Element Call domain
 content_repository:
-  url_preview_enabled: true
   url_preview_url_blacklist: []
 
 # Turn server configuration
-turn_uris: ["turn:synapse.privacy.box:3478?transport=udp"]
+turn_uris: ["turn:matrix.privacy.box:3478?transport=udp"]
 turn_shared_secret: "secret"
 turn_user_lifetime: 86400000
 turn_allow_guests: true
 
 # Cache configuration
-cache:
-  enabled: true
+caches:
   sync_response_cache_duration: 2m
   cache_factors:
     presence: 0.1
@@ -63,17 +62,19 @@ database:
     database: synapse
     host: synapse-db
     cp_min: 10
-    cp_max: 20
+    cp_max: 300
 
-# Federation settings
-federation_domain_whitelist:
-  - matrix.org
-  - vector.im
+# # Federation settings
+# federation_domain_whitelist:
+#   - matrix.org
+#   - vector.im
+
+federation_domain_blacklist:
 
 # Media store path
 media_store_path: /media_store
 
-# # Only uncomment if you plan to host your own identity server
+# # Only uncomment if you plan to host your own identity service
 # experimental_features:
 #   msc3861_enabled: true
 #   msc3861_client_auth:
@@ -82,9 +83,9 @@ media_store_path: /media_store
 #       - "secret"
 
 # Enable registration if you want
-enable_registration: false
+enable_registration: true
 registration_shared_secret: "secret"
-# registration_requires_token: true
+registration_requires_token: true
 
 email:
   enabled: true
@@ -99,27 +100,40 @@ email:
 rc_messages_per_second: 0.2
 rc_message_burst_count: 10.0
 
+# Required for MatrixRTC call cleanup (prevents stuck calls after disconnect)
+max_event_delay_duration: 24h
+rc_delayed_event_mgmt:
+  per_second: 1
+  burst_count: 20
+
+extra_well_known_client_content:
+  org.matrix.msc4143.rtc_foci:
+    - type: livekit
+      livekit_service_url: "https://matrix.privacy.box/livekit/jwt"
+
 # Other recommended settings
 allow_guest_access: false
 url_preview_enabled: true
 url_preview_ip_range_blacklist:
-  - '127.0.0.0/8'
-  - '10.0.0.0/8'
-  - '172.16.0.0/12'
-  - '192.168.0.0/16'
-  - '169.254.0.0/16'
-  - '::1/128'
-  - 'fe80::/64'
-  - 'fc00::/7'
+  - "127.0.0.0/8"
+  - "10.0.0.0/8"
+  - "172.16.0.0/12"
+  - "192.168.0.0/16"
+  - "169.254.0.0/16"
+  - "::1/128"
+  - "fe80::/64"
+  - "fc00::/7"
+  - "::/0"
 max_upload_size: 50M
 
-log_config: "/data/synapse.privacy.box.log.config"
+log_config: "/data/matrix.privacy.box.log.config"
 report_stats: false
 macaroon_secret_key: "secret"
 form_secret: "secret"
-signing_key_path: "/data/synapse.privacy.box.signing.key"
+signing_key_path: "/data/matrix.privacy.box.signing.key"
 trusted_key_servers:
   - server_name: "matrix.org"
 suppress_key_server_warning: true
 
 # vim:ft=yaml
+
