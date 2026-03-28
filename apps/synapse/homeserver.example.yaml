@@ -49,7 +49,6 @@ turn_allow_guests: true
 
 # Cache configuration
 caches:
-  sync_response_cache_duration: 2m
   cache_factors:
     presence: 0.1
 
@@ -136,4 +135,3 @@ trusted_key_servers:
 suppress_key_server_warning: true
 
 # vim:ft=yaml
-
