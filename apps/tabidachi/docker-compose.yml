@@ -62,6 +62,7 @@ services:
       SECURE_COOKIES: ${SECURE_COOKIES:-true}
       PEXELS_API_KEY: ${PEXELS_API_KEY:-}
       UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY:-}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
     volumes:
       - tabidachi-uploads:/app/data/uploads
       - /etc/localtime:/etc/localtime:ro
