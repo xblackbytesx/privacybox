@@ -55,6 +55,10 @@ services:
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     networks:
       - internal
+    deploy:
+      resources:
+        limits:
+          memory: 768M
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "synapse"]
       interval: 10s
@@ -178,6 +182,11 @@ services:
       - traefik.http.middlewares.synapse-livekit-strip.stripprefix.prefixes=/livekit/sfu
       - traefik.http.routers.synapse-livekit-secure.middlewares=https-redirect@file,secure-headers@file,synapse-livekit-strip
       - traefik.http.services.synapse-livekit-svc.loadbalancer.server.port=7880
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
     restart: unless-stopped
 
   synapse-lk-jwt:
@@ -253,6 +262,10 @@ services:
       - traefik.http.routers.synapse-app-secure.service=synapse-app
       - traefik.http.routers.synapse-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.synapse-app.loadbalancer.server.port=8008
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
     restart: unless-stopped
 
   # # Only uncomment if you plan to host your own authentication server (not well tested)
