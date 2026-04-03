@@ -31,7 +31,7 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - opencode-config:/config
+      - opencode-config:/root/.local/share/opencode
       - opencode-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
     stdin_open: true
