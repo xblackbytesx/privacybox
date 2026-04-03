@@ -1,0 +1,22 @@
+# LiveKit SFU configuration for MatrixRTC / Element Call
+# Replace YOUR_LIVEKIT_API_KEY and YOUR_LIVEKIT_API_SECRET with values from your .env
+# Generate with: openssl rand -hex 16 (key) and openssl rand -hex 32 (secret)
+
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 51000
+  port_range_end: 52000
+  use_external_ip: true # Required when behind NAT; LiveKit auto-detects the public IP
+
+keys:
+  YOUR_LIVEKIT_API_KEY: YOUR_LIVEKIT_API_SECRET
+
+room:
+  auto_create: false
+
+logging:
+  json: false
+  level: info
+
