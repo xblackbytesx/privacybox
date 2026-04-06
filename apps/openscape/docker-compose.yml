@@ -1,0 +1,78 @@
+name: openscape
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  openscape-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/openscape/database
+  openscape-uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/openscape/uploads
+
+services:
+  openscape-db:
+    container_name: openscape-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+    environment:
+      POSTGRES_USER: openscape
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: openscape
+    volumes:
+      - openscape-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openscape"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  openscape-app:
+    container_name: openscape-app
+    image: ghcr.io/xblackbytesx/openscape:latest
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+      - proxy
+    environment:
+      DATABASE_URL: postgres://openscape:${DB_PASSWORD}@openscape-db:5432/openscape?sslmode=disable
+      SESSION_SECRET: ${SESSION_SECRET}
+      PORT: "8080"
+      SECURE_COOKIES: ${SECURE_COOKIES:-true}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-100}
+    volumes:
+      - openscape-uploads:/app/data/uploads
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.openscape-app-secure.entrypoints=websecure
+      - traefik.http.routers.openscape-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.openscape-app-secure.tls=true
+      - traefik.http.routers.openscape-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.openscape-app-secure.service=openscape-app
+      - traefik.http.routers.openscape-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.openscape-app.loadbalancer.server.port=8080
+    depends_on:
+      openscape-db:
+        condition: service_healthy
+    restart: unless-stopped
