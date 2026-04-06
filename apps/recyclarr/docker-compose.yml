@@ -11,7 +11,7 @@ volumes:
 services:
   recyclarr:
     container_name: recyclarr
-    image: ghcr.io/recyclarr/recyclarr
+    image: ghcr.io/recyclarr/recyclarr:8
     security_opt:
       - no-new-privileges:true
     user: ${PUID}:${PGID}

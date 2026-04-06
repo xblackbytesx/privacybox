@@ -3,27 +3,22 @@ radarr:
     base_url: !secret radarr_url
     api_key: !secret radarr_apikey
     delete_old_custom_formats: true
-    replace_existing_custom_formats: true
 
-    include:
-      - template: radarr-quality-definition-movie
-
-      # UHD Bluray + WEB
-      - template: radarr-quality-profile-uhd-bluray-web
-      - template: radarr-custom-formats-uhd-bluray-web
-
-      # HD Bluray + WEB
-      - template: radarr-quality-profile-hd-bluray-web
-      - template: radarr-custom-formats-hd-bluray-web
-
-      # Radarr Anime
-      # - template: radarr-quality-profile-anime
-      - template: radarr-custom-formats-anime
+    quality_definition:
+      type: movie
 
     # --------------------------------------------------------
     # MANUAL QUALITY PROFILE DEFINITIONS
     # --------------------------------------------------------
     quality_profiles:
+      # Guide-backed profiles (replaces include: templates)
+      - trash_id: 64fb5f9858489bdac2af690e27c8f42f  # UHD Bluray + WEB
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: d1d67249d3890e49bc12e275d989a7e9  # HD Bluray + WEB
+        reset_unmatched_scores:
+          enabled: true
+
       - name: UHD Anime
         reset_unmatched_scores:
           enabled: false
@@ -251,7 +246,7 @@ radarr:
       - trash_ids:
           - b23eae459cc960816f2d6ba84af45055 # Dubs Only
         assign_scores_to:
-          - name: HD Anime
+          - name: UHD Anime
             score: 0 # Neutral - English dubs acceptable
 
       # ========================================================
@@ -288,7 +283,7 @@ radarr:
       - trash_ids:
           - 4a3b087eea2ce012fcc1ce319259a3be # Anime Dual Audio
         assign_scores_to:
-          - name: UHD Anime
+          - name: HD Anime
             score: 1000
 
       # Dubs Only - Acceptable (neutral score, allowed as fallback)
