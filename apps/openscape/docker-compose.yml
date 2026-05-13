@@ -70,7 +70,9 @@ services:
       - traefik.http.routers.openscape-app-secure.tls=true
       - traefik.http.routers.openscape-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.openscape-app-secure.service=openscape-app
-      - traefik.http.routers.openscape-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.middlewares.openscape-stream.buffering.maxRequestBodyBytes=0
+      - traefik.http.middlewares.openscape-stream.buffering.memRequestBodyBytes=2097152
+      - traefik.http.routers.openscape-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,openscape-stream@docker
       - traefik.http.services.openscape-app.loadbalancer.server.port=8080
     depends_on:
       openscape-db:
