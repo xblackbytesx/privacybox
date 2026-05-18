@@ -1,0 +1,81 @@
+server_url: https://headscale.privacy.box
+listen_addr: 0.0.0.0:8080
+metrics_listen_addr: 127.0.0.1:9090
+
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+derp:
+  # Embedded self-hosted DERP relay. Runs inside the headscale container,
+  # serves DERP over HTTPS at https://${server_url}/derp (routed by Traefik),
+  # plus STUN on UDP 3478. Replace ipv4 with your VPS's public address.
+  server:
+    enabled: true
+    region_id: 999
+    region_code: "self"
+    region_name: "my-private-vps"
+    stun_listen_addr: "0.0.0.0:3479"
+    private_key_path: /var/lib/headscale/derp_server_private.key
+    ipv4: "REPLACE_WITH_VPS_PUBLIC_IPV4"
+    # Optional, only needed if your VPS has public IPv6:
+    # ipv6: "REPLACE_WITH_VPS_PUBLIC_IPV6"
+
+  # Public DERP regions to add on top of the self-hosted one above.
+  # Defaults to none as it keeps the mesh fully self-hosted without any third-party metadata.
+  #
+  # Uncomment the Tailscale entry to add their global DERP map as a fallback
+  # (useful if your VPS DERP is unreachable; trade-off documented in
+  # docs/headscale.md).
+  urls: []
+  # urls:
+  #   - https://controlplane.tailscale.com/derpmap/default
+
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 24h
+
+disable_check_updates: true
+ephemeral_node_inactivity_timeout: 30m
+
+database:
+  type: sqlite
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+
+log:
+  level: info
+  format: text
+
+policy:
+  mode: database
+
+dns:
+  # Set to true if you want more control over DNS endpoints
+  magic_dns: false
+  base_domain: ts.privacy.box
+  override_local_dns: true
+  nameservers:
+    # # If not using your own local DNS
+    # global:
+    #   - 1.1.1.1
+    #   - 9.9.9.9
+    # Use your own local DNS
+    global:
+      - 192.168.1.1
+    split: {}
+  search_domains: []
+
+  # Shared file for Headplane's "Extra DNS records" feature. Must match
+  # `headscale.dns_records_path` in Headplane's config.
+  extra_records_path: /var/lib/headscale/extra_records.json
+
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"

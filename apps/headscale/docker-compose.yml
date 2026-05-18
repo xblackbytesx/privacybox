@@ -1,0 +1,86 @@
+name: headscale
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  headscale-socket:
+
+  headscale-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/headscale/data
+
+  headplane-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/headscale/headplane/data
+
+services:
+  headscale:
+    container_name: "headscale"
+    image: "headscale/headscale:0.28"
+    security_opt:
+      - no-new-privileges:true
+    command: serve
+    networks:
+      - proxy
+    ports:
+      # STUN for the embedded self-hosted DERP relay
+      - "3479:3479/udp"
+    environment:
+      - TZ=${TIMEZONE}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DOCKER_ROOT}/headscale/config/config.yaml:/etc/headscale/config.yaml:ro
+      - headscale-data:/var/lib/headscale
+      - headscale-socket:/var/run/headscale
+    labels:
+      - me.tale.headplane.target=headscale
+      - traefik.enable=true
+      - traefik.http.routers.headscale.entrypoints=web
+      - traefik.http.routers.headscale.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.headscale-secure.entrypoints=websecure
+      - traefik.http.routers.headscale-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.headscale-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.routers.headscale-secure.tls=true
+      - traefik.http.routers.headscale-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.services.headscale.loadbalancer.server.port=8080
+    restart: unless-stopped
+
+  headplane:
+    container_name: "headplane"
+    image: "ghcr.io/tale/headplane:0.6.3"
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - headscale
+    networks:
+      - proxy
+    environment:
+      - TZ=${TIMEZONE}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DOCKER_ROOT}/headscale/headplane/config/config.yaml:/etc/headplane/config.yaml:ro
+      - headplane-data:/var/lib/headplane
+      - ${DOCKER_ROOT}/headscale/config/config.yaml:/etc/headscale/config.yaml:ro
+      - ${DOCKER_ROOT}/headscale/data/extra_records.json:/var/lib/headscale/extra_records.json
+      - headscale-socket:/var/run/headscale
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.headplane.entrypoints=web
+      - traefik.http.routers.headplane.rule=Host(`${HEADPLANE_SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.headplane-secure.entrypoints=websecure
+      - traefik.http.routers.headplane-secure.rule=Host(`${HEADPLANE_SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.headplane-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.routers.headplane-secure.tls=true
+      - traefik.http.routers.headplane-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.services.headplane.loadbalancer.server.port=3000
+    restart: unless-stopped

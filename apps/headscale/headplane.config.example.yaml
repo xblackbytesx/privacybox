@@ -1,0 +1,37 @@
+server:
+  host: "0.0.0.0"
+  port: 3000
+  base_url: "https://headplane.privacy.box"
+
+  # Exactly 32 characters. Generate with:
+  # openssl rand -hex 16
+  cookie_secret: "REPLACE_WITH_32_CHAR_RANDOM_STRING"
+  cookie_secure: true
+  cookie_max_age: 86400
+
+headscale:
+  url: "http://headscale:8080"
+
+  # Headplane reads headscale's config.yaml to observe it's settings.
+  config_path: "/etc/headscale/config.yaml"
+  config_strict: false
+
+  # Shared JSON file for the "Extra DNS records" UI tab. Must match
+  # `dns.extra_records_path` in headscale's config.
+  dns_records_path: "/var/lib/headscale/extra_records.json"
+
+integration:
+  docker:
+    enabled: true
+    container_name: "headscale"
+    socket: "unix:///var/run/docker.sock"
+
+# Optional: OpenID Connect login. If commented out, anonymous access is allowed
+# at the headplane container itself. The basic-auth@file middleware in front
+# of Traefik is doing the actual access control in that case.
+#
+# oidc:
+#   issuer: "https://your-idp.example.com"
+#   client_id: "headplane"
+#   client_secret: "..."
+#   redirect_uri: "https://headplane.privacy.box/oidc/callback"

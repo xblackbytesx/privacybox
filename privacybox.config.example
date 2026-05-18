@@ -10,7 +10,7 @@ STORAGE_ROOT=/media/storage
 ## APPS DEPLOYED ON THIS SYSTEM ##
 ##################################
 # List of all apps running on this system
-DEPLOYED_APPS=traefik, portainer-agent, expressvpn, transmission, nzbget, sonarr, radarr, lidarr, readarr, spotweb, prowlarr, jellyfin, syncthing, baikal, navidrome, pigallery2
+DEPLOYED_APPS=traefik, portainer-agent, headscale, expressvpn, transmission, nzbget, sonarr, radarr, lidarr, readarr, spotweb, prowlarr, jellyfin, syncthing, baikal, navidrome, pigallery2
 
 # List of apps running on this system behind a VPN and require a killswitch 
 VPN_PROTECTED=transmission, nzbget, prowlarr, sonarr, radarr, lidarr, readarr, spotweb

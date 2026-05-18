@@ -108,6 +108,9 @@ Each of these services serve a purpose of either substituting a non-free and non
 | pihole | |
 | expressvpn | |
 | wireguard | |
+| headscale | Self-hosted Tailscale coordination server — reach home services from outside without opening router ports |
+| headplane | Feature-complete Web UI for Headscale (runs alongside the headscale container) |
+| tailscale-client | Containerised Tailscale node for joining a home/Linux server to a self-hosted headscale tailnet |
 | wireshark | |
 | librespeed | Network speed test |
 | openspeedtest | |
@@ -191,6 +194,8 @@ Each of these services serve a purpose of either substituting a non-free and non
 | Transmission | Done |   |
 | Node-Red | Done |   |
 | Wireguard | Done |  Some special instructions for combining with PiHole  |
+| Headscale | Done | [Detailed notes](./docs/headscale.md) |
+| Tailscale client | Done | [Detailed notes](./docs/tailscale-client.md) |
 | Netdata | WIP |   |
 | Glances | Done |   |
 | Mastodon | Done | [Detailed notes](./docs/mastodon.md) |
