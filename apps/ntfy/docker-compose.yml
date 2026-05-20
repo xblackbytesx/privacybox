@@ -46,6 +46,7 @@ services:
       start_period: 40s
     networks:
       - proxy
+    init: true
     labels:
       - traefik.enable=true
       - traefik.http.routers.ntfy-app-secure.entrypoints=websecure
