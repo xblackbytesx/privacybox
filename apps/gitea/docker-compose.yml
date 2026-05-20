@@ -102,12 +102,12 @@ services:
 
   gitea-runner:
     container_name: gitea-runner
-    image: gitea/act_runner:latest
+    image: gitea/act_runner:latest-dind
+    privileged: true
     security_opt:
       - no-new-privileges:true
     volumes:
       - gitea-runner-data:/data
-      - /var/run/docker.sock:/var/run/docker.sock
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - gitea-app
@@ -115,6 +115,7 @@ services:
       - GITEA_INSTANCE_URL=https://${SUBDOMAIN}.${DOMAIN}
       - GITEA_RUNNER_REGISTRATION_TOKEN=${GITEA_RUNNER_TOKEN}
       - GITEA_RUNNER_NAME=docker-runner
+      - DOCKER_HOST=unix:///var/run/docker.sock
     networks:
       - internal
       - proxy
