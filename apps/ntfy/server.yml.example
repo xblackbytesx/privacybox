@@ -1,0 +1,11 @@
+base-url: "https://ntfy.privacy.box"
+cache-file: "/var/cache/ntfy/cache.db"
+cache-startup-queries: |
+    pragma journal_mode = WAL;
+    pragma synchronous = normal;
+    pragma temp_store = memory;
+    pragma busy_timeout = 15000;
+behind-proxy: true
+auth-file: "/var/cache/ntfy/auth.db"
+auth-default-access: "deny-all"
+attachment-cache-dir: "/var/cache/ntfy/attachments"
