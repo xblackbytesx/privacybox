@@ -17,6 +17,7 @@ apps/bluesky-pds/admin-tools
 apps/lemmy/lemmy.hjson
 apps/synapse/element-call-config.json
 apps/synapse/livekit.yaml
+apps/gitea/daemon.json
 apps/gluetun/nginx-custom-proxy.conf
 **/update-jellyfin.sh
 **/redis

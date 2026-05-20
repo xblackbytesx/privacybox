@@ -106,7 +106,13 @@ services:
     privileged: true
     security_opt:
       - no-new-privileges:true
+    # # Enable local DNS resolves (combine this with the daemon.json)
+    # dns:
+    #  - 192.168.1.1
+    #  - 1.1.1.1
     volumes:
+      # # Only enable when you require special config (like local DNS resolves)
+      # - ./daemon.json:/etc/docker/daemon.json:ro
       - gitea-runner-data:/data
       - /etc/localtime:/etc/localtime:ro
     depends_on:
