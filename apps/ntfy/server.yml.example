@@ -8,4 +8,6 @@ cache-startup-queries: |
 behind-proxy: true
 auth-file: "/var/cache/ntfy/auth.db"
 auth-default-access: "deny-all"
+# enable-login: true
+# require-login: true
 attachment-cache-dir: "/var/cache/ntfy/attachments"

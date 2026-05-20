@@ -167,8 +167,10 @@ services:
       - ./livekit.yaml:/etc/livekit.yaml:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - "7881:7881/tcp" # WebRTC control (direct — not via Traefik)
-      - "51000-52000:51000-52000/udp" # Media relay (must bypass Traefik — UDP)
+      - "7881:7881/tcp"
+      # Be sure to have these bypass Traefik as this range spawns ~1,000 docker-proxy processes.
+      # See docs/docker-tuning.md
+      - "51000-52000:51000-52000/udp"
     networks:
       - proxy
       - internal
@@ -186,7 +188,7 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '1.0'
+          cpus: "1.0"
     restart: unless-stopped
 
   synapse-lk-jwt:
