@@ -11,3 +11,31 @@ auth-default-access: "deny-all"
 # enable-login: true
 # require-login: true
 attachment-cache-dir: "/var/cache/ntfy/attachments"
+
+# UnifiedPush (Element-X via Matrix push gateway, plus any other UP apps).
+# Allows the gateway — an unauthenticated external publisher — to POST to
+# topics whose name starts with `up`. Subscribers still need an account
+auth-access:
+  - "everyone:up*:wo"
+
+# Per-visitor (per-IP) rate limits. The Matrix push gateway is a single IP
+# that publishes all your Matrix pushes, so the burst/daily caps must fit
+# realistic catch-up bursts (e.g. phone leaves airplane mode and 20 rooms
+# flush at once). Defaults below give ~720 pushes/hour sustained and 10k/day
+# — generous for personal use.
+visitor-request-limit-burst: 200
+visitor-request-limit-replenish: "5s"
+visitor-message-daily-limit: 10000
+
+# UnifiedPush payloads are tiny JSON (~1 KB); cap message size so any
+# spam that gets through is cheap to drop.
+message-size-limit: "4096"
+
+# Anonymous attachments are the highest-leverage abuse vector and
+# UnifiedPush never uses them. Hard caps for any authenticated upload too.
+attachment-file-size-limit: "10M"
+visitor-attachment-total-size-limit: "100M"
+visitor-attachment-daily-bandwidth-limit: "500M"
+
+# Short retention bounds the damage of anything that does slip through.
+cache-duration: "12h"
