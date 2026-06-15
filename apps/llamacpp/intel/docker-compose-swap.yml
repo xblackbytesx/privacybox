@@ -1,0 +1,53 @@
+name: llama-swap
+
+# llama-swap: a single OpenAI-compatible gateway that hot-swaps models on the one
+# 12GB Arc B580 — only ONE model is loaded at a time, and each is unloaded after
+# its idle `ttl` (the real idle-unload the standalone --timeout could never do).
+#
+# This SUPERSEDES the standalone docker-compose-{generalist,coder,gemma4,qwen36}.yml.
+# Run this instead of those — don't run both, they'd fight over the GPU and ports.
+#
+# Clients point at ONE endpoint and pick the model by name (see llama-swap-config.yaml):
+#   fast  -> Qwen3-4B-Instruct-2507 (no-think; quick chats + Deep Research orchestration)
+#   smart -> Qwen3.6-35B-A3B       (deep chat; MoE experts in RAM)
+#
+# Two ways to reach it:
+#   - From other containers on the `proxy` network (e.g. Odysseus): http://llama-swap:8080/v1
+#     (no host.docker.internal needed — works even with that extra_hosts line removed)
+#   - From the host / LAN: http://<host>:11430/v1
+
+volumes:
+  llama-swap-models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/llamacpp/models
+
+services:
+  llama-swap:
+    container_name: llama-swap
+    image: ghcr.io/mostlygeek/llama-swap:vulkan
+    security_opt:
+      - no-new-privileges:true
+      - label:disable
+    ipc: host
+    shm_size: 4g
+    volumes:
+      - llama-swap-models:/models
+      # Model definitions; mounted where the image's entrypoint reads its config.
+      - ./llama-swap-config.yaml:/app/config.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+    devices:
+      - /dev/dri:/dev/dri
+    ports:
+      - "11430:8080"
+    labels:
+      - "traefik.enable=false"
+    deploy:
+      resources:
+        limits:
+          # Sized for the heaviest model (smart): experts in RAM + overhead.
+          cpus: "10.0"
+          memory: 28G
+    restart: unless-stopped
