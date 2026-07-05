@@ -25,7 +25,7 @@ volumes:
 services:
   headscale:
     container_name: "headscale"
-    image: "headscale/headscale:0.28"
+    image: "headscale/headscale:0.29"
     security_opt:
       - no-new-privileges:true
     command: serve
@@ -56,7 +56,7 @@ services:
 
   headplane:
     container_name: "headplane"
-    image: "ghcr.io/tale/headplane:0.6.3"
+    image: "ghcr.io/tale/headplane:0.7.0"
     security_opt:
       - no-new-privileges:true
     depends_on:
