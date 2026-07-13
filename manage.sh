@@ -4,13 +4,23 @@ if [ -z "$BASH_VERSION" ]; then
     exec bash "$0" "$@"
 fi
 
+# Always operate from the repo root so the config and apps/ paths resolve
+# regardless of the caller's working directory.
+PRIVACYBOX_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "$PRIVACYBOX_DIR" || exit 1
+
 # Read config file
 config_file="privacybox.config"
+if [[ ! -f "$config_file" ]]; then
+  echo "Config file not found: $PRIVACYBOX_DIR/$config_file" >&2
+  echo "Copy privacybox.config.example to privacybox.config and adjust it." >&2
+  exit 1
+fi
 declare -A groups=()
 
 while read -r line; do
-  group_name=$(echo "$line" | cut -d'=' -f1)
-  apps=$(echo "$line" | cut -d'=' -f2)
+  group_name="${line%%=*}"
+  apps="${line#*=}"
   groups["$group_name"]="$apps"
   export "$group_name"="$apps"
 done < <(grep '^[A-Z_]*=' "$config_file")
@@ -18,21 +28,23 @@ done < <(grep '^[A-Z_]*=' "$config_file")
 # Usage message
 usage() {
   echo "Usage: ./manage.sh --(start|stop|restart|update|check-vpn) --(app|group|all) <name>"
-  echo "       ./manage.sh --backup"
+  echo "       ./manage.sh --backup [--rolling | --app <name>] [--force] [--yes]"
   echo "       ./manage.sh --create-dsm-tun"
   echo "       ./manage.sh --free-dsm-ports"
   echo "Example: ./manage.sh --start --app wordpress"
   echo "Example: ./manage.sh --restart --group PUBLISHING"
   echo "Example: ./manage.sh --update --all"
   echo "Example: ./manage.sh --check-vpn --group VPN_PROTECTED"
-  echo "Example: ./manage.sh --backup"
+  echo "Example: ./manage.sh --backup                     (full backup, everything must be stopped)"
+  echo "Example: ./manage.sh --backup --rolling           (per-app: stop, archive, verify, restart)"
+  echo "Example: ./manage.sh --backup --app nextcloud     (rolling treatment for one app)"
   echo "Example: ./manage.sh --create-dsm-tun"
   echo "Example: ./manage.sh --free-dsm-ports"
   exit 1
 }
 
 # Check if there are enough arguments
-if [[ $# -lt 1 ]] || [[ $# -gt 3 ]]; then
+if [[ $# -lt 1 ]] || [[ $# -gt 5 ]]; then
   usage
 fi
 
@@ -40,12 +52,14 @@ fi
 action=""
 entity_type=""
 entity_name=""
+backup_flags=()
 
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     --start|--stop|--restart|--update|--check-vpn) action="${1#--}" ;;
     --app|--group|--all) entity_type="${1#--}" ;;
     --backup) action="backup" ;;
+    --rolling|--force|--yes) backup_flags+=("$1") ;;
     *) entity_name="$1" ;;
   esac
   shift
@@ -114,7 +128,10 @@ execute_action() {
     cd "$app_dir" || exit
     case $action in
       start) $COMPOSE_BIN up -d ;;
-      stop) $COMPOSE_BIN down -v ;;
+      # No -v on down: all current volumes are bind-driver so -v would only
+      # drop definitions, but the first app that ever uses a real named
+      # volume would have its data deleted by it.
+      stop) $COMPOSE_BIN down ;;
       restart) $COMPOSE_BIN restart ;;
       update)
         $COMPOSE_BIN pull
@@ -127,70 +144,18 @@ execute_action() {
   fi
 }
 
-# Function to run backup.sh script
+# Function to run the scripts/backup.sh script (all backup logic lives there)
 run_backup() {
-  PRIVACYBOX_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-  TIMESTAMP_HOUR=$(date +%Y%m%d%H)
-  SERVER_NAME=$(cat /proc/sys/kernel/hostname)
-  BACKUP_FILE="$BACKUP_ROOT/$TIMESTAMP_HOUR-$SERVER_NAME.tar.gz"
-  BACKUP_PATHS=("$PRIVACYBOX_DIR" "$DOCKER_ROOT")
-
-  # Convert the string to an array
-  IFS=' ' read -r -a EXCLUDE_PATHS <<< "$EXCLUDE_PATHS"
-
-  # Build the exclude options for tar command
-  EXCLUDE_OPTS=""
-  FULL_EXCLUDE_PATHS=()
-  for EXCLUDE_PATH in "${EXCLUDE_PATHS[@]}"; do
-    FULL_PATH="$DOCKER_ROOT/$EXCLUDE_PATH"
-    EXCLUDE_OPTS+="--exclude=$FULL_PATH "
-    FULL_EXCLUDE_PATHS+=("$FULL_PATH")
-  done
-
-  # Task summary
-  echo "Backup Task Summary:"
-  echo "Backup Directory: $BACKUP_ROOT"
-  echo "Backup Filename: $BACKUP_FILE"
-
-  echo "Paths to be Backed Up:"
-  for BACKUP_PATH in "${BACKUP_PATHS[@]}"; do
-    echo "  - $BACKUP_PATH"
-  done
-
-  echo "Paths to be Excluded:"
-  for EXCLUDE_PATH in "${FULL_EXCLUDE_PATHS[@]}"; do
-    echo "  - $EXCLUDE_PATH"
-  done
-
-  echo "Command to be run:"
-  echo "sudo tar $EXCLUDE_OPTS -zcvpf \"$BACKUP_FILE\" \"${BACKUP_PATHS[@]}\""
-
-  # Prompt for confirmation
-  read -p "Are you sure you want to continue with the backup? (y/n): " -n 1 -r
-  echo    # move to a new line
-  if [[ ! $REPLY =~ ^[Yy]$ ]]
-  then
-      echo "Backup cancelled."
-      exit 1
+  if [[ "$entity_type" == "app" ]]; then
+    if [[ -z "$entity_name" ]]; then
+      usage
+    fi
+    backup_flags+=(--app "$entity_name")
+  elif [[ -n "$entity_type" ]]; then
+    # --group/--all make no sense for backups (--rolling covers "all")
+    usage
   fi
-
-  # Make the backup directory
-  mkdir -p "$BACKUP_ROOT"
-  if [ $? -ne 0 ]; then
-    echo "Failed to create backup directory" >&2
-    exit 1
-  fi
-
-  # Create the backup and capture any error output
-  ERROR_OUTPUT=$(sudo tar $EXCLUDE_OPTS -zcvpf "$BACKUP_FILE" "${BACKUP_PATHS[@]}" 2>&1 >/dev/null)
-
-  if [ $? -ne 0 ]; then
-    echo "Failed to create backup: $BACKUP_FILE" >&2
-    echo "Error: $ERROR_OUTPUT" >&2
-    exit 1
-  else
-    echo "Backup succeeded: $BACKUP_FILE"
-  fi
+  exec bash "scripts/backup.sh" "${backup_flags[@]}"
 }
 
 # Function to run create-dsm-tun.sh script

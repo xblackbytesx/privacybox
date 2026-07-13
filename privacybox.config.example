@@ -1,27 +1,38 @@
 # Example of deployment configuration
 
-#######################
-## STORAGE LOCATIONS ##
-#######################
+####################
+## GENERAL CONFIG ##
+####################
+# Root of all per-app container data. Backups depend on it: full mode
+# archives the whole tree, rolling mode archives $DOCKER_ROOT/<app> per app,
+# and EXCLUDE_PATHS entries are resolved relative to it.
 DOCKER_ROOT=/media/storage/docker
-STORAGE_ROOT=/media/storage
+
+# Where backups are written (see docs/backups.md)
+BACKUP_ROOT=/media/storage/backups
+
+# Paths to leave out of backups, relative to DOCKER_ROOT (will be prefixed).
+# One path per line; repeat the EXCLUDE_PATH key as often as needed.
+# (The legacy single-line, space-separated EXCLUDE_PATHS= form also still works.)
+EXCLUDE_PATH=librephotos
+EXCLUDE_PATH=immich/data
+EXCLUDE_PATH=photoprism/data/albums
+EXCLUDE_PATH=photoprism/data/cache
+EXCLUDE_PATH=photoprism/data/serial
+EXCLUDE_PATH=photoprism/data/sidecar
+EXCLUDE_PATH=pigallery/temp
+EXCLUDE_PATH=jellyfin
+EXCLUDE_PATH=jellyfinBAK
+EXCLUDE_PATH=ollama
+EXCLUDE_PATH=spotweb
+
+# Optional: keep only the newest N backups (full archives and rolling run
+# folders are counted separately). Old backups are pruned only after a new
+# one has been created AND verified. Leave unset to keep everything.
+# BACKUP_KEEP=2
 
 ##################################
 ## APPS DEPLOYED ON THIS SYSTEM ##
 ##################################
 # List of all apps running on this system
-DEPLOYED_APPS=traefik, portainer-agent, headscale, expressvpn, transmission, nzbget, sonarr, radarr, lidarr, readarr, spotweb, prowlarr, jellyfin, syncthing, baikal, navidrome, pigallery2
-
-# List of apps running on this system behind a VPN and require a killswitch 
-VPN_PROTECTED=transmission, nzbget, prowlarr, sonarr, radarr, lidarr, readarr, spotweb
-
-# List of apps capable of running VPN checks against (e.g. containers with curl installed)
-VPN_CHECKS=transmission, expressvpn, sonarr, radarr
-
-####################
-## BACKUPS CONFIG ##
-####################
-BACKUP_ROOT=/media/storage/backups
-
-# Relative to the DOCKER_ROOT path (will be prefixed)
-EXCLUDE_PATHS=photoprism/data/albums photoprism/data/cache photoprism/data/serial photoprism/data/sidecar pigallery/temp jellyfin jellyfinBAK
+DEPLOYED_APPS=traefik, portainer-agent, headscale, qbittorrent, nzbget, sonarr, radarr, lidarr, readarr, spotweb, prowlarr, jellyfin, syncthing, baikal, immich
