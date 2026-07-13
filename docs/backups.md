@@ -17,6 +17,15 @@ Extra flags: `--yes` skips the confirmation prompt (for cron), `--force`
 overrides the running-containers guard and the free-space preflight — the
 point of this tooling is that you never need it.
 
+**Multi-deployment apps.** A `DEPLOYED_APPS` entry is a compose-project path
+under `apps/` — flat (`baikal`) or one deployment of an app
+(`ghost/deployments/eli5`). The unit of *data* is always the top-level
+`DOCKER_ROOT/<app>` tree, archived whole (minus excludes). All deployments
+sharing a top are stopped together and the tree is archived once as
+`<app>.tar.gz` — archiving `DOCKER_ROOT/ghost` while another ghost deployment
+still runs would capture a moving target. `--app` accepts either form and
+always treats the whole group.
+
 ## Scope (deliberate)
 
 A backup is the privacybox repo (compose files, `.env`s, config — every mode

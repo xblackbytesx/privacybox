@@ -7,7 +7,11 @@
 #                  Refuses to run while ANY container is running (--force overrides).
 #   --rolling      Per-app backup: stop -> archive -> verify -> restart, one app
 #                  at a time, so only one service is down at any moment.
-#   --app <name>   The rolling treatment for a single app.
+#                  Deployments sharing a top-level dir (apps/<app>/deployments/*)
+#                  are stopped together and DOCKER_ROOT/<app> is archived once.
+#   --app <name>   The rolling treatment for a single app. Accepts a top-level
+#                  name ("ghost") or one deployment ("ghost/deployments/eli5");
+#                  the whole top-level group is treated either way.
 #
 # Flags:
 #   --yes          Skip the confirmation prompt (for cron; run as root so tar
@@ -139,25 +143,26 @@ mkdir -p "$BACKUP_ROOT"
 
 # ----------------------------------------------------- cleanup guarantees ----
 
-CURRENT_PARTIAL=""      # partial archive to delete if we die mid-write
-RESTART_PENDING_APP=""  # app we stopped and have not yet restarted
+CURRENT_PARTIAL=""        # partial archive to delete if we die mid-write
+RESTART_PENDING_APPS=()   # compose projects we stopped and have not yet restarted
 RESULTS=()
 
 cleanup() {
-  local rc=$?
+  local rc=$? a
   set +e
   if [[ -n $CURRENT_PARTIAL && -e $CURRENT_PARTIAL ]]; then
     err "Removing incomplete archive: $CURRENT_PARTIAL"
     as_root rm -f -- "$CURRENT_PARTIAL"
   fi
-  if [[ -n $RESTART_PENDING_APP ]]; then
-    err "Run aborted while $RESTART_PENDING_APP was stopped — restarting it..."
-    if start_app "$RESTART_PENDING_APP"; then
-      err "$RESTART_PENDING_APP restarted."
-    else
-      err "COULD NOT RESTART $RESTART_PENDING_APP — start it manually:" \
-          "./manage.sh --start --app $RESTART_PENDING_APP"
-    fi
+  if [[ ${#RESTART_PENDING_APPS[@]} -gt 0 ]]; then
+    err "Run aborted while apps were stopped — restarting: ${RESTART_PENDING_APPS[*]}"
+    for a in "${RESTART_PENDING_APPS[@]}"; do
+      if start_app "$a"; then
+        err "$a restarted."
+      else
+        err "COULD NOT RESTART $a — start it manually: ./manage.sh --start --app $a"
+      fi
+    done
   fi
   if [[ ${#RESULTS[@]} -gt 0 ]]; then
     log ""
@@ -357,52 +362,98 @@ do_full() {
   apply_retention
 }
 
-backup_one_app() {
-  # Stop (if running) -> archive -> verify -> restart. An app that was already
-  # stopped is backed up cold and deliberately NOT started afterwards.
-  local app=$1 outdir=$2
-  local data_dir="$DOCKER_ROOT/$app"
-  if [[ ! -f "$PRIVACYBOX_DIR/apps/$app/docker-compose.yml" ]]; then
-    die "Unknown app: $app (no apps/$app/docker-compose.yml) — fix DEPLOYED_APPS or the --app argument."
-  fi
+# A DEPLOYED_APPS entry is a compose-project path under apps/ — either a flat
+# app ("baikal") or one deployment of a multi-deployment app
+# ("ghost/deployments/eli5"). The unit of DATA is always the top-level
+# directory DOCKER_ROOT/<top> (first path segment), archived whole, minus
+# excludes. All deployments sharing a top are therefore stopped together —
+# archiving DOCKER_ROOT/ghost while another ghost deployment still runs would
+# capture a moving target.
+top_of() { printf '%s' "${1%%/*}"; }
 
-  local was_running=0
-  if app_running "$app"; then
-    was_running=1
-    log "[$app] stopping..."
-    RESTART_PENDING_APP=$app
-    stop_app "$app"
-    if app_running "$app"; then
-      err "[$app] containers still present after 'down' — aborting."
-      return 1
+validate_entry() {
+  [[ -f "$PRIVACYBOX_DIR/apps/$1/docker-compose.yml" ]] \
+    || die "Unknown app: $1 (no apps/$1/docker-compose.yml) — fix DEPLOYED_APPS or the --app argument."
+}
+
+backup_group() {
+  # backup_group <outdir> <top> <entry>...
+  # Stop every listed deployment (if running) -> archive DOCKER_ROOT/<top>
+  # once -> verify -> restart the ones that were running. Deployments that
+  # were already stopped are deliberately NOT started afterwards.
+  local outdir=$1 top=$2
+  shift 2
+  local entry to_restart=()
+  local data_dir="$DOCKER_ROOT/$top"
+
+  for entry in "$@"; do
+    validate_entry "$entry"
+  done
+
+  for entry in "$@"; do
+    if app_running "$entry"; then
+      log "[$entry] stopping..."
+      to_restart+=("$entry")
+      RESTART_PENDING_APPS+=("$entry")
+      stop_app "$entry"
+      if app_running "$entry"; then
+        err "[$entry] containers still present after 'down' — aborting."
+        return 1
+      fi
+    else
+      log "[$entry] not running — cold backup, will stay stopped."
     fi
-  else
-    log "[$app] not running — cold backup, will stay stopped."
-  fi
+  done
 
   if [[ -d $data_dir ]]; then
-    create_archive "$outdir/$app.tar.gz" "$data_dir"
-    RESULTS+=("$app: OK -> $outdir/$app.tar.gz")
+    create_archive "$outdir/$top.tar.gz" "$data_dir"
+    RESULTS+=("$top: OK -> $outdir/$top.tar.gz")
   else
-    err "[$app] no data directory at $data_dir — nothing archived."
-    RESULTS+=("$app: NO DATA DIR ($data_dir) — nothing archived")
+    err "[$top] no data directory at $data_dir — nothing archived."
+    RESULTS+=("$top: NO DATA DIR ($data_dir) — nothing archived")
   fi
 
-  if [[ $was_running -eq 1 ]]; then
-    log "[$app] starting..."
-    start_app "$app"
-    RESTART_PENDING_APP=""
-  fi
+  for entry in ${to_restart[@]+"${to_restart[@]}"}; do
+    log "[$entry] starting..."
+    start_app "$entry"
+  done
+  RESTART_PENDING_APPS=()
+}
+
+group_for_top() {
+  # Fill the global GROUP array with every DEPLOYED_APPS entry whose top-level
+  # segment matches $1 (order preserved).
+  local top=$1 entry entries=()
+  GROUP=()
+  IFS=', ' read -r -a entries <<< "$DEPLOYED_APPS"
+  for entry in ${entries[@]+"${entries[@]}"}; do
+    if [[ $(top_of "$entry") == "$top" ]]; then
+      GROUP+=("$entry")
+    fi
+  done
 }
 
 do_rolling() {
   [[ -n $DEPLOYED_APPS ]] || die "DEPLOYED_APPS is not set in $CONFIG_FILE"
-  local apps=() app
-  IFS=', ' read -r -a apps <<< "$DEPLOYED_APPS"
+  local entries=() entry tops=() top seen t
+  IFS=', ' read -r -a entries <<< "$DEPLOYED_APPS"
+
+  # Validate everything up front — a typo must fail before anything is
+  # stopped or archived. Then derive the ordered, unique top-level list.
+  for entry in "${entries[@]}"; do
+    validate_entry "$entry"
+    top=$(top_of "$entry")
+    seen=0
+    for t in ${tops[@]+"${tops[@]}"}; do
+      if [[ $t == "$top" ]]; then seen=1; fi
+    done
+    if [[ $seen -eq 0 ]]; then tops+=("$top"); fi
+  done
 
   local outdir="$BACKUP_ROOT/$TIMESTAMP-$HOST"
   log "Backup task summary (rolling — each app is only down while its own archive is written):"
-  log "  Apps: ${apps[*]}"
+  log "  Apps: ${entries[*]}"
+  log "  Data trees: ${tops[*]}"
   log "  Excludes:"
   print_excludes
   log "  Target: $outdir/"
@@ -412,30 +463,44 @@ do_rolling() {
   mkdir -p "$outdir"
   create_archive "$outdir/privacybox-repo.tar.gz" "$PRIVACYBOX_DIR"
   RESULTS+=("privacybox-repo: OK -> $outdir/privacybox-repo.tar.gz")
-  for app in "${apps[@]}"; do
-    backup_one_app "$app" "$outdir"
+  for top in "${tops[@]}"; do
+    group_for_top "$top"
+    backup_group "$outdir" "$top" "${GROUP[@]}"
   done
   apply_retention
 }
 
 do_single() {
-  [[ -f "$PRIVACYBOX_DIR/apps/$APP_NAME/docker-compose.yml" ]] \
-    || die "Unknown app: $APP_NAME (no apps/$APP_NAME/docker-compose.yml)"
+  # --app accepts a top-level name ("ghost") or a single deployment
+  # ("ghost/deployments/eli5"); either way the whole top-level group is
+  # treated — its data tree can only be archived consistently as one unit.
+  local top
+  top=$(top_of "$APP_NAME")
+  group_for_top "$top"
+  if [[ ${#GROUP[@]} -eq 0 ]]; then
+    # Not in DEPLOYED_APPS — back the named compose project up directly.
+    GROUP=("$APP_NAME")
+  fi
+  local entry
+  for entry in "${GROUP[@]}"; do
+    validate_entry "$entry"
+  done
+
   local outdir="$BACKUP_ROOT/$TIMESTAMP-$HOST"
   log "Backup task summary (single app):"
-  log "  App: $APP_NAME"
+  log "  App: $top (deployments: ${GROUP[*]})"
   log "  Excludes:"
   print_excludes
-  log "  Target: $outdir/$APP_NAME.tar.gz (+ privacybox-repo.tar.gz)"
+  log "  Target: $outdir/$top.tar.gz (+ privacybox-repo.tar.gz)"
   confirm
-  preflight_space "$(newest_backup_size "$BACKUP_ROOT"/*-"$HOST"/"$APP_NAME".tar.gz)"
+  preflight_space "$(newest_backup_size "$BACKUP_ROOT"/*-"$HOST"/"$top".tar.gz)"
 
   mkdir -p "$outdir"
   # Every backup, whatever the mode, carries a copy of the repo itself —
   # compose files, .envs and config are needed to make app data restorable.
   create_archive "$outdir/privacybox-repo.tar.gz" "$PRIVACYBOX_DIR"
   RESULTS+=("privacybox-repo: OK -> $outdir/privacybox-repo.tar.gz")
-  backup_one_app "$APP_NAME" "$outdir"
+  backup_group "$outdir" "$top" "${GROUP[@]}"
   apply_retention
 }
 
