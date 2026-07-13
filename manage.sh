@@ -27,14 +27,14 @@ done < <(grep '^[A-Z_]*=' "$config_file")
 
 # Usage message
 usage() {
-  echo "Usage: ./manage.sh --(start|stop|restart|update|check-vpn) --(app|group|all) <name>"
+  echo "Usage: ./manage.sh --(start|stop|restart|update|force-recreate) --(app|group|all) <name>"
   echo "       ./manage.sh --backup [--rolling | --app <name>] [--force] [--yes]"
   echo "       ./manage.sh --create-dsm-tun"
   echo "       ./manage.sh --free-dsm-ports"
   echo "Example: ./manage.sh --start --app wordpress"
+  echo "Example: ./manage.sh --force-recreate --app immich"
   echo "Example: ./manage.sh --restart --group PUBLISHING"
   echo "Example: ./manage.sh --update --all"
-  echo "Example: ./manage.sh --check-vpn --group VPN_PROTECTED"
   echo "Example: ./manage.sh --backup                     (full backup, everything must be stopped)"
   echo "Example: ./manage.sh --backup --rolling           (per-app: stop, archive, verify, restart)"
   echo "Example: ./manage.sh --backup --app nextcloud     (rolling treatment for one app)"
@@ -56,7 +56,7 @@ backup_flags=()
 
 while [[ "$#" -gt 0 ]]; do
   case $1 in
-    --start|--stop|--restart|--update|--check-vpn) action="${1#--}" ;;
+    --start|--stop|--restart|--update|--force-recreate) action="${1#--}" ;;
     --app|--group|--all) entity_type="${1#--}" ;;
     --backup) action="backup" ;;
     --rolling|--force|--yes) backup_flags+=("$1") ;;
@@ -79,39 +79,6 @@ fi
 
 echo "COMPOSE_BIN is set to $COMPOSE_BIN"
 
-# Function to check VPN status for a single app
-check_vpn() {
-  app_name="$1"
-  app_dir="apps/$app_name"
-  container_id=$($COMPOSE_BIN -f "$app_dir/docker-compose.yml" ps -q)
-
-  if [ -n "$container_id" ]; then
-    container_ip=$(docker exec -it "$container_id" curl -s https://ifconfig.me)
-    system_ip=$(curl -s https://ifconfig.me)
-
-    # IP address validation regex
-    ip_regex='^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
-
-    if [[ ! $container_ip =~ $ip_regex ]]; then
-      echo "Invalid container IP returned for $app_name"
-      return
-    fi
-
-    if [[ ! $system_ip =~ $ip_regex ]]; then
-      echo "Invalid system IP returned"
-      return
-    fi
-
-    if [ "$container_ip" == "$system_ip" ]; then
-      echo "VPN down issuing killswitch for $app_name"
-    else
-      echo "VPN check passed for $app_name"
-    fi
-  else
-    echo "Container not running for $app_name"
-  fi
-}
-
 # Function to perform the action on a single app
 execute_action() {
   app_name="$1"
@@ -119,11 +86,6 @@ execute_action() {
   app_dir="apps/$app_name"
 
   if [[ -d "$app_dir" ]] && [[ -f "$app_dir/docker-compose.yml" ]]; then
-    if [[ "$action" == "check-vpn" ]]; then
-      check_vpn "$app_name"
-      return
-    fi
-
     echo "${action^}-ing $app_name..."
     cd "$app_dir" || exit
     case $action in
@@ -133,6 +95,7 @@ execute_action() {
       # volume would have its data deleted by it.
       stop) $COMPOSE_BIN down ;;
       restart) $COMPOSE_BIN restart ;;
+      force-recreate) $COMPOSE_BIN up -d --force-recreate ;;
       update)
         $COMPOSE_BIN pull
         $COMPOSE_BIN up -d --build
@@ -202,15 +165,9 @@ else
     group)
       if [[ -n "${groups[$entity_name]}" ]]; then
         IFS=', ' read -ra app_list <<<"${groups[$entity_name]}"
-        if [[ "$action" == "check-vpn" ]]; then
-          # Pick a random app from the group
-          random_app=${app_list[RANDOM % ${#app_list[@]}]}
-          execute_action "$random_app" "$action"
-        else
-          for app in "${app_list[@]}"; do
-            execute_action "$app" "$action"
-          done
-        fi
+        for app in "${app_list[@]}"; do
+          execute_action "$app" "$action"
+        done
       else
         echo "Group not found: $entity_name"
       fi
