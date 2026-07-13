@@ -72,17 +72,25 @@ is consistent. If you need one cross-app point-in-time snapshot, use full mode.
 
 ```
 BACKUP_ROOT/
-├── 20260713-142530-myhost-full.tar.gz        # full mode
-├── 20260713-142530-myhost-full.tar.gz.sha256
-└── 20260714-041200-myhost/                   # rolling / --app mode
-    ├── privacybox-repo.tar.gz (+ .sha256)
-    ├── nextcloud.tar.gz       (+ .sha256)
+├── hoth/                              # one subtree per server — sync or
+│   ├── 20260713-142530-full.tar.gz    # ignore a whole host in syncthing
+│   ├── 20260713-142530-full.tar.gz.sha256
+│   └── 20260714-041200/               # rolling / --app mode
+│       ├── privacybox-repo.tar.gz (+ .sha256)
+│       ├── nextcloud.tar.gz       (+ .sha256)
+│       └── ...
+└── endor/
     └── ...
 ```
 
+Each host writes only inside `BACKUP_ROOT/<its-hostname>/`, so several
+servers can share one synced `BACKUP_ROOT` without touching each other.
+
 Retention: set `BACKUP_KEEP=N` in `privacybox.config` to keep only the newest
 N full archives and the newest N rolling run folders (counted separately).
-Pruning only happens after a new backup has been created **and verified**.
+Pruning only happens after a new backup has been created **and verified**,
+and only ever inside the local host's own folder — archives synced in from
+other servers are never pruned.
 
 ## Restoring
 

@@ -128,6 +128,10 @@ fi
 
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 HOST=$(cat /proc/sys/kernel/hostname)
+# Per-host parent folder: BACKUP_ROOT/<host>/… so one server's backups form a
+# single subtree that syncthing can selectively sync or ignore. Retention and
+# the space preflight are scoped to this folder only.
+HOST_DIR="$BACKUP_ROOT/$HOST"
 
 # EXCLUDE_PATH(S) entries are relative to DOCKER_ROOT. BACKUP_ROOT is always
 # excluded so a backup can never recursively archive its own output. Empty
@@ -321,13 +325,14 @@ apply_retention() {
   local items=() item
   if [[ $MODE == "full" ]]; then
     while IFS= read -r item; do items+=("$item"); done \
-      < <(ls -1dt "$BACKUP_ROOT"/*-"$HOST"-full.tar.gz 2>/dev/null || true)
+      < <(ls -1dt "$HOST_DIR"/*-full.tar.gz 2>/dev/null || true)
   else
     while IFS= read -r item; do items+=("$item"); done \
-      < <(ls -1dt "$BACKUP_ROOT"/*-"$HOST" 2>/dev/null || true)
+      < <(ls -1dt "$HOST_DIR"/*/ 2>/dev/null || true)
   fi
   [[ ${#items[@]} -gt $BACKUP_KEEP ]] || return 0
   for item in "${items[@]:$BACKUP_KEEP}"; do
+    item=${item%/}
     log "Retention (BACKUP_KEEP=$BACKUP_KEEP): removing old backup $item"
     as_root rm -rf -- "$item" "$item.sha256"
   done
@@ -352,7 +357,7 @@ do_full() {
     fi
   fi
 
-  local final="$BACKUP_ROOT/$TIMESTAMP-$HOST-full.tar.gz"
+  local final="$HOST_DIR/$TIMESTAMP-full.tar.gz"
   log "Backup task summary (full):"
   log "  Sources:"
   log "    - $PRIVACYBOX_DIR"
@@ -361,8 +366,9 @@ do_full() {
   print_excludes
   log "  Target: $final"
   confirm
-  preflight_space "$(newest_backup_size "$BACKUP_ROOT"/*-"$HOST"-full.tar.gz)"
+  preflight_space "$(newest_backup_size "$HOST_DIR"/*-full.tar.gz)"
 
+  mkdir -p "$HOST_DIR"
   create_archive "$final" "$PRIVACYBOX_DIR" "$DOCKER_ROOT"
   RESULTS+=("full: OK -> $final")
   apply_retention
@@ -492,7 +498,7 @@ do_rolling() {
     if [[ $seen -eq 0 ]]; then tops+=("$top"); fi
   done
 
-  local outdir="$BACKUP_ROOT/$TIMESTAMP-$HOST"
+  local outdir="$HOST_DIR/$TIMESTAMP"
   log "Backup task summary (rolling — each app is only down while its own archive is written):"
   log "  Compose projects: ${PROJECTS[*]}"
   log "  Data trees: ${tops[*]}"
@@ -500,7 +506,7 @@ do_rolling() {
   print_excludes
   log "  Target: $outdir/"
   confirm
-  preflight_space "$(newest_backup_size "$BACKUP_ROOT"/*-"$HOST")"
+  preflight_space "$(newest_backup_size "$HOST_DIR"/*/)"
 
   mkdir -p "$outdir"
   create_archive "$outdir/privacybox-repo.tar.gz" "$PRIVACYBOX_DIR"
@@ -534,14 +540,14 @@ do_single() {
   fi
   group_for_top "$top"
 
-  local outdir="$BACKUP_ROOT/$TIMESTAMP-$HOST"
+  local outdir="$HOST_DIR/$TIMESTAMP"
   log "Backup task summary (single app):"
   log "  App: $top (compose projects: ${GROUP[*]})"
   log "  Excludes:"
   print_excludes
   log "  Target: $outdir/$top.tar.gz (+ privacybox-repo.tar.gz)"
   confirm
-  preflight_space "$(newest_backup_size "$BACKUP_ROOT"/*-"$HOST"/"$top".tar.gz)"
+  preflight_space "$(newest_backup_size "$HOST_DIR"/*/"$top".tar.gz)"
 
   mkdir -p "$outdir"
   # Every backup, whatever the mode, carries a copy of the repo itself —

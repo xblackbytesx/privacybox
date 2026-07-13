@@ -25,6 +25,7 @@ EXCLUDE_PATH=jellyfin
 EXCLUDE_PATH=jellyfinBAK
 EXCLUDE_PATH=ollama
 EXCLUDE_PATH=spotweb
+EXCLUDE_PATH=filebrowser/data
 
 # Optional: keep only the newest N backups (full archives and rolling run
 # folders are counted separately). Old backups are pruned only after a new
