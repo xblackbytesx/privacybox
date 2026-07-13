@@ -187,7 +187,13 @@ compose_app() {
 
 app_running() {
   local out
-  out=$(compose_app "$1" ps -q) || die "[$1] failed to query container status"
+  if ! out=$(compose_app "$1" ps -q); then
+    # A variant that was never deployed may not even be queryable (missing
+    # .env). Treat it as not running — if that assumption were ever wrong,
+    # the moving-target detection fails the archive rather than trust it.
+    err "[$1] could not query container status — treating as not running."
+    return 1
+  fi
   [[ -n $out ]]
 }
 
@@ -362,18 +368,56 @@ do_full() {
   apply_retention
 }
 
-# A DEPLOYED_APPS entry is a compose-project path under apps/ — either a flat
-# app ("baikal") or one deployment of a multi-deployment app
-# ("ghost/deployments/eli5"). The unit of DATA is always the top-level
-# directory DOCKER_ROOT/<top> (first path segment), archived whole, minus
-# excludes. All deployments sharing a top are therefore stopped together —
-# archiving DOCKER_ROOT/ghost while another ghost deployment still runs would
-# capture a moving target.
+# A DEPLOYED_APPS entry names something under apps/: a compose project
+# directly ("baikal", "ghost/deployments/eli5") or a parent directory whose
+# subdirectories hold the actual compose projects — variant layouts like
+# apps/gluetun/{openvpn,wireguard} or deployment layouts like
+# apps/ghost/deployments/<name>. Entries are resolved to concrete compose
+# projects below; the unit of DATA is always the top-level directory
+# DOCKER_ROOT/<top> (first path segment), archived whole, minus excludes.
+# All projects sharing a top are stopped together — archiving
+# DOCKER_ROOT/ghost while another ghost deployment still runs would capture
+# a moving target.
 top_of() { printf '%s' "${1%%/*}"; }
 
-validate_entry() {
-  [[ -f "$PRIVACYBOX_DIR/apps/$1/docker-compose.yml" ]] \
-    || die "Unknown app: $1 (no apps/$1/docker-compose.yml) — fix DEPLOYED_APPS or the --app argument."
+has_compose() {
+  local f
+  for f in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do
+    if [[ -f "$1/$f" ]]; then return 0; fi
+  done
+  return 1
+}
+
+PROJECTS=()  # resolved compose-project paths, relative to apps/
+
+add_project() {
+  local p
+  for p in ${PROJECTS[@]+"${PROJECTS[@]}"}; do
+    if [[ $p == "$1" ]]; then return 0; fi
+  done
+  PROJECTS+=("$1")
+}
+
+resolve_entry() {
+  # Append the compose project(s) a DEPLOYED_APPS/--app entry stands for to
+  # PROJECTS. Non-running variants cost nothing: they are queried, found
+  # stopped, and left alone.
+  local entry=$1 dir="$PRIVACYBOX_DIR/apps/$1" found=0 f
+  if has_compose "$dir"; then
+    add_project "$entry"
+    return 0
+  fi
+  if [[ -d $dir ]]; then
+    while IFS= read -r f; do
+      add_project "$(dirname "${f#"$PRIVACYBOX_DIR/apps/"}")"
+      found=1
+    done < <(find "$dir" -mindepth 2 -maxdepth 4 \
+               \( -name docker-compose.yml -o -name docker-compose.yaml \
+                  -o -name compose.yml -o -name compose.yaml \) | sort)
+  fi
+  if [[ $found -eq 0 ]]; then
+    die "Unknown app: $entry — no compose project at apps/$entry or below. Fix DEPLOYED_APPS or the --app argument."
+  fi
 }
 
 backup_group() {
@@ -385,10 +429,6 @@ backup_group() {
   shift 2
   local entry to_restart=()
   local data_dir="$DOCKER_ROOT/$top"
-
-  for entry in "$@"; do
-    validate_entry "$entry"
-  done
 
   for entry in "$@"; do
     if app_running "$entry"; then
@@ -421,28 +461,30 @@ backup_group() {
 }
 
 group_for_top() {
-  # Fill the global GROUP array with every DEPLOYED_APPS entry whose top-level
+  # Fill the global GROUP array with every resolved project whose top-level
   # segment matches $1 (order preserved).
-  local top=$1 entry entries=()
+  local top=$1 p
   GROUP=()
-  IFS=', ' read -r -a entries <<< "$DEPLOYED_APPS"
-  for entry in ${entries[@]+"${entries[@]}"}; do
-    if [[ $(top_of "$entry") == "$top" ]]; then
-      GROUP+=("$entry")
+  for p in ${PROJECTS[@]+"${PROJECTS[@]}"}; do
+    if [[ $(top_of "$p") == "$top" ]]; then
+      GROUP+=("$p")
     fi
   done
 }
 
 do_rolling() {
   [[ -n $DEPLOYED_APPS ]] || die "DEPLOYED_APPS is not set in $CONFIG_FILE"
-  local entries=() entry tops=() top seen t
+  local entries=() entry tops=() top seen t p
   IFS=', ' read -r -a entries <<< "$DEPLOYED_APPS"
 
-  # Validate everything up front — a typo must fail before anything is
+  # Resolve everything up front — a typo must fail before anything is
   # stopped or archived. Then derive the ordered, unique top-level list.
+  PROJECTS=()
   for entry in "${entries[@]}"; do
-    validate_entry "$entry"
-    top=$(top_of "$entry")
+    resolve_entry "$entry"
+  done
+  for p in "${PROJECTS[@]}"; do
+    top=$(top_of "$p")
     seen=0
     for t in ${tops[@]+"${tops[@]}"}; do
       if [[ $t == "$top" ]]; then seen=1; fi
@@ -452,7 +494,7 @@ do_rolling() {
 
   local outdir="$BACKUP_ROOT/$TIMESTAMP-$HOST"
   log "Backup task summary (rolling — each app is only down while its own archive is written):"
-  log "  Apps: ${entries[*]}"
+  log "  Compose projects: ${PROJECTS[*]}"
   log "  Data trees: ${tops[*]}"
   log "  Excludes:"
   print_excludes
@@ -471,24 +513,30 @@ do_rolling() {
 }
 
 do_single() {
-  # --app accepts a top-level name ("ghost") or a single deployment
-  # ("ghost/deployments/eli5"); either way the whole top-level group is
-  # treated — its data tree can only be archived consistently as one unit.
-  local top
+  # --app accepts a top-level name ("ghost", "gluetun") or a single project
+  # ("ghost/deployments/eli5", "gluetun/wireguard"); either way the whole
+  # top-level group is treated — its data tree can only be archived
+  # consistently as one unit.
+  local top entry entries=()
   top=$(top_of "$APP_NAME")
-  group_for_top "$top"
-  if [[ ${#GROUP[@]} -eq 0 ]]; then
-    # Not in DEPLOYED_APPS — back the named compose project up directly.
-    GROUP=("$APP_NAME")
+  PROJECTS=()
+  if [[ -n $DEPLOYED_APPS ]]; then
+    IFS=', ' read -r -a entries <<< "$DEPLOYED_APPS"
+    for entry in ${entries[@]+"${entries[@]}"}; do
+      if [[ $(top_of "$entry") == "$top" ]]; then
+        resolve_entry "$entry"
+      fi
+    done
   fi
-  local entry
-  for entry in "${GROUP[@]}"; do
-    validate_entry "$entry"
-  done
+  if [[ ${#PROJECTS[@]} -eq 0 ]]; then
+    # Not in DEPLOYED_APPS — resolve the named app/project directly.
+    resolve_entry "$APP_NAME"
+  fi
+  group_for_top "$top"
 
   local outdir="$BACKUP_ROOT/$TIMESTAMP-$HOST"
   log "Backup task summary (single app):"
-  log "  App: $top (deployments: ${GROUP[*]})"
+  log "  App: $top (compose projects: ${GROUP[*]})"
   log "  Excludes:"
   print_excludes
   log "  Target: $outdir/$top.tar.gz (+ privacybox-repo.tar.gz)"
