@@ -1,0 +1,105 @@
+# llama-swap model definitions (mounted at /app/config.yaml).
+#
+# Default routing loads ONE model at a time and unloads the previous one on swap —
+# correct for the 12GB B580. `ttl` additionally unloads a model after N idle seconds,
+# freeing the GPU for other services. ${PORT} is auto-assigned by llama-swap per model.
+
+# Allow up to 5 min for a model to become ready — the `smart` model loads ~22GB
+# (--no-mmap) into RAM before serving, which can take a while on first start.
+healthCheckTimeout: 300
+logLevel: info
+
+models:
+  # Fast, fully-GPU model for quick chats AND Deep Research orchestration.
+  # Deep Research fires many short LLM calls with tight (some hardcoded 60s) timeouts,
+  # so it needs a fast responder, not a smart-but-slow one. Point Odysseus's research
+  # model at "fast".
+  #
+  # Qwen3-4B-Instruct-2507: a DEDICATED NON-THINKING model — it never emits <think>
+  # blocks, so it answers immediately instead of "overthinking" simple questions (and
+  # generates far fewer tokens, which also keeps research calls inside their timeouts).
+  # We use this instead of the hybrid Qwen3.5-4B because llama.cpp's thinking-disable
+  # switches (--reasoning-budget 0 / enable_thinking:false) are currently buggy for the
+  # Qwen3.5 series. It's the 3.0 generation rather than 3.6, but still the same Qwen3.x
+  # family (same chat template / tokenizer / tool-calling format as `smart`).
+  # 4B fully on the GPU = very fast prefill; Q8_0 since a 4B is tiny and VRAM is ample.
+  #
+  # -fa on (NOT off) for this model, despite the B580/Vulkan norm of -fa off:
+  # fully on the GPU at -c 32768, flash attention's small compute buffer is what keeps
+  # this model FITTING cleanly in the 12GB B580. With -fa off the ~4.4GB non-FA compute
+  # buffer puts the card under memory pressure (slow alloc / reload / iGPU spill) and
+  # TTFT collapses (~4.7s vs ~0.25s measured end-to-end). llama-bench shows -fa off with
+  # higher steady-state prefill throughput, but that's the wrong metric here — for short,
+  # model-swapping research/chat calls, time-to-first-token dominates, and FA's memory
+  # efficiency wins it. (smart stays -fa off: its experts are in RAM, so it isn't
+  # GPU-memory-bound the same way.)
+  "fast":
+    name: "Qwen3-4B-Instruct (fast, no-think)"
+    ttl: 300
+    cmd: >
+      /app/llama-server
+      -m /models/Qwen3-4B-Instruct-2507-Q8_0.gguf
+      --host 127.0.0.1 --port ${PORT}
+      -ngl 99
+      -c 32768
+      -b 2048
+      --no-mmap
+      -fa on
+
+  # Smart MoE model for deep chat. 35B total / ~3B active; experts offloaded to RAM
+  # via --n-cpu-moe. Slower per token + slow prefill — great for quality chat, poor
+  # for the many-call Deep Research loop (use "fast" there).
+  "smart":
+    name: "Qwen3.6-35B-A3B (smart)"
+    ttl: 300
+    cmd: >
+      /app/llama-server
+      -m /models/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+      --host 127.0.0.1 --port ${PORT}
+      -ngl 99
+      --n-cpu-moe 32
+      -t 6
+      -c 32768
+      -b 2048
+      --no-mmap
+      -fa on
+
+  # GLM-4.7-Flash (uncensored): DavidAU abliterated + NEO-CODE code-imatrix build of
+  # Zhipu's GLM-4.7-Flash. 30B-A3B MoE (31B total, ~3B active, 47 layers, deepseek2 arch),
+  # coding/agentic. Runs like `smart`: too big for 12GB, so routed experts live in RAM via
+  # --n-cpu-moe while attention stays on the B580. Fewer total params than smart -> a bit snappier.
+  #
+  # Quant: DavidAU IQ4_NL (17.3GB) -- one of his "precision-balanced" quants, and every quant in
+  # this repo carries a 16-bit output tensor, so this 4-bit holds up well for code. Fits the 28G
+  # container cap with ARC headroom (matches smart's footprint). Step up to Q5_K_M (21.6GB, still
+  # <28G) for more fidelity, or Q6_K (25GB) ONLY after raising docker-compose-swap.yml memory: to 32G.
+  #
+  # -fa off: DavidAU explicitly says disable flash attention on this model (speed issues); and its
+  # routed experts are in RAM, so it isn't GPU-memory-bound anyway. --repeat-penalty 1.0 + --min-p
+  # 0.01: this model loops/degrades unless rep-pen is neutral and min-p is lowered from llama.cpp's
+  # 0.05 default (DavidAU allows rep-pen 1.1; 1.0 is the safe default). Clients may override temp/
+  # top-p; DavidAU's defaults are temp 1.0 / top-p 0.95 (drop temp to ~0.7 for deterministic code).
+  #
+  # REQUIRES a llama.cpp newer than commit 7789 (Jan 21 2026): earlier builds mis-set scoring_func
+  # (softmax instead of sigmoid) and produce looping garbage. The llama-swap :vulkan image is well
+  # past that, but re-verify (/app/llama --version) after any image pull.
+  #
+  # --n-cpu-moe 47 = all routed experts on CPU (safe, guaranteed fit); it under-uses the 12GB.
+  # Tune DOWN (44, 40, 36...) while watching B580 VRAM to push experts onto the GPU for more t/s;
+  # expect to land near smart's 32. Restart llama-swap between changes.
+  "uncensored":
+    name: "GLM-4.7-Flash Uncensored (NEO-CODE)"
+    ttl: 300
+    cmd: >
+      /app/llama-server
+      -m /models/GLM-4.7-Flash-Uncen-Hrt-NEO-CODE-MAX-imat-D_AU-IQ4_NL.gguf
+      --host 127.0.0.1 --port ${PORT}
+      -ngl 99
+      --n-cpu-moe 47
+      -t 6
+      -c 32768
+      -b 2048
+      --no-mmap
+      -fa off
+      --min-p 0.01
+      --repeat-penalty 1.0
