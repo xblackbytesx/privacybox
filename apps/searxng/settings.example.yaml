@@ -28,16 +28,17 @@ engines:
   - name: startpage      # Google's index, delivered privately (our Google path)
     disabled: false
 
-  # Brave via its official API instead of scraping — no 429s / CAPTCHAs. Get a
-  # free key at https://api-dashboard.search.brave.com and paste it below.
+  # get a free key at https://api-dashboard.search.brave.com and paste it below.
   - name: braveapi
     engine: braveapi
-    shortcut: br
+    shortcut: brapi
     api_key: ""            # <-- REQUIRED: paste your Brave Search API key
     inactive: false
     disabled: false
-  - name: brave            # scrape engine retired in favor of braveapi above
-    inactive: true
+  # Scrape 'brave' is loaded but off-by-default (disabled, not inactive) as the braveapi needs it.
+  # Disabled means it's just not queried as braveapi above handles general web instead.
+  - name: brave
+    disabled: true
 
   # Extra diversity — disabled upstream, we enable:
   - name: bing           # major independent index
