@@ -1,0 +1,54 @@
+# SearXNG — recommended settings.yml (opinionated overrides only).
+# Copy to ${DOCKER_ROOT}/searxng/config/settings.yml (mounts to /etc/searxng/settings.yml).
+# `use_default_settings: true` inherits all upstream defaults; we list only our deltas.
+# Env-driven settings (secret, base_url, image_proxy, limiter, method, valkey) live in .env.
+
+use_default_settings: true
+
+general:
+  instance_name: "Privacybox Search"   # cosmetic; no env var, so it lives here
+
+outgoing:
+  # 5s (vs upstream 3s) favors completeness over speed; dial to 4.0 if the UI feels slow.
+  request_timeout: 5.0
+  max_request_timeout: 10.0
+
+server:
+  http_protocol_version: "1.1"   # keep-alive to upstreams
+
+# Engines listed here merge into the defaults by name. More engines = no privacy
+# cost: SearXNG proxies every engine server-side, so your IP is never exposed.
+engines:
+  # Core web engines, pinned on so upstream default drift can't silently drop them:
+  - name: duckduckgo
+    disabled: false
+  - name: startpage      # Google's index, delivered privately (our Google path)
+    disabled: false
+  - name: brave
+    disabled: false
+
+  # Extra diversity — disabled upstream, we enable:
+  - name: bing           # major independent index
+    disabled: false
+  - name: mojeek         # truly independent crawler
+    disabled: false
+  - name: qwant          # European; Bing-derived ranking
+    disabled: false
+
+  # Google left off by choice (Startpage covers its index); pinned inactive so an
+  # upstream re-enable can't turn it back on. Flip to inactive: false to use it.
+  - name: google
+    engine: google
+    shortcut: go
+    inactive: true
+
+  # To drop a core engine, change its disabled: false above to disabled: true.
+
+# Optional UX niceties — off for privacy (proxied, but forward more upstream). Uncomment to enable:
+# search:
+#   autocomplete: "duckduckgo"      # search-as-you-type
+#   safe_search: 1                  # moderate SafeSearch (consider for kids)
+# ui:
+#   favicon_resolver: "duckduckgo"  # favicons per result
+
+# UI preference changes are per-user browser cookies — they never write back here.

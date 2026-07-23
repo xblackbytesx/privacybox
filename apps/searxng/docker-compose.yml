@@ -14,6 +14,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/searxng/config
+  searxng-valkey:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/searxng/valkey
 
 services:
   searxng-app:
@@ -22,7 +28,12 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      - BASE_URL=https://${SUBDOMAIN}.${DOMAIN}
+      - SEARXNG_BASE_URL=https://${SUBDOMAIN}.${DOMAIN}
+      - SEARXNG_SECRET=${SEARXNG_SECRET}
+      - SEARXNG_VALKEY_URL=valkey://searxng-valkey:6379/0
+      - SEARXNG_IMAGE_PROXY=${SEARXNG_IMAGE_PROXY:-true}
+      - SEARXNG_LIMITER=${SEARXNG_LIMITER:-false}
+      - SEARXNG_METHOD=${SEARXNG_METHOD:-POST}
     volumes:
       - searxng-config:/etc/searxng
       - /etc/localtime:/etc/localtime:ro
@@ -38,22 +49,27 @@ services:
     networks:
       - internal
       - proxy
+    depends_on:
+      searxng-valkey:
+        condition: service_healthy
     restart: unless-stopped
 
-  searxng-redis:
-    container_name: searxng-redis
-    image: redis:alpine
+  searxng-valkey:
+    container_name: searxng-valkey
+    image: valkey/valkey:8-alpine
     security_opt:
       - no-new-privileges:true
-    command: redis-server --save 30 1 --loglevel warning
-    networks: 
+    command: valkey-server --save 30 1 --loglevel warning
+    networks:
       - internal
     volumes:
-      - ./data/redis:/data
+      - searxng-valkey:/data
       - /etc/localtime:/etc/localtime:ro
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     labels:
       - "traefik.enable=false"
     restart: unless-stopped
-
