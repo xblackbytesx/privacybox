@@ -55,6 +55,14 @@ engines:
     shortcut: go
     inactive: true
 
+  # Google CSE (Programmable Search) is upstream's default Google path now that
+  # the scrape engine above is inactive. It's still Google's index via Google,
+  # and ranks worse than real Google — so we disable it and its images variant.
+  - name: google cse
+    disabled: true
+  - name: google cse images
+    disabled: true
+
   # To drop a core engine, change its disabled: false above to disabled: true.
 
 # Optional UX niceties — off for privacy (proxied, but forward more upstream). Uncomment to enable:
