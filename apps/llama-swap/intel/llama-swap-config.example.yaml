@@ -3,6 +3,13 @@
 # Default routing loads ONE model at a time and unloads the previous one on swap —
 # correct for the 12GB B580. `ttl` additionally unloads a model after N idle seconds,
 # freeing the GPU for other services. ${PORT} is auto-assigned by llama-swap per model.
+#
+# PATH TAXONOMY (2026-07): /models follows the modelarr layout —
+#   /models/<hf-owner>/<hf-repo>/<file>.gguf
+# The path IS the upstream identity: it makes files re-adoptable by modelarr's
+# library scan, keeps same-named files (e.g. each repo's mmproj-F16.gguf) from
+# colliding, and is the groundwork for modelarr's future push-to-machine feature.
+# New entries must use taxonomy paths; no flat /models/<file>.gguf paths.
 
 # Allow up to 5 min for a model to become ready — the `smart` model loads ~22GB
 # (--no-mmap) into RAM before serving, which can take a while on first start.
@@ -38,7 +45,7 @@ models:
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/Qwen3-4B-Instruct-2507-Q8_0.gguf
+      -m /models/unsloth/Qwen3-4B-Instruct-2507-GGUF/Qwen3-4B-Instruct-2507-Q8_0.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       -c 32768
@@ -54,7 +61,7 @@ models:
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+      -m /models/unsloth/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       --n-cpu-moe 32
@@ -92,7 +99,7 @@ models:
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/GLM-4.7-Flash-Uncen-Hrt-NEO-CODE-MAX-imat-D_AU-IQ4_NL.gguf
+      -m /models/DavidAU/GLM-4.7-Flash-Uncensored-Heretic-NEO-CODE-Imatrix-MAX-GGUF/GLM-4.7-Flash-Uncen-Hrt-NEO-CODE-MAX-imat-D_AU-IQ4_NL.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       --n-cpu-moe 47
@@ -103,3 +110,71 @@ models:
       -fa off
       --min-p 0.01
       --repeat-penalty 1.0
+
+  # ── Gemma 4 vision pair (fast_mm / smart_mm) ──────────────────────────────────
+  # Multimodal (image-text-to-text) siblings of fast/smart. Vision needs TWO files
+  # per model: the weights AND that repo's own mmproj (vision encoder + projector).
+  # mmprojs are trained PER MODEL (different embedding dims) — never mix them
+  # across models. Each repo names its projector `mmproj-F16.gguf`; the taxonomy
+  # keeps them apart (one per repo dir), so canonical filenames are used as-is.
+  # F16 (not BF16) mmproj: same size/quality, but F16 is the fast native path on
+  # Vulkan; BF16 support there is newer and spottier on Arc.
+  #
+  # Files (unsloth):
+  #   unsloth/gemma-4-E4B-it-GGUF          -> gemma-4-E4B-it-Q5_K_M.gguf (5.5GB) + mmproj-F16.gguf (1.0GB)
+  #   unsloth/gemma-4-26B-A4B-it-qat-GGUF  -> gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf (14.2GB) + mmproj-F16.gguf (1.2GB)
+  #
+  # Images eat context tokens and add a one-off encode cost per image to TTFT —
+  # that's why `fast` (Deep Research) stays text-only and this is a separate pair.
+  # Needs a llama.cpp with Gemma 4 + its mmproj support; the :vulkan image is
+  # recent enough, but re-verify after any image pull (same drill as `uncensored`).
+
+  # E4B: Gemma 4's efficient ~4B-effective model — the Gemma analog of `fast`,
+  # fully on the GPU. Quant Q5_K_M (5.5GB): with the ~1GB mmproj also on GPU
+  # plus FA compute + KV at -c 32768 this lands ~9GB on the 12GB card, with
+  # comfortable headroom. Step UP to UD-Q5_K_XL (6.7GB, unsloth dynamic) for a
+  # touch more fidelity if VRAM stays calm; Q8_0 (8.2GB) only fits comfortably
+  # WITHOUT the mmproj (text-only). -fa on for the same reason as `fast`:
+  # fully-GPU, FA's small compute buffer is what makes it fit.
+  "fast_mm":
+    name: "Gemma-4-E4B (fast, vision)"
+    ttl: 300
+    cmd: >
+      /app/llama-server
+      -m /models/unsloth/gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q5_K_M.gguf
+      --mmproj /models/unsloth/gemma-4-E4B-it-GGUF/mmproj-F16.gguf
+      --host 127.0.0.1 --port ${PORT}
+      -ngl 99
+      -c 32768
+      -b 2048
+      --no-mmap
+      -fa on
+
+  # 26B-A4B QAT: Gemma 4's MoE (~26B total / ~4B active) — runs like `smart`:
+  # routed experts in RAM via --n-cpu-moe, attention on the B580. The qat repo
+  # ships essentially one quant on purpose: quantization-aware trained, so this
+  # UD-Q4_K_XL holds near-bf16 quality. 14.2GB --no-mmap into RAM + overhead
+  # fits the 28G container cap (lighter than smart's ~22GB).
+  #
+  # --n-cpu-moe 99 = clamps to "all routed experts on CPU" (layer count not
+  # published for this repo; 99 is the same idiom as -ngl 99). Safe first boot;
+  # tune DOWN while watching B580 VRAM exactly like `uncensored`'s guidance —
+  # expect to land somewhere near smart's 32. If VRAM gets tight with vision in
+  # play, add --no-mmproj-offload to keep the projector on CPU (one-off slower
+  # image encode; generation speed unaffected). -fa on to start (mirrors smart);
+  # bench both ways — Gemma's sliding-window attention changes the math vs Qwen.
+  "smart_mm":
+    name: "Gemma-4-26B-A4B QAT (smart, vision)"
+    ttl: 300
+    cmd: >
+      /app/llama-server
+      -m /models/unsloth/gemma-4-26B-A4B-it-qat-GGUF/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
+      --mmproj /models/unsloth/gemma-4-26B-A4B-it-qat-GGUF/mmproj-F16.gguf
+      --host 127.0.0.1 --port ${PORT}
+      -ngl 99
+      --n-cpu-moe 99
+      -t 6
+      -c 32768
+      -b 2048
+      --no-mmap
+      -fa on

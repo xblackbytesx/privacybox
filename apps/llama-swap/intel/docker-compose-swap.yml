@@ -8,8 +8,10 @@ name: llama-swap
 # Run this instead of those — don't run both, they'd fight over the GPU and ports.
 #
 # Clients point at ONE endpoint and pick the model by name (see llama-swap-config.yaml):
-#   fast  -> Qwen3-4B-Instruct-2507 (no-think; quick chats + Deep Research orchestration)
-#   smart -> Qwen3.6-35B-A3B       (deep chat; MoE experts in RAM)
+#   fast     -> Qwen3-4B-Instruct-2507   (no-think; quick chats + Deep Research orchestration)
+#   smart    -> Qwen3.6-35B-A3B          (deep chat; MoE experts in RAM)
+#   fast_mm  -> Gemma-4-E4B              (vision; fully-GPU)
+#   smart_mm -> Gemma-4-26B-A4B QAT      (vision; MoE experts in RAM)
 #
 # Two ways to reach it:
 #   - From other containers on the `proxy` network (e.g. Odysseus): http://llama-swap:8080/v1
