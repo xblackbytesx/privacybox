@@ -13,6 +13,13 @@ volumes:
       o: bind
       device: ${DOCKER_ROOT}/opencode/config
 
+  opencode-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/opencode/data
+
   opencode-workspace:
     driver: local
     driver_opts:
@@ -31,7 +38,8 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - opencode-config:/root/.local/share/opencode
+      - opencode-config:/root/.config/opencode
+      - opencode-data:/root/.local/share/opencode
       - opencode-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
     stdin_open: true
