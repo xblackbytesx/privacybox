@@ -1,0 +1,191 @@
+// opencode global config — copy to ${DOCKER_ROOT}/opencode/config/opencode.jsonc
+// (that bind mount is the container's ~/.config/opencode).
+//
+// .jsonc or .json? Both are read, and both are parsed as JSONC — comments and
+// trailing commas work either way. When both exist in the same directory the
+// .jsonc file wins. This example uses .jsonc so the comments survive.
+//
+// opencode ships no config file of its own; everything below is optional and is
+// merged over the defaults. A per-project opencode.json in a /workspace/<repo>
+// checkout is merged on top of this one.
+//
+// All three backends here are the same thing to opencode: an OpenAI-compatible
+// /v1/chat/completions endpoint behind "@ai-sdk/openai-compatible" (opencode
+// installs that package on first use). They differ only in baseURL, auth, and
+// what the model id means:
+//
+//   llama-swap  one endpoint, many model ids — the id selects which model
+//               llama-swap loads (and unloads after its idle ttl).
+//   litellm     one endpoint, many model ids — the id is a `model_name` from
+//               LiteLLM's config, which may route on to any upstream.
+//   llama.cpp   one endpoint, ONE model — llama-server ignores the model id in
+//               the request, so the id is just a label for you.
+//
+// Hostnames below match apps/litellm/.env.example (litellm.privacy.box) and the
+// LAN port llama-swap publishes (11430). Adjust to your own FQDNs.
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Default model, and the cheap one used for side tasks like title generation.
+  "model": "llama-swap/smart",
+  "small_model": "llama-swap/fast",
+
+  "provider": {
+    // ---------------------------------------------------------------------
+    // llama-swap — apps/llama-swap/intel/, hot-swaps one model at a time on
+    // the Arc B580. Model ids are the keys in llama-swap-config.yaml.
+    // No auth: llama-swap has traefik.enable=false and is LAN-only, but the
+    // SDK still wants an apiKey, so any non-empty string does.
+    // ---------------------------------------------------------------------
+    "llama-swap": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama-swap (local)",
+      "options": {
+        "baseURL": "http://llm.privacy.box:11430/v1",
+        "apiKey": "local"
+      },
+      "models": {
+        "fast": {
+          "name": "Qwen3-4B-Instruct (fast, no-think)",
+          "tool_call": true,
+          "reasoning": false, // dedicated non-thinking model, never emits <think>
+          "attachment": false,
+          "temperature": true,
+          "cost": { "input": 0, "output": 0 },
+          "limit": {
+            "context": 32768, // matches -c 32768 in llama-swap-config.yaml
+            "output": 8192
+          }
+        },
+        "smart": {
+          "name": "Qwen3.6-35B-A3B (smart)",
+          "tool_call": true,
+          "reasoning": true,
+          "attachment": false,
+          "temperature": true,
+          "cost": { "input": 0, "output": 0 },
+          "limit": { "context": 32768, "output": 8192 }
+        },
+        "uncensored": {
+          "name": "GLM-4.7-Flash Uncensored (NEO-CODE)",
+          "tool_call": true,
+          "reasoning": true,
+          "attachment": false,
+          "temperature": true,
+          "cost": { "input": 0, "output": 0 },
+          "limit": { "context": 32768, "output": 8192 }
+        },
+        "fast_mm": {
+          "name": "Gemma-4-E4B (fast, vision)",
+          "tool_call": true,
+          "reasoning": false,
+          "attachment": true, // vision: opencode may send images
+          "temperature": true,
+          "cost": { "input": 0, "output": 0 },
+          "limit": { "context": 32768, "output": 8192 }
+        },
+        "smart_mm": {
+          "name": "Gemma-4-26B-A4B QAT (smart, vision)",
+          "tool_call": true,
+          "reasoning": false,
+          "attachment": true,
+          "temperature": true,
+          "cost": { "input": 0, "output": 0 },
+          "limit": { "context": 32768, "output": 8192 }
+        }
+      }
+    },
+
+    // ---------------------------------------------------------------------
+    // LiteLLM — apps/litellm/, behind traefik on https://litellm.privacy.box.
+    // Model ids are the `model_name` entries from LiteLLM's own config.yaml;
+    // GET /v1/models on the proxy lists exactly what is routable.
+    //
+    // No apiKey here on purpose: create a virtual key in the LiteLLM dashboard,
+    // then run `/connect` in opencode (scroll to "Other", provider id "litellm",
+    // paste the key). It is stored in ~/.local/share/opencode/auth.json, which
+    // the opencode-data bind mount persists. See the note at the bottom for the
+    // in-config alternatives.
+    // ---------------------------------------------------------------------
+    "litellm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LiteLLM",
+      "options": {
+        "baseURL": "https://litellm.privacy.box/v1"
+      },
+      "models": {
+        // Replace these with your own LiteLLM model_name values.
+        "local-smart": {
+          "name": "Local smart (via LiteLLM)",
+          "tool_call": true,
+          "reasoning": true,
+          "attachment": false,
+          "temperature": true,
+          "cost": { "input": 0, "output": 0 },
+          "limit": { "context": 32768, "output": 8192 }
+        },
+        "claude-opus-5": {
+          "name": "Claude Opus 5 (via LiteLLM)",
+          "tool_call": true,
+          "reasoning": true,
+          "attachment": true,
+          "temperature": true,
+          "limit": { "context": 200000, "output": 64000 }
+          // Per-model request options are passed through to the endpoint, e.g.:
+          // "options": { "thinking": { "type": "enabled", "budgetTokens": 16000 } }
+        }
+      }
+    },
+
+    // ---------------------------------------------------------------------
+    // Bare llama.cpp — a single llama-server with no swapping in front of it.
+    // Only needed if you run llama-server directly instead of llama-swap; the
+    // two would fight over the GPU, so pick one. llama-server serves whatever
+    // model it was started with and ignores the requested id, so the key below
+    // is only a display label. Match "limit.context" to the -c you launched with.
+    // ---------------------------------------------------------------------
+    "llamacpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama.cpp (direct)",
+      "options": {
+        "baseURL": "http://llm.privacy.box:8080/v1",
+        "apiKey": "local"
+      },
+      "models": {
+        "default": {
+          "name": "llama-server (whatever is loaded)",
+          "tool_call": true,
+          "reasoning": false,
+          "attachment": false,
+          "temperature": true,
+          "cost": { "input": 0, "output": 0 },
+          "limit": { "context": 32768, "output": 8192 }
+        }
+      }
+    }
+  }
+}
+//
+// Secrets: the LiteLLM key is a virtual key you mint in the LiteLLM dashboard
+// (or LITELLM_MASTER_KEY). opencode has to send it as a Bearer token on every
+// request, so it needs it from one of four places — in rough order of least
+// hassle here:
+//
+//   1. `/connect` -> "Other" -> id "litellm" -> paste key.  Lands in
+//      ~/.local/share/opencode/auth.json, on the opencode-data bind mount, so
+//      it survives container recreates. Nothing in this file, nothing in git.
+//   2. "apiKey": "{file:litellm-key}" — relative paths resolve against the
+//      config dir, so that reads ${DOCKER_ROOT}/opencode/config/litellm-key.
+//      Persisted the same way; handy if you provision the host dir with Ansible.
+//   3. "apiKey": "sk-..." literally. Works, but plaintext in the config file.
+//   4. "apiKey": "{env:LITELLM_API_KEY}" — resolved inside the container, so it
+//      also needs `- LITELLM_API_KEY=${LITELLM_API_KEY}` under `environment:`
+//      in docker-compose.yml plus an entry in .env. Most moving parts.
+//
+// Don't combine 1 with 2-4; set the key in exactly one place. Whichever you
+// pick, keep the real config out of git — only this .example belongs in the repo.
+//
+// Tool calling: opencode drives everything through tools. A model with weak or
+// absent tool-call support will look "broken" (it narrates edits instead of
+// making them) rather than erroring. If that happens, it is the model, not the
+// provider wiring — try the model on `smart` first.
