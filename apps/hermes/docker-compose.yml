@@ -1,0 +1,64 @@
+name: hermes
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  hermes-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/hermes/data
+  hermes-vault:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HERMES_VAULT_DIR}
+
+services:
+  hermes:
+    container_name: hermes
+    image: nousresearch/hermes-agent:latest
+    security_opt:
+      - no-new-privileges:true
+    command: ["gateway", "run"]
+    environment:
+      - HERMES_UID=${PUID}
+      - HERMES_GID=${PGID}
+      - TZ=${TIMEZONE}
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_HOST=0.0.0.0
+      - HERMES_DASHBOARD_PORT=9119
+      - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=${HERMES_DASHBOARD_USER}
+      - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=${HERMES_DASHBOARD_PASS}
+      - HERMES_DASHBOARD_BASIC_AUTH_SECRET=${HERMES_DASHBOARD_SECRET}
+      - HERMES_WRITE_SAFE_ROOT=/vault
+      - OBSIDIAN_VAULT_PATH=/vault
+    volumes:
+      - hermes-data:/opt/data
+      - hermes-vault:/vault
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.hermes-secure.entrypoints=websecure
+      - traefik.http.routers.hermes-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.hermes-secure.tls=true
+      - traefik.http.routers.hermes-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.hermes-secure.service=hermes
+      - traefik.http.routers.hermes-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      - traefik.http.services.hermes.loadbalancer.server.port=9119
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2.0"
+    # Uncomment only if you enable the browser/Playwright tools — Chromium needs
+    # more shared memory than the 64M default.
+    # shm_size: 1g
+    restart: unless-stopped
