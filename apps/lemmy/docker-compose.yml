@@ -52,14 +52,15 @@ services:
         -c effective_cache_size=12GB
         -c maintenance_work_mem=1GB
         -c checkpoint_completion_target=0.9
-        -c checkpoint_timeout=86400
+        -c checkpoint_timeout=900
         -c wal_buffers=16MB
         -c default_statistics_target=100
         -c random_page_cost=1.1
         -c effective_io_concurrency=200
         -c work_mem=5242kB
         -c min_wal_size=1GB
-        -c max_wal_size=30GB
+        -c max_wal_size=8GB
+        -c huge_pages=try
         -c max_worker_processes=4
         -c max_parallel_workers_per_gather=2
         -c max_parallel_workers=4
@@ -82,18 +83,22 @@ services:
 
   lemmy-app:
     container_name: lemmy-app
-    image: dessalines/lemmy:0.19.12
+    image: dessalines/lemmy:0.19.20
     security_opt:
       - no-new-privileges:true
     hostname: lemmy
     environment:
-      - RUST_LOG="warn"
+      # Unquoted: in compose list syntax the quotes would become part of the
+      # value, env_logger would fail to parse `"warn"` and silently fall back.
+      - RUST_LOG=warn
     volumes:
       - ./lemmy.hjson:/config/config.hjson:Z
       - /etc/localtime:/etc/localtime:ro
     depends_on:
-      - lemmy-postgres
-      - lemmy-pictrs
+      lemmy-postgres:
+        condition: service_healthy
+      lemmy-pictrs:
+        condition: service_started
     networks:
       - internal
       - proxy
@@ -110,7 +115,12 @@ services:
       - traefik.http.routers.lemmy-api.service=lemmy-backend
       
       # ActivityPub requests (GET/HEAD with activity+json or ld+json)
-      - traefik.http.routers.lemmy-activitypub.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (Method(`GET`) || Method(`HEAD`)) && (HeadersRegexp(`Accept`, `.*application/(activity|ld)\+json.*`))
+      # NOTE: the matcher is `HeaderRegexp` (singular) and takes two arguments.
+      # Traefik v2's `HeadersRegexp` was renamed in v3. Under v3 the old name
+      # fails to parse, the router is silently dropped, and every ActivityPub
+      # fetch falls through to lemmy-ui and gets HTML instead of JSON, which
+      # breaks federation. The regexp is unanchored (Go regexp), so no `.*`.
+      - traefik.http.routers.lemmy-activitypub.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (Method(`GET`) || Method(`HEAD`)) && HeaderRegexp(`Accept`, `application/(activity|ld)\+json`)
       - traefik.http.routers.lemmy-activitypub.entrypoints=websecure
       - traefik.http.routers.lemmy-activitypub.tls=true
       - traefik.http.routers.lemmy-activitypub.tls.certresolver=${CERT_RESOLVER}
@@ -130,12 +140,20 @@ services:
       # Backend service
       - traefik.http.services.lemmy-backend.loadbalancer.server.port=8536
 
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://localhost:8536/api/v3/site >/dev/null || exit 1
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 3
     logging: *default-logging
     restart: unless-stopped
 
   lemmy-ui:
     container_name: lemmy-ui
-    image: dessalines/lemmy-ui:0.19.12
+    image: dessalines/lemmy-ui:0.19.20
     security_opt:
       - no-new-privileges:true
     environment:
@@ -170,7 +188,7 @@ services:
 
   lemmy-pictrs:
     container_name: lemmy-pictrs
-    image: asonix/pictrs:0.5.19
+    image: asonix/pictrs:0.5.24
     security_opt:
       - no-new-privileges:true
     hostname: lemmy-pictrs
@@ -198,7 +216,7 @@ services:
 
   lemmy-postfix:
     container_name: lemmy-postfix
-    image: mwader/postfix-relay
+    image: mwader/postfix-relay:1.2.17
     security_opt:
       - no-new-privileges:true
     environment:

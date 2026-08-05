@@ -1,21 +1,61 @@
 {
-  # for more info about the config, check out the documentation
-  # https://join-lemmy.org/docs/en/administration/configuration.html
+  # Full reference:
+  # https://join-lemmy.org/docs/administration/configuration.html
+  #
+  # This file is a TEMPLATE. Copy it to `lemmy.hjson` (which is gitignored) and
+  # replace every CHANGE_ME by hand. Nothing in this repo substitutes these
+  # for you, they are NOT read from the .env:
+  #
+  #   cp apps/lemmy/lemmy.example.hjson apps/lemmy/lemmy.hjson
+  #
+  # The values below must match the ones in your .env:
+  #   DB_USER_PASS   -> database.password
+  #   PICTRS_API_KEY -> pictrs.api_key
+  #   SUBDOMAIN.DOMAIN -> hostname
+
+  # The federated identity of this instance. Bare domain only: no scheme, no
+  # port, no trailing slash, no "www.". This exact string is baked into the
+  # ActivityPub id of every user, community, post and comment you create, so
+  # CHANGING IT LATER ORPHANS ALL EXISTING FEDERATED CONTENT. Pick it once.
+  # It must resolve publicly and serve the TLS cert Traefik issues for it.
+  hostname: "lemmy.CHANGE_ME.tld"
+
+  # Mandatory for federation, remote instances refuse plain HTTP. Traefik
+  # terminates TLS in front of Lemmy; this flag only tells Lemmy to advertise
+  # itself as https, it does not make Lemmy serve TLS itself.
+  tls_enabled: true
 
   database: {
     host: lemmy-postgres
-    password: "{{ DB_USER_PASS }}"
+    password: "CHANGE_ME"
+    # Keep below the postgres `max_connections=200` set in docker-compose.yml.
+    # Raising this much further can produce "could not resize shared memory
+    # segment" errors unless the postgres `shm_size` is raised to match.
+    pool_size: 30
   }
-  hostname: "{{ $SUBDOMAIN.DOMAIN }}"
+
   pictrs: {
     url: "http://lemmy-pictrs:8080/"
-    api_key: "{{ PICTRS_API_KEY }}"
+    api_key: "CHANGE_ME"
   }
+
   email: {
     smtp_server: "lemmy-postfix:25"
-    smtp_from_address: "noreply@{{ SUBDOMAIN.DOMAIN }}"
+    smtp_from_address: "noreply@lemmy.CHANGE_ME.tld"
     tls_type: "none"
-  # }
+  }
+
+  federation: {
+    # Parallel activity sends per remote instance. Upstream default is 1 and
+    # that is correct for a small instance. Only raise it (6 is the suggested
+    # ceiling) if you are pushing >10 activities/second and remote instances
+    # are visibly lagging behind. See docs/lemmy.md for how to check that
+    # against the federation_queue_state table.
+    concurrent_sends_per_instance: 1
+  }
+
+  # Uncomment to relax the built-in rate limits. The defaults are sane for a
+  # public instance; a single-user or invite-only instance can loosen them.
   # rate_limit: {
   #   message: 999999
   #   post: 999999
