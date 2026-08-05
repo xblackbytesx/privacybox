@@ -41,6 +41,6 @@ services:
       - traefik.http.routers.traefik-secure.service=api@internal
       - traefik.http.services.traefik.loadbalancer.server.port=8080
       # Global settings
-      - traefik.http.routers.http-catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`.+`)
       - traefik.http.routers.http-catchall.entrypoints=web
       - traefik.http.routers.http-catchall.middlewares=https-redirect@file

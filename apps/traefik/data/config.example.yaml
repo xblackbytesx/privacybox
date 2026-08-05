@@ -32,7 +32,7 @@ http:
 
   routers:
     http-catchall:
-      rule: "HostRegexp(`{any:.+}`)"
+      rule: "HostRegexp(`.+`)"
       entrypoints:
         - web
       middlewares:
@@ -40,7 +40,7 @@ http:
       service: noop@internal
 
   serversTransports:
-      ignorecert:
+    ignorecert:
       insecureSkipVerify: true
 
   # # Example of using Traefik to statically route and proxy network endpoints outside Traefik control.
