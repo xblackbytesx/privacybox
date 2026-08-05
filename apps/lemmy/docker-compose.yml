@@ -26,6 +26,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/lemmy/pictrs
+  lemmy-ui-themes:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/lemmy/themes
 
 services:
   lemmy-postgres:
@@ -88,8 +94,7 @@ services:
       - no-new-privileges:true
     hostname: lemmy
     environment:
-      # Unquoted: in compose list syntax the quotes would become part of the
-      # value, env_logger would fail to parse `"warn"` and silently fall back.
+      # Unquoted: in list syntax the quotes become part of the value.
       - RUST_LOG=warn
     volumes:
       - ./lemmy.hjson:/config/config.hjson:Z
@@ -114,12 +119,8 @@ services:
       - traefik.http.routers.lemmy-api.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.routers.lemmy-api.service=lemmy-backend
       
-      # ActivityPub requests (GET/HEAD with activity+json or ld+json)
-      # NOTE: the matcher is `HeaderRegexp` (singular) and takes two arguments.
-      # Traefik v2's `HeadersRegexp` was renamed in v3. Under v3 the old name
-      # fails to parse, the router is silently dropped, and every ActivityPub
-      # fetch falls through to lemmy-ui and gets HTML instead of JSON, which
-      # breaks federation. The regexp is unanchored (Go regexp), so no `.*`.
+      # ActivityPub requests (GET/HEAD with activity+json or ld+json).
+      # Traefik v3 matcher: HeaderRegexp, singular, two args, Go regexp.
       - traefik.http.routers.lemmy-activitypub.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (Method(`GET`) || Method(`HEAD`)) && HeaderRegexp(`Accept`, `application/(activity|ld)\+json`)
       - traefik.http.routers.lemmy-activitypub.entrypoints=websecure
       - traefik.http.routers.lemmy-activitypub.tls=true
@@ -161,7 +162,7 @@ services:
       - LEMMY_UI_LEMMY_EXTERNAL_HOST=${SUBDOMAIN}.${DOMAIN}
       - LEMMY_UI_HTTPS=true
     volumes:
-      - ./volumes/lemmy-ui/extra_themes:/app/extra_themes
+      - lemmy-ui-themes:/app/extra_themes
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - lemmy-app

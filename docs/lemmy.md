@@ -7,6 +7,13 @@ ever contacted by other instances.
 
 ## Config file
 
+The bind-mounted volumes do not auto-create, so make the host directories
+first or the stack will fail to start:
+
+```
+mkdir -p ${DOCKER_ROOT}/lemmy/{database,pictrs,themes}
+```
+
 `lemmy.hjson` is not generated from the `.env`. Copy it and fill it in by hand:
 
 ```
