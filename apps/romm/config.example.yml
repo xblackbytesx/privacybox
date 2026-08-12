@@ -1,31 +1,139 @@
-exclude:
-  # Exclude platforms to be scanned
-  platforms:
-    - 'romm'
+# Optional. Copy to $DOCKER_ROOT/romm/config/config.yml, every section falls
+# back to defaults when omitted. RomM also writes this file from
+# Settings > Library Management, so hand edits and UI edits share one file.
+# Full reference: https://docs.romm.app/latest/reference/configuration-file/
 
-  # Exclude roms or parts of roms to be scanned
+exclude:
+  # Platform folders the scanner skips entirely, by folder name.
+  # platforms:
+  #   - ps3
+
   roms:
-    ## Single file games section
+    # Single file games. Does not apply to files inside sub-folders.
     single_file:
-      # Exclude matched file names to be sanned
+      # Skip every file with these extensions.
+      extensions:
+        - xml
+        - txt
+        - nfo
+        - db
+        - bak
+      # Skip matched file names, unix pattern matching is supported.
       names:
         - 'info.txt'
-      # Exclude all files with certain extensions to be scanned
-      extensions:
-        - 'xml'
+        - '._*'
+        - '.DS_Store'
+        - 'gamelist.xml'
 
-    ## Multi files games section
+    # Multi file games, meaning folders RomM reads as one game.
     multi_file:
-      # Exclude matched 'folder' (RomM identifies folders as multi file games) names to be scanned
+      # Skip matched folder names. The list below covers NAS junk plus the
+      # ES-DE media folders, which are artwork and not games. Names here are
+      # also what the filesystem watcher ignores, and it tests every path
+      # component, so a staging folder at the library root belongs here too.
+      # Adding it to exclude.platforms would not do that, the watcher does not
+      # read that list.
       names:
-        - 'my_multi_file_game'
-        - 'DLC'
+        - unsorted
+        - '@eaDir'
+        - '__MACOSX'
+        - '$RECYCLE.BIN'
+        - '.stfolder'
+        - 3dboxes
+        - backcovers
+        - covers
+        - fanart
+        - manuals
+        - marquees
+        - miximages
+        - physicalmedia
+        - screenshots
+        - titlescreens
+        - videos
+        - downloaded_media
+        - media
       parts:
-        # Exclude matched file names to be sanned from multi file roms
-        # Keep in mind that RomM doesn't scan folders inside multi files games,
-        # so there is no need to exclude folders from inside of multi files games.
+        # Skip these files from inside a multi file game.
         names:
           - 'data.xml'
-        # Exclude all files with certain extensions to be scanned from multi file roms
+          - '._*'
         extensions:
-          - 'txt'
+          - xml
+          - txt
+
+filesystem:
+  roms_folder: 'roms'
+  firmware_folder: 'bios'
+  # Hashes drive Hasheous and RetroAchievements matching. Only turn this on if
+  # scans are too slow on a low power host.
+  skip_hash_calculation: false
+
+scan:
+  priority:
+    # Decides which provider wins when two of them return a different value for
+    # the same field. It does not enable or disable anything: a provider left
+    # out of the list still gets used, it just ranks after the listed ones.
+    # Hasheous is first because it resolves games by file hash and proxies IGDB
+    # titles, descriptions and covers, which is the most reliable answer for a
+    # DAT verified library.
+    metadata:
+      - hasheous
+      - ss
+      - igdb
+      - moby
+      - launchbox
+      - ra
+      - hltb
+    artwork:
+      - ss
+      - igdb
+      - moby
+      - libretro
+    # Preferred release region, most wanted first. 'ss' is ScreenScraper's own
+    # generic region, worth keeping as a fallback for art it only files there.
+    region:
+      - eu
+      - wor
+      - ss
+      - us
+      - jp
+    # Region tags in the file name beat the priority list above.
+    region_mode: prefer_rom_tags
+    language:
+      - en
+  media:
+    - box2d
+    - box2d_back
+    - box2d_side
+    - screenshot
+    - manual
+  # Export metadata files for other frontends after every scan.
+  # gamelist:
+  #   export: true
+  #   media:
+  #     thumbnail: box2d
+  #     image: screenshot
+  # pegasus:
+  #   export: true
+
+# Map a folder name onto a RomM platform slug. Only needed when a folder does
+# not already match a slug from the Supported Platforms list.
+# system:
+#   platforms:
+#     gc: ngc
+#     ps1: psx
+#   # Treat a folder as a version of another platform.
+#   versions:
+#     naomi: arcade
+
+# EmulatorJS per core options.
+# emulatorjs:
+#   settings:
+#     default:
+#       fps: show
+#     snes9x:
+#       snes9x_region: ntsc
+#   netplay:
+#     enabled: true
+#     ice_servers:
+#       - urls: "stun:stun.relay.metered.ca:80"

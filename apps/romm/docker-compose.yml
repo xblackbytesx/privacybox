@@ -26,76 +26,112 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/romm/assets
-  romm-roms-dir:
+  romm-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/romm/config
+  romm-valkey:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/romm/valkey
+  romm-library:
     driver: local
     driver_opts:
       type: ${MEDIA_DRIVER_OPT_TYPE}
       o: ${MEDIA_DRIVER_OPT_O}
-      device: ${ROMS_PATH}
+      device: ${LIBRARY_ROOT}
 
 services:
   romm-db:
     container_name: romm-db
-    image: mariadb:latest
+    image: postgres:17-alpine
     security_opt:
       - no-new-privileges:true
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-      - MYSQL_DATABASE=${DB_NAME}
-      - MYSQL_USER=romm
-      - MYSQL_PASSWORD=${DB_USER_PASS}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_USER_PASS}
     volumes:
-      - romm-database:/var/lib/mysql
+      - romm-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=false"
     networks:
       - internal
     healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
-      start_period: 1m
-      # start_interval: 10s
-      interval: 1m
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 5s
       timeout: 5s
-      retries: 3
+      retries: 10
     restart: unless-stopped
 
   romm-app:
     container_name: romm-app
+    # Full image, ships the EmulatorJS cores. Use rommapp/romm:slim for an
+    # API-only instance that pulls cores from a CDN instead.
     image: rommapp/romm:latest
     security_opt:
       - no-new-privileges:true
     environment:
-      - ROMM_DB_DRIVER=mariadb
-      - ROMM_HOST=https://${SUBDOMAIN}.${DOMAIN}
+      - ROMM_BASE_URL=https://${SUBDOMAIN}.${DOMAIN}
+      - ROMM_SESSION_SECURE_COOKIE=true
+      - ROMM_CORS_ALLOWED_ORIGINS=https://${SUBDOMAIN}.${DOMAIN}
+      - ROMM_DB_DRIVER=postgresql
       - DB_HOST=romm-db
-      - DB_PORT=3306
-      - DB_USER=romm
+      - DB_PORT=5432
       - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
       - DB_PASSWD=${DB_USER_PASS}
+      - ROMM_AUTH_SECRET_KEY=${SECRET_KEY}
+      # Metadata providers. Hasheous needs no account and matches on file
+      # hashes, so it carries a scan on its own.
+      - HASHEOUS_API_ENABLED=true
+      # PlayMatch is a second hash matcher, hosted by the community. Manually
+      # matching a ROM forwards its hashes, filename, filesize and provider ids
+      # to that third party as a suggestion, so it stays off here. Point
+      # PLAYMATCH_API_URL at your own instance if you want it without that.
+      - PLAYMATCH_API_ENABLED=false
+      - LAUNCHBOX_API_ENABLED=true
+      - HLTB_API_ENABLED=true
       - IGDB_CLIENT_ID=${IGDB_CLIENT_ID}
       - IGDB_CLIENT_SECRET=${IGDB_CLIENT_SECRET}
-      # [Optional - WIP] Use SteamGridDB as a source for covers
-      # - STEAMGRIDDB_API_KEY=${STEAMGRIDDB_API_KEY}
-      - ROMM_AUTH_SECRET_KEY=${SECRET_KEY}
-      - ROMM_AUTH_USERNAME=${ADMIN_USER}
-      - ROMM_AUTH_PASSWORD=${ADMIN_PASS}
-      # [Optional] Will enable asynchronous tasks (all disabled by default)
-      # Important: Do NOT wrap the cron expression in quotes
+      - SCREENSCRAPER_USER=${SCREENSCRAPER_USER}
+      - SCREENSCRAPER_PASSWORD=${SCREENSCRAPER_PASSWORD}
+      - STEAMGRIDDB_API_KEY=${STEAMGRIDDB_API_KEY}
+      - RETROACHIEVEMENTS_API_KEY=${RETROACHIEVEMENTS_API_KEY}
+      - MOBYGAMES_API_KEY=${MOBYGAMES_API_KEY}
+      # - TGDB_API_ENABLED=true
+      # - FLASHPOINT_API_ENABLED=true
+      # Crons are staggered so they never overlap a scan.
       - ENABLE_RESCAN_ON_FILESYSTEM_CHANGE=true
       - RESCAN_ON_FILESYSTEM_CHANGE_DELAY=5
       - ENABLE_SCHEDULED_RESCAN=true
       - SCHEDULED_RESCAN_CRON=0 3 * * *
       - ENABLE_SCHEDULED_UPDATE_SWITCH_TITLEDB=true
       - SCHEDULED_UPDATE_SWITCH_TITLEDB_CRON=0 4 * * *
-      - ENABLE_SCHEDULED_UPDATE_MAME_XML=true
-      - SCHEDULED_UPDATE_MAME_XML_CRON=0 5 * * *
+      - ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA=true
+      - SCHEDULED_UPDATE_LAUNCHBOX_METADATA_CRON=30 4 * * *
+      - ENABLE_SCHEDULED_CLEANUP_ORPHANED_RESOURCES=true
+      - SCHEDULED_CLEANUP_ORPHANED_RESOURCES_CRON=0 5 * * *
+      # Needs RETROACHIEVEMENTS_API_KEY to be set, errors out without it.
+      # - ENABLE_SCHEDULED_RETROACHIEVEMENTS_PROGRESS_SYNC=true
+      # - SCHEDULED_RETROACHIEVEMENTS_PROGRESS_SYNC_CRON=30 5 * * *
+      # Rewrites stored artwork in place, enable only after a backup.
+      # - ENABLE_SCHEDULED_CONVERT_IMAGES_TO_WEBP=true
+      # - SCHEDULED_CONVERT_IMAGES_TO_WEBP_CRON=0 6 * * *
+      # Rule of thumb: 2 x CPU cores + 1. Raise SCAN_WORKERS for large libraries.
+      # - WEB_SERVER_CONCURRENCY=5
+      # - SCAN_WORKERS=2
     volumes:
-      - 'romm-roms-dir:/romm/library'
+      - 'romm-library:/romm/library'
       - 'romm-resources:/romm/resources'
       - 'romm-assets:/romm/assets'
-      # - '${DOCKER_ROOT}/romm/config/config.yml:/romm/config.yml' # Optional
+      - 'romm-config:/romm/config'
+      - 'romm-valkey:/redis-data'
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       romm-db:
