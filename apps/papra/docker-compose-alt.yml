@@ -1,10 +1,5 @@
 name: papra
 
-networks:
-  proxy:
-    name: proxy
-    external: true
-
 volumes:
   papra-data:
     driver: local
@@ -62,15 +57,6 @@ services:
       - papra-documents:/app/documents
       - papra-ingestion:/app/ingestion
       - /etc/localtime:/etc/localtime:ro
-    networks:
-      - proxy
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.papra-app-secure.entrypoints=websecure
-      - traefik.http.routers.papra-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.papra-app-secure.tls=true
-      - traefik.http.routers.papra-app-secure.tls.certresolver=${CERT_RESOLVER}
-      - traefik.http.routers.papra-app-secure.service=papra-app
-      - traefik.http.routers.papra-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-      - traefik.http.services.papra-app.loadbalancer.server.port=1221
+    ports:
+      - 1221:1221
     restart: unless-stopped
