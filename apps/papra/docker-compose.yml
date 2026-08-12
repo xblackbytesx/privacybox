@@ -1,0 +1,76 @@
+name: papra
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  papra-app-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/papra/app-data
+  papra-documents:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCUMENTS_PATH}
+  papra-ingestion:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${INGESTION_PATH}
+
+services:
+  papra-app:
+    container_name: papra-app
+    image: ghcr.io/papra-hq/papra:latest
+    security_opt:
+      - no-new-privileges:true
+    user: "${PUID}:${PGID}"
+    environment:
+      - APP_BASE_URL=https://${SUBDOMAIN}.${DOMAIN}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_IS_REGISTRATION_ENABLED=${REGISTRATION_ENABLED}
+      - DOCUMENT_STORAGE_FILESYSTEM_ROOT=/app/documents
+      - DOCUMENT_STORAGE_MAX_UPLOAD_SIZE=${MAX_UPLOAD_SIZE}
+      - DOCUMENTS_OCR_LANGUAGES=${OCR_LANGUAGES}
+      - INGESTION_FOLDER_IS_ENABLED=true
+      - INGESTION_FOLDER_ROOT_PATH=/app/ingestion
+      # Imported files are deleted from the drop folder. Set 'move' to keep
+      # them in <ingestion>/<org_id>/ingestion-done/ instead. A file that fails
+      # to import always goes to <ingestion>/<org_id>/ingestion-error/, both
+      # paths are relative to the organisation folder, not the container root.
+      - INGESTION_FOLDER_POST_PROCESSING_STRATEGY=delete
+      # Watching a network share needs polling, inotify events do not cross it.
+      # - INGESTION_FOLDER_WATCHER_USE_POLLING=true
+      # Password resets and organisation invites need a mailer. Without one the
+      # emails are only written to the container log.
+      # - EMAILS_DRIVER=smtp
+      # - EMAILS_FROM_ADDRESS=Papra <papra@privacy.box>
+      # - SMTP_HOST=
+      # - SMTP_PORT=587
+      # - SMTP_USER=
+      # - SMTP_PASSWORD=
+      # - SMTP_SECURE=false
+    volumes:
+      - papra-app-data:/app/app-data
+      - papra-documents:/app/documents
+      - papra-ingestion:/app/ingestion
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.papra-app-secure.entrypoints=websecure
+      - traefik.http.routers.papra-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.papra-app-secure.tls=true
+      - traefik.http.routers.papra-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.papra-app-secure.service=papra-app
+      - traefik.http.routers.papra-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.papra-app.loadbalancer.server.port=1221
+    restart: unless-stopped
