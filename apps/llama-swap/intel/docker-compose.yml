@@ -8,10 +8,12 @@ name: llama-swap
 # Run this instead of those — don't run both, they'd fight over the GPU and ports.
 #
 # Clients point at ONE endpoint and pick the model by name (see llama-swap-config.yaml):
-#   fast     -> Qwen3-4B-Instruct-2507   (no-think; quick chats + Deep Research orchestration)
-#   smart    -> Qwen3.6-35B-A3B          (deep chat; MoE experts in RAM)
-#   fast_mm  -> Gemma-4-E4B              (vision; fully-GPU)
-#   smart_mm -> Gemma-4-26B-A4B QAT      (vision; MoE experts in RAM)
+#   fast       -> Qwen3-4B-Instruct-2507 (no-think; quick chats + Deep Research orchestration)
+#   smart      -> Qwen3.6-35B-A3B        (deep chat; MoE experts in RAM)
+#   uncensored -> GLM-4.7-Flash NEO-CODE (abliterated reasoning coder; MoE experts in RAM)
+#   coder      -> Qwen3-Coder-Next 80B-A3B (no-think agentic code; MoE experts in RAM)
+#   fast_mm    -> Gemma-4-E4B            (vision; fully-GPU)
+#   smart_mm   -> Gemma-4-26B-A4B QAT    (vision; MoE experts in RAM)
 #
 # Two ways to reach it:
 #   - From other containers on the `proxy` network (e.g. Odysseus): http://llama-swap:8080/v1
@@ -49,7 +51,10 @@ services:
     deploy:
       resources:
         limits:
-          # Sized for the heaviest model (smart): experts in RAM + overhead.
+          # Sized for the heaviest model (coder, UD-IQ4_XS): ~25GiB of routed
+          # experts in RAM + KV + overhead. Leaves ~28GiB of the host's 64 for
+          # TrueNAS and ZFS ARC, which stays dynamic. Do not go past 36G on this
+          # box: 40G+ (UD-Q4_K_XL) starts starving ARC.
           cpus: "10.0"
-          memory: 28G
+          memory: 36G
     restart: unless-stopped

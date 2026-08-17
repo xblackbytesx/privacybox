@@ -1,67 +1,76 @@
 # llama-swap model definitions (mounted at /app/config.yaml).
 #
-# Default routing loads ONE model at a time and unloads the previous one on swap —
-# correct for the 12GB B580. `ttl` additionally unloads a model after N idle seconds,
-# freeing the GPU for other services. ${PORT} is auto-assigned by llama-swap per model.
+# One model loaded at a time, previous unloaded on swap, which is what makes a
+# 12GB card workable. `ttl` also unloads after N idle seconds. ${PORT} is
+# auto-assigned per model.
 #
-# PATH TAXONOMY (2026-07): /models follows the modelarr layout —
-#   /models/<hf-owner>/<hf-repo>/<file>.gguf
-# The path IS the upstream identity: it makes files re-adoptable by modelarr's
-# library scan, keeps same-named files (e.g. each repo's mmproj-F16.gguf) from
-# colliding, and is the groundwork for modelarr's future push-to-machine feature.
-# New entries must use taxonomy paths; no flat /models/<file>.gguf paths.
+# Sized for a 12GB Intel Arc B580, 64GB RAM, 6-core CPU, llama.cpp Vulkan
+# backend (~2x SYCL on Arc). Adjust quants, -c and --n-cpu-moe for other setups.
+#
+# PICKING A MODEL: dense or MoE matters more than file size. --n-cpu-moe puts
+# routed experts in RAM and keeps attention on the GPU, so only active params
+# hit the CPU per token; that is what makes a ~17GB MoE usable on 12GB. A dense
+# model of the same size has nothing to offload and costs full compute on every
+# CPU-resident layer. Dense above ~14B wants a 24GB card.
+#
+# PATH TAXONOMY: /models/<source>/<owner>/<repo>/<file>.gguf. The path is the
+# upstream identity, which keeps same-named files apart (every repo ships its
+# own mmproj-F16.gguf) and matches what modelarr resolves for a llama-swap
+# target, so its files.tsv destinations are these paths verbatim.
+#
+# The <source> segment is new: models come from more than HuggingFace now. An
+# older tree is /models/<owner>/<repo>/ and needs a one-time re-shape (the dot
+# name keeps the new directory out of the glob; safe to re-run):
+#   cd $DOCKER_ROOT/llamacpp/models
+#   [ -d huggingface ] || { mkdir .hf && mv */ .hf/ && mv .hf huggingface; }
+#
+# --jinja on every model: without it llama.cpp ignores the GGUF's own chat
+# template and uses a legacy matcher with no concept of tools, leaving `tools`
+# inert. Check with: docker logs llama-swap | grep -i "chat format"
+# A named format is good; "Generic" means the template was not recognised.
 
-# Allow up to 5 min for a model to become ready — the `smart` model loads ~22GB
-# (--no-mmap) into RAM before serving, which can take a while on first start.
-healthCheckTimeout: 300
+# 10 min ceiling to become ready: `coder` reads ~36GiB (--no-mmap) before serving,
+# ~1.6x what `smart` does. Raise again if a cold load ever trips the health check.
+healthCheckTimeout: 600
 logLevel: info
 
 models:
-  # Fast, fully-GPU model for quick chats AND Deep Research orchestration.
-  # Deep Research fires many short LLM calls with tight (some hardcoded 60s) timeouts,
-  # so it needs a fast responder, not a smart-but-slow one. Point Odysseus's research
-  # model at "fast".
+  # Quick chat, and orchestration for tools firing many short calls under tight
+  # timeouts (Odysseus Deep Research has some hardcoded at 60s).
   #
-  # Qwen3-4B-Instruct-2507: a DEDICATED NON-THINKING model — it never emits <think>
-  # blocks, so it answers immediately instead of "overthinking" simple questions (and
-  # generates far fewer tokens, which also keeps research calls inside their timeouts).
-  # We use this instead of the hybrid Qwen3.5-4B because llama.cpp's thinking-disable
-  # switches (--reasoning-budget 0 / enable_thinking:false) are currently buggy for the
-  # Qwen3.5 series. It's the 3.0 generation rather than 3.6, but still the same Qwen3.x
-  # family (same chat template / tokenizer / tool-calling format as `smart`).
-  # 4B fully on the GPU = very fast prefill; Q8_0 since a 4B is tiny and VRAM is ample.
+  # Qwen3-4B-Instruct-2507 is a DEDICATED NON-THINKING model: never emits
+  # <think>, so it answers immediately instead of overthinking simple questions.
+  # Preferred over hybrid Qwen3.5-4B, whose thinking-disable switches are buggy
+  # in llama.cpp. Same Qwen3.x chat template and tool-calling format as `smart`.
   #
-  # -fa on (NOT off) for this model, despite the B580/Vulkan norm of -fa off:
-  # fully on the GPU at -c 32768, flash attention's small compute buffer is what keeps
-  # this model FITTING cleanly in the 12GB B580. With -fa off the ~4.4GB non-FA compute
-  # buffer puts the card under memory pressure (slow alloc / reload / iGPU spill) and
-  # TTFT collapses (~4.7s vs ~0.25s measured end-to-end). llama-bench shows -fa off with
-  # higher steady-state prefill throughput, but that's the wrong metric here — for short,
-  # model-swapping research/chat calls, time-to-first-token dominates, and FA's memory
-  # efficiency wins it. (smart stays -fa off: its experts are in RAM, so it isn't
-  # GPU-memory-bound the same way.)
+  # -fa on despite the usual Arc/Vulkan preference for off: fully on the GPU at
+  # -c 32768, FA's small compute buffer is what keeps it fitting in 12GB. With
+  # -fa off the ~4.4GB non-FA buffer causes memory pressure and TTFT collapses
+  # to ~4.7s from ~0.25s. llama-bench prefers -fa off on prefill throughput, but
+  # TTFT is the metric that matters for short swapping calls.
   "fast":
     name: "Qwen3-4B-Instruct (fast, no-think)"
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/unsloth/Qwen3-4B-Instruct-2507-GGUF/Qwen3-4B-Instruct-2507-Q8_0.gguf
+      -m /models/huggingface/unsloth/Qwen3-4B-Instruct-2507-GGUF/Qwen3-4B-Instruct-2507-Q8_0.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       -c 32768
       -b 2048
       --no-mmap
       -fa on
+      --jinja
 
-  # Smart MoE model for deep chat. 35B total / ~3B active; experts offloaded to RAM
-  # via --n-cpu-moe. Slower per token + slow prefill — great for quality chat, poor
-  # for the many-call Deep Research loop (use "fast" there).
+  # Deep chat. 35B total / ~3B active MoE, experts in RAM via --n-cpu-moe. Slow
+  # per token with slow prefill: good for quality chat, poor for many-call loops
+  # (use `fast` there).
   "smart":
     name: "Qwen3.6-35B-A3B (smart)"
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/unsloth/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+      -m /models/huggingface/unsloth/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       --n-cpu-moe 32
@@ -70,36 +79,34 @@ models:
       -b 2048
       --no-mmap
       -fa on
+      --jinja
 
-  # GLM-4.7-Flash (uncensored): DavidAU abliterated + NEO-CODE code-imatrix build of
-  # Zhipu's GLM-4.7-Flash. 30B-A3B MoE (31B total, ~3B active, 47 layers, deepseek2 arch),
-  # coding/agentic. Runs like `smart`: too big for 12GB, so routed experts live in RAM via
-  # --n-cpu-moe while attention stays on the B580. Fewer total params than smart -> a bit snappier.
+  # DavidAU abliterated + NEO-CODE code-imatrix build of GLM-4.7-Flash. 30B-A3B
+  # MoE (47 layers, deepseek2), coding/agentic. Runs like `smart`: experts in
+  # RAM, attention on GPU. Slightly snappier on fewer total params.
   #
-  # Quant: DavidAU IQ4_NL (17.3GB) -- one of his "precision-balanced" quants, and every quant in
-  # this repo carries a 16-bit output tensor, so this 4-bit holds up well for code. Fits the 28G
-  # container cap with ARC headroom (matches smart's footprint). Step up to Q5_K_M (21.6GB, still
-  # <28G) for more fidelity, or Q6_K (25GB) ONLY after raising docker-compose-swap.yml memory: to 32G.
+  # IQ4_NL (17.3GB): every quant in that repo carries a 16-bit output tensor, so
+  # 4-bit holds up for code. Q5_K_M (21.6GB) for more fidelity; Q6_K (25GB) only
+  # after raising the container memory cap in docker-compose-swap.yml to 32G.
   #
-  # -fa off: DavidAU explicitly says disable flash attention on this model (speed issues); and its
-  # routed experts are in RAM, so it isn't GPU-memory-bound anyway. --repeat-penalty 1.0 + --min-p
-  # 0.01: this model loops/degrades unless rep-pen is neutral and min-p is lowered from llama.cpp's
-  # 0.05 default (DavidAU allows rep-pen 1.1; 1.0 is the safe default). Clients may override temp/
-  # top-p; DavidAU's defaults are temp 1.0 / top-p 0.95 (drop temp to ~0.7 for deterministic code).
+  # -fa off on the author's advice (speed issues); experts are in RAM so it is
+  # not GPU-memory-bound anyway. --repeat-penalty 1.0 and --min-p 0.01 are
+  # required: it loops with llama.cpp's 0.05 min-p default or a non-neutral
+  # rep-pen. Author defaults temp 1.0 / top-p 0.95; ~0.7 for deterministic code.
   #
-  # REQUIRES a llama.cpp newer than commit 7789 (Jan 21 2026): earlier builds mis-set scoring_func
-  # (softmax instead of sigmoid) and produce looping garbage. The llama-swap :vulkan image is well
-  # past that, but re-verify (/app/llama --version) after any image pull.
+  # REQUIRES llama.cpp newer than commit 7789 (Jan 21 2026); earlier builds
+  # mis-set scoring_func and produce looping garbage. Check /app/llama --version
+  # after any image pull.
   #
-  # --n-cpu-moe 47 = all routed experts on CPU (safe, guaranteed fit); it under-uses the 12GB.
-  # Tune DOWN (44, 40, 36...) while watching B580 VRAM to push experts onto the GPU for more t/s;
-  # expect to land near smart's 32. Restart llama-swap between changes.
+  # --n-cpu-moe 47 = all experts on CPU: safe, and under-uses the 12GB. Tune DOWN
+  # (44, 40, 36) while watching VRAM; expect to land near smart's 32. Restart
+  # between changes.
   "uncensored":
     name: "GLM-4.7-Flash Uncensored (NEO-CODE)"
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/DavidAU/GLM-4.7-Flash-Uncensored-Heretic-NEO-CODE-Imatrix-MAX-GGUF/GLM-4.7-Flash-Uncen-Hrt-NEO-CODE-MAX-imat-D_AU-IQ4_NL.gguf
+      -m /models/huggingface/DavidAU/GLM-4.7-Flash-Uncensored-Heretic-NEO-CODE-Imatrix-MAX-GGUF/GLM-4.7-Flash-Uncen-Hrt-NEO-CODE-MAX-imat-D_AU-IQ4_NL.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       --n-cpu-moe 47
@@ -110,66 +117,131 @@ models:
       -fa off
       --min-p 0.01
       --repeat-penalty 1.0
+      --jinja
+
+  # Qwen3-Coder-Next: 80B-A3B MoE, hybrid Gated DeltaNet + attention, text only.
+  # Non-reasoning by design (never emits <think>), built for fast agentic code.
+  # Feb 2026, on the Qwen3-Next-80B-A3B base, so it is a settled arch with months
+  # of llama.cpp fixes behind it, not a fresh drop.
+  #
+  # Same ~3B active as `smart`, so per-token RAM traffic and throughput land in
+  # the same class: the extra 45B of experts is a memory cost, not a speed cost.
+  # This is the --n-cpu-moe idiom at its most favourable, 3B of 80B being far
+  # sparser than 3B of 35B.
+  #
+  # UD-IQ4_XS (35.8GiB on disk, ~25GiB CPU-side once attention and KV are on the
+  # B580). Quantization hurts code more than chat and IQ4 is where that stops
+  # being a compromise, so it is worth the 36G cap in docker-compose-swap.yml.
+  # UD-IQ3_XXS (26.5GiB) fits the old 28G cap if you want the compose change back.
+  # UD-Q4_K_XL (46.2GiB) needs 40G+ and starts competing with ZFS ARC: don't.
+  #
+  # --min-p 0.01 (llama.cpp defaults to 0.05) and --repeat-penalty 1.0 per Unsloth,
+  # same deviation `uncensored` carries. Author defaults temp 1.0 / top-p 0.95 /
+  # top-k 40, left to the client like the other models.
+  #
+  # --n-cpu-moe IS THE WHOLE BALLGAME here, far more than it is on `smart`. 48
+  # layers, 512 tiny routed experts (moe_intermediate_size 512) plus 1 shared, 10
+  # active per token, so every token gathers 10 scattered slices per layer out of
+  # ~34GiB of expert weight. Clamped at 99 (all experts in RAM) replies took ~47s
+  # and clients timed out; at 37 it is fast. Fine-grained MoE punishes the safe
+  # all-experts-on-CPU starting value far harder than coarse MoE does, so never
+  # leave this one clamped.
+  #
+  # 37 = 48 layers at ~0.71GiB of experts each, ~8GiB free on the B580 once
+  # non-expert weights and KV are placed, so ~11 layers of experts ride the GPU.
+  # 37 IS THE EXACT FLOOR, measured: 36 and anything below fails to load at all,
+  # llama-server aborting ~0.5s in on a failed Vulkan device allocation. Do NOT
+  # copy `smart`'s tuned 32 to this model, its per-layer expert weight is roughly
+  # half. There is nothing left to find below 37; don't go hunting again.
+  #
+  # Corollary: this sits ON the VRAM ceiling, so anything that grows the allocation
+  # breaks the load outright instead of just slowing it, and always presents as the
+  # same opaque "upstream command exited prematurely". Raising -c does it. So does
+  # -fa off, whose compute buffer is several GB larger, which means benching FA
+  # both ways here is not free: -fa off needs --n-cpu-moe raised to fit. So does a
+  # new :vulkan image with different buffer sizing. Use 38 instead if you would
+  # rather carry a one-layer margin than the last few percent of throughput.
+  #
+  # Context if this ever regresses: llama.cpp's CPU MoE path does not fully exploit
+  # this model's sparsity (ggml-org/llama.cpp #19480), so RAM-resident experts cost
+  # more here than the 3B active count predicts, which is why the clamp hurt so
+  # much. Watch client timeouts too: Odysseus Deep Research gives up at 60s.
+  #
+  # Overlaps `uncensored` on coding. The split is reasoning: this one never thinks,
+  # GLM-4.7-Flash does. Route quick completions here, hard problems there.
+  "coder":
+    name: "Qwen3-Coder-Next 80B-A3B (coder, no-think)"
+    ttl: 300
+    cmd: >
+      /app/llama-server
+      -m /models/huggingface/unsloth/Qwen3-Coder-Next-GGUF/Qwen3-Coder-Next-UD-IQ4_XS.gguf
+      --host 127.0.0.1 --port ${PORT}
+      -ngl 99
+      --n-cpu-moe 37
+      -t 6
+      -c 32768
+      -b 2048
+      --no-mmap
+      -fa on
+      --min-p 0.01
+      --repeat-penalty 1.0
+      --jinja
 
   # ── Gemma 4 vision pair (fast_mm / smart_mm) ──────────────────────────────────
-  # Multimodal (image-text-to-text) siblings of fast/smart. Vision needs TWO files
-  # per model: the weights AND that repo's own mmproj (vision encoder + projector).
-  # mmprojs are trained PER MODEL (different embedding dims) — never mix them
-  # across models. Each repo names its projector `mmproj-F16.gguf`; the taxonomy
-  # keeps them apart (one per repo dir), so canonical filenames are used as-is.
-  # F16 (not BF16) mmproj: same size/quality, but F16 is the fast native path on
-  # Vulkan; BF16 support there is newer and spottier on Arc.
+  # Vision needs TWO files per model: weights plus that repo's own mmproj (vision
+  # encoder + projector). mmprojs are per-model with different embedding dims, so
+  # never mix them. Every repo names its projector mmproj-F16.gguf; the taxonomy
+  # keeps them apart. F16 not BF16: same size and quality, but F16 is the fast
+  # native path on Vulkan and BF16 is spottier on Arc.
   #
   # Files (unsloth):
-  #   unsloth/gemma-4-E4B-it-GGUF          -> gemma-4-E4B-it-Q5_K_M.gguf (5.5GB) + mmproj-F16.gguf (1.0GB)
-  #   unsloth/gemma-4-26B-A4B-it-qat-GGUF  -> gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf (14.2GB) + mmproj-F16.gguf (1.2GB)
+  #   gemma-4-E4B-it-GGUF          -> gemma-4-E4B-it-Q5_K_M.gguf (5.5GB) + mmproj-F16.gguf (1.0GB)
+  #   gemma-4-26B-A4B-it-qat-GGUF  -> gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf (14.2GB) + mmproj-F16.gguf (1.2GB)
   #
-  # Images eat context tokens and add a one-off encode cost per image to TTFT —
-  # that's why `fast` (Deep Research) stays text-only and this is a separate pair.
-  # Needs a llama.cpp with Gemma 4 + its mmproj support; the :vulkan image is
-  # recent enough, but re-verify after any image pull (same drill as `uncensored`).
+  # Images consume context tokens and add a one-off encode cost to TTFT, which is
+  # why `fast` stays text-only. Needs a llama.cpp with Gemma 4 mmproj support.
+  #
+  # Thinking stays ON for both. enable_thinking:false disables reasoning outright
+  # rather than relocating it, and is deprecated in favour of --reasoning off.
+  # Gemma 4 emits thought and tool call in one stream; llama-server's PEG parser
+  # (PR #21326) separates them, so both work. Only disable if tool calls start
+  # landing in reasoning_content.
 
-  # E4B: Gemma 4's efficient ~4B-effective model — the Gemma analog of `fast`,
-  # fully on the GPU. Quant Q5_K_M (5.5GB): with the ~1GB mmproj also on GPU
-  # plus FA compute + KV at -c 32768 this lands ~9GB on the 12GB card, with
-  # comfortable headroom. Step UP to UD-Q5_K_XL (6.7GB, unsloth dynamic) for a
-  # touch more fidelity if VRAM stays calm; Q8_0 (8.2GB) only fits comfortably
-  # WITHOUT the mmproj (text-only). -fa on for the same reason as `fast`:
-  # fully-GPU, FA's small compute buffer is what makes it fit.
+  # E4B: Gemma analog of `fast`, fully on GPU. Q5_K_M (5.5GB) plus the ~1GB
+  # mmproj plus FA compute and KV at -c 32768 lands ~9GB on a 12GB card. Step up
+  # to UD-Q5_K_XL (6.7GB) if VRAM stays calm; Q8_0 (8.2GB) needs the mmproj
+  # dropped. -fa on for the same reason as `fast`.
   "fast_mm":
     name: "Gemma-4-E4B (fast, vision)"
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/unsloth/gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q5_K_M.gguf
-      --mmproj /models/unsloth/gemma-4-E4B-it-GGUF/mmproj-F16.gguf
+      -m /models/huggingface/unsloth/gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q5_K_M.gguf
+      --mmproj /models/huggingface/unsloth/gemma-4-E4B-it-GGUF/mmproj-F16.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       -c 32768
       -b 2048
       --no-mmap
       -fa on
+      --jinja
 
-  # 26B-A4B QAT: Gemma 4's MoE (~26B total / ~4B active) — runs like `smart`:
-  # routed experts in RAM via --n-cpu-moe, attention on the B580. The qat repo
-  # ships essentially one quant on purpose: quantization-aware trained, so this
-  # UD-Q4_K_XL holds near-bf16 quality. 14.2GB --no-mmap into RAM + overhead
-  # fits the 28G container cap (lighter than smart's ~22GB).
+  # 26B-A4B QAT: ~26B total / ~4B active MoE, runs like `smart`. The qat repo
+  # ships essentially one quant on purpose: quantization-aware trained, so
+  # UD-Q4_K_XL holds near-bf16 quality at 14.2GB.
   #
-  # --n-cpu-moe 99 = clamps to "all routed experts on CPU" (layer count not
-  # published for this repo; 99 is the same idiom as -ngl 99). Safe first boot;
-  # tune DOWN while watching B580 VRAM exactly like `uncensored`'s guidance —
-  # expect to land somewhere near smart's 32. If VRAM gets tight with vision in
-  # play, add --no-mmproj-offload to keep the projector on CPU (one-off slower
-  # image encode; generation speed unaffected). -fa on to start (mirrors smart);
-  # bench both ways — Gemma's sliding-window attention changes the math vs Qwen.
+  # --n-cpu-moe 99 clamps to all experts on CPU (layer count unpublished; same
+  # idiom as -ngl 99). Safe first boot; tune DOWN while watching VRAM as with
+  # `uncensored`. If VRAM gets tight, --no-mmproj-offload keeps the projector on
+  # CPU (slower one-off image encode, generation unaffected). -fa on to start,
+  # but bench both ways: Gemma's sliding-window attention changes the math.
   "smart_mm":
     name: "Gemma-4-26B-A4B QAT (smart, vision)"
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/unsloth/gemma-4-26B-A4B-it-qat-GGUF/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
-      --mmproj /models/unsloth/gemma-4-26B-A4B-it-qat-GGUF/mmproj-F16.gguf
+      -m /models/huggingface/unsloth/gemma-4-26B-A4B-it-qat-GGUF/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
+      --mmproj /models/huggingface/unsloth/gemma-4-26B-A4B-it-qat-GGUF/mmproj-F16.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       --n-cpu-moe 99
@@ -178,3 +250,4 @@ models:
       -b 2048
       --no-mmap
       -fa on
+      --jinja
