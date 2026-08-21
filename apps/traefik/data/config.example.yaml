@@ -45,135 +45,136 @@ http:
 
   # # Example of using Traefik to statically route and proxy network endpoints outside Traefik control.
   # # This is useful for proxying routers, nas-drives or even host-mode docker containers on localhost.
+  # routers:
   #   router-homeassistant:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`hass.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-homeassistant"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-jellyfin:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`jellyfin.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-jellyfin"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-transmission:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`transmission.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-transmission"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-nzbget:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`nzbget.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-nzbget"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-jackett:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`jackett.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-jackett"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-prowlarr:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`prowlarr.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-prowlarr"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-sonarr:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`sonarr.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-sonarr"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-radarr:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`radarr.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-radarr"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-readarr:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`readarr.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-readarr"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-lidarr:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`lidarr.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-lidarr"
   #     tls:
   #       certResolver: "transip-dns"
   #   router-spotweb:
   #     entryPoints:
-  #       - "https"
+  #       - "websecure"
   #     rule: "Host(`spotweb.privacy.box`)"
-  #     middlewares: 
-  #       - "https_redirect@file"
-  #       - "non_www@file"
-  #       - "sec_headers@file"
-  #       - "gzip_compress@file"
+  #     middlewares:
+  #       - "https-redirect@file"
+  #       - "non-www@file"
+  #       - "secure-headers@file"
+  #       - "gzip-compress@file"
   #     service: "service-spotweb"
   #     tls:
   #       certResolver: "transip-dns"

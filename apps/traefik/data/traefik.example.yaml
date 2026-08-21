@@ -24,6 +24,12 @@ providers:
   file:
     filename: /config.yaml
 
+# `resolvers` sets the recursive nameservers lego uses for the DNS-01
+# propagation check. Without it lego falls back to the container's
+# /etc/resolv.conf, which is Docker's embedded stub at 127.0.0.11 forwarding
+# to whatever the host uses. That path caches, and the cache outlives the
+# challenge window, so the check keeps seeing the previous run's TXT value or
+# a negative answer and every domain times out. Public resolvers avoid it.
 certificatesResolvers:
   # le-http:
   #   acme:
@@ -37,15 +43,28 @@ certificatesResolvers:
       storage: acme.json
       dnsChallenge:
         provider: transip
-        delayBeforeCheck: 0
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"
+        propagation:
+          # Never check before the provider has published the record. A miss
+          # negative-caches _acme-challenge for the zone's SOA minimum (1800s
+          # on Cloudflare), which outlives the challenge window and turns one
+          # early lookup into a guaranteed failure.
+          delayBeforeChecks: 10s
+          # Set disableANSChecks to true if the direct queries to the zone's
+          # authoritative nameservers are blocked or intercepted outbound.
+          # Checks then run against the resolvers listed above only.
+          disableANSChecks: false
   cloudflare-dns:
     acme:
       email: john.doe@privacy.box
       storage: acme.json
       dnsChallenge:
         provider: cloudflare
-        delayBeforeCheck: 0
-
-resolvers:
-  - "1.1.1.1:53"
-  - "1.0.0.1:53"
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"
+        propagation:
+          delayBeforeChecks: 10s
+          disableANSChecks: false
