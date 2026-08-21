@@ -1,0 +1,233 @@
+name: turnstone
+
+# Turnstone (https://github.com/turnstonelabs/turnstone) is a local-first
+# orchestrator for tool-using AI agents: shell, files, search, web access,
+# memory, sub-agents, and an LLM judge that risk-grades every tool call before
+# you approve it.
+#
+# This is upstream's PRODUCTION stack (turnstone/deploy/compose.yaml) adapted to
+# the house style: released ghcr.io images instead of a local build, one server
+# node instead of ten, real secrets required, and no Caddy. Upstream ships Caddy
+# because the dashboard opens one SSE stream per pane and a plain HTTP/1.1
+# origin caps the browser at 6 connections. Traefik already serves HTTP/2 on
+# websecure, so that requirement is met without it.
+#
+# Three services, one route:
+#   turnstone-db       Shared Postgres. Not optional: every node registers and
+#                      heartbeats into a `services` table the console polls, so
+#                      a per-container SQLite file cannot work here.
+#   turnstone-console  Cluster dashboard, the only service behind Traefik. It
+#                      reverse-proxies each node's own chat UI at
+#                      /node/<node-id>/, so the server needs no route.
+#   turnstone-server   The node that runs workstreams, tools and shell commands.
+#
+# Models are NOT configured in this file. Nodes boot without an LLM and backends
+# are added in the dashboard under Admin -> Models. See docs/turnstone.md for
+# wiring in the local llama-swap models.
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  turnstone-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/turnstone/database
+  turnstone-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/turnstone/data
+  # Everything the agent is meant to read and write. Keep it a dedicated
+  # directory, not a whole media tree: the shell tool runs inside this container
+  # and can reach anything mounted into it.
+  turnstone-workspace:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${TURNSTONE_WORKSPACE_DIR}
+
+services:
+  turnstone-db:
+    container_name: turnstone-db
+    image: postgres:18-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_DB: turnstone
+      POSTGRES_USER: turnstone
+      POSTGRES_PASSWORD: ${DB_USER_PASS}
+    volumes:
+      - turnstone-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d turnstone -U turnstone"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    restart: unless-stopped
+
+  turnstone-console:
+    container_name: turnstone-console
+    image: ghcr.io/turnstonelabs/turnstone:${TURNSTONE_IMAGE_TAG:-latest}
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - turnstone-console
+      - --host=0.0.0.0
+      - --port=8090
+    environment:
+      TURNSTONE_JWT_SECRET: ${TURNSTONE_JWT_SECRET}
+      TURNSTONE_DB_BACKEND: postgresql
+      TURNSTONE_DB_URL: "postgresql+psycopg://turnstone:${DB_USER_PASS}@turnstone-db:5432/turnstone"
+      TURNSTONE_CONSOLE_URL: http://turnstone-console:8090
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.turnstone-console-secure.entrypoints=websecure
+      - traefik.http.routers.turnstone-console-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.turnstone-console-secure.tls=true
+      - traefik.http.routers.turnstone-console-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.turnstone-console-secure.service=turnstone-console
+      # Local compress middleware instead of gzip-compress@file. Traefik v3 no
+      # longer skips text/event-stream the way v2 did, and a compressed SSE
+      # stream leaves the dashboard panes hanging. Everything else is still
+      # compressed.
+      - traefik.http.middlewares.turnstone-sse.compress.excludedContentTypes=text/event-stream
+      # basic-auth@file sits in front of Turnstone's own login on purpose. Until
+      # you create the first user, POST /v1/api/auth/setup is a public endpoint
+      # that hands out the admin account, so an exposed dashboard is claimable by
+      # whoever reaches it first. Keep it, or drop it only after the admin user
+      # exists and you need API tokens against this hostname (basic auth and
+      # bearer tokens both use the Authorization header, so they cannot share it).
+      - traefik.http.routers.turnstone-console-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,turnstone-sse@docker,basic-auth@file
+      - traefik.http.services.turnstone-console.loadbalancer.server.port=8090
+    networks:
+      - internal
+      - proxy
+    depends_on:
+      turnstone-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "/usr/local/bin/healthcheck.py", "http://127.0.0.1:8090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    restart: unless-stopped
+
+  turnstone-server:
+    container_name: turnstone-server
+    image: ghcr.io/turnstonelabs/turnstone:${TURNSTONE_IMAGE_TAG:-latest}
+    security_opt:
+      - no-new-privileges:true
+    # LLM_BASE_URL and OPENAI_API_KEY are only the bootstrap default this node
+    # starts with. The real model definitions live in the database and are
+    # edited under Admin -> Models, so both flags are optional here.
+    command:
+      - sh
+      - -c
+      - >-
+        turnstone-server
+        --host 0.0.0.0
+        --port 8080
+        $${LLM_BASE_URL:+--base-url $$LLM_BASE_URL}
+        $${OPENAI_API_KEY:+--api-key $$OPENAI_API_KEY}
+    environment:
+      TURNSTONE_JWT_SECRET: ${TURNSTONE_JWT_SECRET}
+      TURNSTONE_DB_BACKEND: postgresql
+      TURNSTONE_DB_URL: "postgresql+psycopg://turnstone:${DB_USER_PASS}@turnstone-db:5432/turnstone"
+      TURNSTONE_NODE_ID: ${TURNSTONE_NODE_ID:-node-1}
+      TURNSTONE_ADVERTISE_URL: http://turnstone-server:8080
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Backend for the web_search tool, pointed at the searxng app in this repo
+      # rather than a second bundled instance. Leave empty to disable web search.
+      TURNSTONE_SEARXNG_URL: ${TURNSTONE_SEARXNG_URL:-}
+      # Uncomment once you have an MCP config to mount:
+      # MCP_CONFIG: /workspace/mcp.json
+    volumes:
+      - turnstone-data:/data
+      - turnstone-workspace:/workspace
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      # No route. The console proxies this node's UI at /node/<node-id>/, which
+      # is also what keeps its API off the internet.
+      - traefik.enable=false
+    networks:
+      # `proxy` is not for ingress here, it is the only network with egress:
+      # the node has to reach the model endpoint, SearxNG and the open web.
+      - internal
+      - proxy
+    depends_on:
+      turnstone-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "/usr/local/bin/healthcheck.py", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    restart: unless-stopped
+
+  # Discord and Slack gateway. Off by default because it does nothing without a
+  # token. It needs no inbound port and no route, only the same JWT secret and
+  # database. See https://github.com/turnstonelabs/turnstone/blob/main/docs/channels.md
+  # turnstone-channel:
+  #   container_name: turnstone-channel
+  #   image: ghcr.io/turnstonelabs/turnstone:${TURNSTONE_IMAGE_TAG:-latest}
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   command:
+  #     - sh
+  #     - -c
+  #     - >-
+  #       turnstone-channel
+  #       --http-host=0.0.0.0
+  #       $${TURNSTONE_DISCORD_GUILD:+--discord-guild $$TURNSTONE_DISCORD_GUILD}
+  #   environment:
+  #     TURNSTONE_JWT_SECRET: ${TURNSTONE_JWT_SECRET}
+  #     TURNSTONE_DB_BACKEND: postgresql
+  #     TURNSTONE_DB_URL: "postgresql+psycopg://turnstone:${DB_USER_PASS}@turnstone-db:5432/turnstone"
+  #     TURNSTONE_DISCORD_TOKEN: ${TURNSTONE_DISCORD_TOKEN:-}
+  #     TURNSTONE_DISCORD_GUILD: ${TURNSTONE_DISCORD_GUILD:-0}
+  #     TURNSTONE_SLACK_TOKEN: ${TURNSTONE_SLACK_TOKEN:-}
+  #     TURNSTONE_SLACK_APP_TOKEN: ${TURNSTONE_SLACK_APP_TOKEN:-}
+  #     TURNSTONE_CHANNEL_ADVERTISE_URL: http://turnstone-channel:8091
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #   labels:
+  #     - traefik.enable=false
+  #   networks:
+  #     - internal
+  #     - proxy
+  #   depends_on:
+  #     turnstone-db:
+  #       condition: service_healthy
+  #   restart: unless-stopped
