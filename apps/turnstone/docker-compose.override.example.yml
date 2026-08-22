@@ -1,0 +1,46 @@
+# Build the Turnstone image on this host instead of pulling it.
+#
+# Needed wherever the ghcr.io image has no matching architecture: upstream
+# publishes linux/amd64 only, so an arm64 host fails the pull with
+# "no matching manifest for linux/arm64/v8".
+#
+# Copy this file, do not rename it:
+#
+#   cp docker-compose.override.example.yml docker-compose.override.yml
+#
+# Compose merges docker-compose.override.yml automatically, so every
+# ./manage.sh --start|--update|--force-recreate --app turnstone keeps working
+# and the base docker-compose.yml stays untouched. It is deliberately NOT
+# committed, because auto-merging means any host holding it would be forced to
+# build, including the x86 hosts that should just pull.
+#
+# The build context is a clone of the upstream repo that update-source.sh in
+# this directory maintains. Run that script once before the first start.
+#
+# TURNSTONE_IMAGE_TAG is unused while this override is in place.
+
+services:
+  turnstone-console:
+    image: turnstone:local
+    pull_policy: build
+    build:
+      context: ${TURNSTONE_SRC_DIR}
+      dockerfile: Dockerfile
+
+  # Same image and tag as the console on purpose: the second build is a cache
+  # hit, and giving both a build section avoids the cold-start case where a
+  # pull-only service looks for a tag that does not exist yet.
+  turnstone-server:
+    image: turnstone:local
+    pull_policy: build
+    build:
+      context: ${TURNSTONE_SRC_DIR}
+      dockerfile: Dockerfile
+
+  # Uncomment alongside the channel service in docker-compose.yml.
+  # turnstone-channel:
+  #   image: turnstone:local
+  #   pull_policy: build
+  #   build:
+  #     context: ${TURNSTONE_SRC_DIR}
+  #     dockerfile: Dockerfile

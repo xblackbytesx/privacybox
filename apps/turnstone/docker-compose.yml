@@ -1,30 +1,5 @@
 name: turnstone
 
-# Turnstone (https://github.com/turnstonelabs/turnstone) is a local-first
-# orchestrator for tool-using AI agents: shell, files, search, web access,
-# memory, sub-agents, and an LLM judge that risk-grades every tool call before
-# you approve it.
-#
-# This is upstream's PRODUCTION stack (turnstone/deploy/compose.yaml) adapted to
-# the house style: released ghcr.io images instead of a local build, one server
-# node instead of ten, real secrets required, and no Caddy. Upstream ships Caddy
-# because the dashboard opens one SSE stream per pane and a plain HTTP/1.1
-# origin caps the browser at 6 connections. Traefik already serves HTTP/2 on
-# websecure, so that requirement is met without it.
-#
-# Three services, one route:
-#   turnstone-db       Shared Postgres. Not optional: every node registers and
-#                      heartbeats into a `services` table the console polls, so
-#                      a per-container SQLite file cannot work here.
-#   turnstone-console  Cluster dashboard, the only service behind Traefik. It
-#                      reverse-proxies each node's own chat UI at
-#                      /node/<node-id>/, so the server needs no route.
-#   turnstone-server   The node that runs workstreams, tools and shell commands.
-#
-# Models are NOT configured in this file. Nodes boot without an LLM and backends
-# are added in the dashboard under Admin -> Models. See docs/turnstone.md for
-# wiring in the local llama-swap models.
-
 networks:
   proxy:
     name: proxy
@@ -66,7 +41,7 @@ services:
       POSTGRES_USER: turnstone
       POSTGRES_PASSWORD: ${DB_USER_PASS}
     volumes:
-      - turnstone-database:/var/lib/postgresql/data
+      - turnstone-database:/var/lib/postgresql
       - /etc/localtime:/etc/localtime:ro
     labels:
       - traefik.enable=false
@@ -163,8 +138,6 @@ services:
       TURNSTONE_ADVERTISE_URL: http://turnstone-server:8080
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      # Backend for the web_search tool, pointed at the searxng app in this repo
-      # rather than a second bundled instance. Leave empty to disable web search.
       TURNSTONE_SEARXNG_URL: ${TURNSTONE_SEARXNG_URL:-}
       # Uncomment once you have an MCP config to mount:
       # MCP_CONFIG: /workspace/mcp.json
@@ -173,12 +146,8 @@ services:
       - turnstone-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
     labels:
-      # No route. The console proxies this node's UI at /node/<node-id>/, which
-      # is also what keeps its API off the internet.
       - traefik.enable=false
     networks:
-      # `proxy` is not for ingress here, it is the only network with egress:
-      # the node has to reach the model endpoint, SearxNG and the open web.
       - internal
       - proxy
     depends_on:
