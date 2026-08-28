@@ -53,3 +53,25 @@ services:
     networks:
       - proxy
     restart: unless-stopped
+
+  # One-shot library renamer. Never starts with the stack: the profile keeps it
+  # out of `docker compose up -d`, which is what manage.sh runs.
+  #
+  #   docker compose -f apps/komga/docker-compose.yml run --rm tidy
+  #   docker compose -f apps/komga/docker-compose.yml run --rm tidy --apply
+  #
+  # A separate service rather than `exec` into komga, because the app image's
+  # toolchain is not a contract: it has whatever the upstream base happens to
+  # ship, and that can change on any version bump. This pins its own.
+  tidy:
+    profiles: ["tools"]
+    image: python:3.13-alpine
+    user: "${PUID}:${PGID}"
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - komga-manga-dir:/data/manga
+      - ./tidy:/tidy:ro
+    working_dir: /data/manga
+    entrypoint: ["python3", "/tidy/komga-tidy.py"]
+    command: ["/data/manga"]
