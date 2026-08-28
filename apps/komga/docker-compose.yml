@@ -1,0 +1,55 @@
+name: komga
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  komga-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/komga/config
+  komga-manga-dir:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${MANGA_PATH}
+  # komga-comics-dir:
+  #   driver: local
+  #   driver_opts:
+  #     type: ${MEDIA_DRIVER_OPT_TYPE}
+  #     o: ${MEDIA_DRIVER_OPT_O}
+  #     device: ${COMICS_PATH}
+
+services:
+  komga:
+    container_name: komga
+    image: gotson/komga:latest
+    user: "${PUID}:${PGID}"
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - TZ=${TIMEZONE}
+      # # Raise the JVM heap if scans of a large library run out of memory
+      # - JAVA_TOOL_OPTIONS=-Xmx4g
+    volumes:
+      - komga-config:/config
+      - komga-manga-dir:/data/manga
+      # - komga-comics-dir:/data/comics
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.komga-secure.entrypoints=websecure
+      - traefik.http.routers.komga-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.komga-secure.tls=true
+      - traefik.http.routers.komga-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.komga-secure.service=komga
+      - traefik.http.routers.komga-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.komga.loadbalancer.server.port=25600
+    networks:
+      - proxy
+    restart: unless-stopped

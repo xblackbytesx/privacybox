@@ -1,0 +1,41 @@
+name: komga
+
+volumes:
+  komga-config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/komga/config
+  komga-manga-dir:
+    driver: local
+    driver_opts:
+      type: ${MEDIA_DRIVER_OPT_TYPE}
+      o: ${MEDIA_DRIVER_OPT_O}
+      device: ${MANGA_PATH}
+  # komga-comics-dir:
+  #   driver: local
+  #   driver_opts:
+  #     type: ${MEDIA_DRIVER_OPT_TYPE}
+  #     o: ${MEDIA_DRIVER_OPT_O}
+  #     device: ${COMICS_PATH}
+
+services:
+  komga:
+    container_name: komga
+    image: gotson/komga:latest
+    user: "${PUID}:${PGID}"
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - TZ=${TIMEZONE}
+      # # Raise the JVM heap if scans of a large library run out of memory
+      # - JAVA_TOOL_OPTIONS=-Xmx4g
+    volumes:
+      - komga-config:/config
+      - komga-manga-dir:/data/manga
+      # - komga-comics-dir:/data/comics
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 25600:25600
+    restart: unless-stopped
