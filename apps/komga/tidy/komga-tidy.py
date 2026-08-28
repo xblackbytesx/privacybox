@@ -176,7 +176,15 @@ def parse_book(path: Path, series: str) -> ParsedBook:
             # A trailing number is a chapter only if what precedes it still looks
             # like the series. Without that check, Mobile Suit Gundam 0079 gets
             # filed as chapter 79 of a series called Mobile Suit Gundam.
-            if bare and normalise_spacing(bare.group(1)).lower() == series.lower():
+            #
+            # "Contains" rather than "equals", because a nested folder gives a
+            # short series name while the files keep the long one: the folder
+            # "Cyberpunk 2077/Psycho Squad" holds files called "Cyberpunk 2077 -
+            # Psycho Squad 01". Under equality none of them parsed a number, so
+            # all four wanted the same target name and the collision guard aborted
+            # the whole library over one folder.
+            prefix = normalise_spacing(bare.group(1)).lower() if bare else ""
+            if bare and series.lower() in prefix:
                 kind = "chapter"
                 number = float(bare.group(2))
                 remainder = bare.group(1)
@@ -309,18 +317,61 @@ def sidecar_payload(plan: SeriesPlan) -> dict:
     }
 
 
+def flattened_name(root: Path, directory: Path) -> str:
+    """
+    What a nested series would be called if its folders were collapsed into one.
+
+    Joins each level's cleaned name with " - ", skipping any level whose name a
+    deeper one already contains, so "Cyberpunk 2077/Cyberpunk 2077 - Psycho Squad"
+    does not come out doubled.
+    """
+    parts: list[str] = []
+    for raw in directory.relative_to(root).parts:
+        name = normalise_spacing(split_descriptors(dots_to_spaces(raw))[0])
+        if name and name not in parts:
+            parts.append(name)
+    kept = [
+        part for index, part in enumerate(parts)
+        if not any(part.lower() in deeper.lower() for deeper in parts[index + 1:])
+    ]
+    return " - ".join(kept)
+
+
 def scan(root: Path) -> list[SeriesPlan]:
+    """
+    Every folder holding book files is a series, at any depth.
+
+    This mirrors Komga's own rule rather than inventing one: Komga walks the whole
+    tree and turns each folder that directly contains books into a series, while a
+    folder holding only other folders becomes nothing at all.
+
+    Scanning only the top level, which is what this did first, meant a library
+    with any nesting was silently half-processed. It reported no series folders
+    found and exited zero, which reads exactly like a library that is already tidy.
+    """
     plans = []
-    for entry in sorted(root.iterdir()):
-        if not entry.is_dir():
-            continue
-        p = plan_series(entry)
+    for directory in sorted(d for d in root.rglob("*") if d.is_dir()):
+        p = plan_series(directory)
         if p:
             plans.append(p)
     return plans
 
 
-def report(plans: list[SeriesPlan], verbose: bool) -> None:
+def loose_books(root: Path) -> list[Path]:
+    """Book files sitting directly in the library root, belonging to no series."""
+    return sorted(
+        p for p in root.iterdir()
+        if p.is_file() and p.suffix.lower() in BOOK_EXTENSIONS
+    )
+
+
+def report(plans: list[SeriesPlan], root: Path, verbose: bool) -> None:
+    loose = loose_books(root)
+    if loose:
+        print(f"\n  {len(loose)} book file(s) sit directly in the library root.")
+        print("    Komga makes each of those its own one-shot series. Move them")
+        print("    into a folder named after the series to group them.")
+
     total_renames = 0
     for plan in plans:
         folder_change = plan.target_dir.name != plan.source_dir.name
@@ -339,6 +390,17 @@ def report(plans: list[SeriesPlan], verbose: bool) -> None:
         for source, target in renames:
             print(f"    file    {source.name}")
             print(f"         -> {target.name}")
+
+        if plan.source_dir.parent != root:
+            # Komga's library view is flat. A nested folder still becomes a
+            # series, but it is listed under its own short name with nothing
+            # connecting it to the folder above, so the extra level costs a
+            # recognisable name and buys no grouping at all.
+            under = plan.source_dir.parent.relative_to(root)
+            print(f"    note    nested under '{under}'. Komga's library list is flat,")
+            print(f"            so this appears as '{plan.series}' with no visible link")
+            print("            to the parent. Flattening is usually better:")
+            print(f"              {flattened_name(root, plan.source_dir)}")
 
         kinds = {b.kind for b in plan.books}
         if "volume" in kinds and "chapter" in kinds:
@@ -454,7 +516,7 @@ def main() -> int:
             print(f"  {clash}", file=sys.stderr)
         return 1
 
-    report(plans, args.verbose)
+    report(plans, args.root, args.verbose)
 
     if not args.apply:
         print("\nDry run. Nothing was changed. Re-run with --apply to rename.")
