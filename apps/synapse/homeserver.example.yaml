@@ -26,20 +26,30 @@ redis:
   host: synapse-redis
   port: 6379
 
-# Enable native MatrixRTC support (MSC4143)
-matrix_rtc:
-  enabled: true
-
-# Element Call / MatrixRTC configuration
+# Element Call / MatrixRTC. msc4143_enabled registers the
+# /_matrix/client/org.matrix.msc4143/rtc/transports endpoint; without it the
+# matrix_rtc block below is never served to clients.
 experimental_features:
-  msc3266_enabled: true
   msc4222_enabled: true
+  msc4143_enabled: true
 
-# Widget configuration for Element Call
+matrix_rtc:
+  transports:
+    - type: livekit
+      livekit_service_url: "https://matrix.privacy.box/livekit/jwt"
+
+# Appservice registrations. Paths are container-internal, so they resolve
+# against ${DOCKER_ROOT}/synapse/data on the host. To add the WhatsApp bridge
+# (see docs/mautrix-whatsapp.md) replace this with:
+#
+# app_service_config_files:
+#   - /data/registration-whatsapp.yaml
 app_service_config_files: []
 
-content_repository:
-  url_preview_url_blacklist: []
+# url_preview_url_blacklist is a top-level option. It was previously nested
+# under a "content_repository:" key, which is not a config section, so Synapse
+# ignored it entirely.
+url_preview_url_blacklist: []
 
 # Turn server configuration
 turn_uris: ["turn:matrix.privacy.box:3478?transport=udp"]
@@ -61,25 +71,22 @@ database:
     database: synapse
     host: synapse-db
     cp_min: 10
-    cp_max: 300
+    cp_max: 10
 
-# # Federation settings
 # federation_domain_whitelist:
 #   - matrix.org
 #   - vector.im
 
-federation_domain_blacklist:
-
 # Media store path
 media_store_path: /media_store
 
-# # Only uncomment if you plan to host your own identity service
-# experimental_features:
-#   msc3861_enabled: true
-#   msc3861_client_auth:
-#     method: "org.matrix.msc2965.client_secret_basic"
-#     secrets:
-#       - "secret"
+# # Matrix Authentication Service. Only uncomment if you run the synapse-mas
+# # container.
+# matrix_authentication_service:
+#   enabled: true
+#   endpoint: http://synapse-mas:8080
+#   # Must equal matrix.secret in the MAS config (MAS_MATRIX_SECRET in .env).
+#   secret: "secret"
 
 # Enable registration if you want
 enable_registration: true
@@ -93,7 +100,7 @@ email:
   smtp_user: "john.doe@privacy.box"
   smtp_pass: "secret"
   require_transport_security: true
-  notif_from: "Privacybox | Matrix <noreply@synapse.privacy.box>"
+  notif_from: "Privacybox | Matrix <noreply@matrix.privacy.box>"
 
 # Rate limiting
 rc_messages_per_second: 0.2

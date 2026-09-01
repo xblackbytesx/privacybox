@@ -66,19 +66,31 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Service name stays synapse-redis on purpose: the hostname is baked into
+  # /data/homeserver.yaml, which lives outside this repo. Renaming the service
+  # would break the running instance until that file is hand-edited.
+  #
+  # Synapse talks RESP through txredisapi + hiredis with no version gating, so
+  # valkey is a clean swap. What this actually serves is the ExternalCache
+  # (event_to_prev_state_group, get_joined_hosts, 1h TTL) plus the worker
+  # replication pub/sub. With no workers the cache mainly buys a warmer
+  # federation sender across restarts, which is why the volume is kept.
   synapse-redis:
     container_name: synapse-redis
-    image: redis:7-alpine
+    image: valkey/valkey:9-alpine
     security_opt:
       - no-new-privileges:true
-    command: redis-server --save 60 1 --loglevel warning
+    command: valkey-server --save 60 1 --loglevel warning
     volumes:
       - synapse-redis:/data
       - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
   synapse-coturn:
@@ -129,33 +141,6 @@ services:
       - traefik.http.routers.synapse-well-known-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.synapse-well-known.loadbalancer.server.port=80
     restart: unless-stopped
-
-  # # This part needs more testing but it's a work in progress
-  # element-call:
-  #   container_name: element-call
-  #   image: ghcr.io/element-hq/element-call:latest
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   volumes:
-  #     - ./element-call-config.json:/usr/share/nginx/html/config.json:ro
-  #     - /etc/localtime:/etc/localtime:ro
-  #   environment:
-  #     - VITE_DEFAULT_HOMESERVER_URL=https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
-  #     - VITE_DEFAULT_HOMESERVER_NAME=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
-  #     - PUBLIC_BASE_URL=https://call.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
-  #   networks:
-  #     - internal
-  #     - proxy
-  #   labels:
-  #     - traefik.enable=true
-  #     - traefik.http.routers.element-call-secure.entrypoints=websecure
-  #     - traefik.http.routers.element-call-secure.rule=Host(`call.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
-  #     - traefik.http.routers.element-call-secure.tls=true
-  #     - traefik.http.routers.element-call-secure.tls.certresolver=${CERT_RESOLVER}
-  #     - traefik.http.routers.element-call-secure.service=element-call
-  #     - traefik.http.routers.element-call-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-  #     - traefik.http.services.element-call.loadbalancer.server.port=8080
-  #   restart: unless-stopped
 
   synapse-livekit:
     container_name: synapse-livekit
@@ -224,7 +209,7 @@ services:
 
   synapse-app:
     container_name: synapse-app
-    image: matrixdotorg/synapse:latest
+    image: ghcr.io/element-hq/synapse:latest
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -235,14 +220,12 @@ services:
       - UID=${PUID}
       - GID=${PGID}
       - TZ=${TIMEZONE}
+      # Used only by the one-off "generate" run that creates homeserver.yaml.
+      # In normal "run" mode the image reads none of these: all real settings,
+      # including the database credentials and the redis host, come from
+      # /data/homeserver.yaml.
       - SYNAPSE_SERVER_NAME=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
       - SYNAPSE_REPORT_STATS=no
-      - POSTGRES_HOST=synapse-db
-      - POSTGRES_USER=synapse
-      - POSTGRES_PASSWORD=${DB_USER_PASS}
-      - POSTGRES_DB=synapse
-      - SYNAPSE_REDIS_HOST=synapse-redis
-      - SYNAPSE_REDIS_PORT=6379
     depends_on:
       synapse-db:
         condition: service_healthy
@@ -255,56 +238,73 @@ services:
     networks:
       - proxy
       - internal
+    # Loopback only, so the admin API stays reachable from a shell on the host
+    # while Traefik refuses it from the internet:
+    #   curl -H "Authorization: Bearer $TOKEN" \
+    #     http://127.0.0.1:8008/_synapse/admin/v1/registration_tokens
+    # Nothing outside the host can reach this; the container publishes no other
+    # port. Equivalent without the binding: docker exec synapse-app curl ...
+    ports:
+      - "127.0.0.1:8008:8008"
     labels:
       - traefik.enable=true
       - traefik.http.routers.synapse-app-secure.entrypoints=websecure
-      - traefik.http.routers.synapse-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && (PathPrefix(`/_matrix`) || PathPrefix(`/_synapse`))
+      - traefik.http.routers.synapse-app-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && (PathPrefix(`/_matrix`) || PathPrefix(`/_synapse`)) && !PathPrefix(`/_synapse/admin`)
       - traefik.http.routers.synapse-app-secure.tls=true
       - traefik.http.routers.synapse-app-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.synapse-app-secure.service=synapse-app
       - traefik.http.routers.synapse-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
       - traefik.http.services.synapse-app.loadbalancer.server.port=8008
+
+      # /_synapse/admin is excluded from the rule above, so it is not served to
+      # the internet at all. Admin work runs from a shell on the host against
+      # 127.0.0.1:8008, see docs/synapse.md.
+      #
+      # Uncomment to publish it again, which is what a browser-based admin UI
+      # such as Ketesa (formerly synapse-admin) needs, since those are
+      # client-side apps that call the admin API from your browser. No priority
+      # is needed: this rule and the one above are mutually exclusive. Set a
+      # source range you can actually reach, or drop the last two lines to
+      # publish it openly and rely on the admin token alone.
+      # - traefik.http.routers.synapse-admin-secure.entrypoints=websecure
+      # - traefik.http.routers.synapse-admin-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`) && PathPrefix(`/_synapse/admin`)
+      # - traefik.http.routers.synapse-admin-secure.tls=true
+      # - traefik.http.routers.synapse-admin-secure.tls.certresolver=${CERT_RESOLVER}
+      # - traefik.http.routers.synapse-admin-secure.service=synapse-app
+      # - traefik.http.routers.synapse-admin-secure.middlewares=https-redirect@file,secure-headers@file,synapse-admin-allow
+      # - traefik.http.middlewares.synapse-admin-allow.ipallowlist.sourcerange=10.0.0.0/8,192.168.0.0/16,100.64.0.0/10
     deploy:
       resources:
         limits:
           memory: 1.5G
     restart: unless-stopped
 
-  # # Only uncomment if you plan to host your own authentication server (not well tested)
+  # # Matrix Authentication Service. Entirely optional: legacy password login
+  # # keeps working without it, and Element has not forced a migration.
+  # #
+  # # Enable it together with the matrix_authentication_service section in
+  # # homeserver.yaml.
+  # #
+  # # MAS is configured by a YAML file, not by environment variables. The only
+  # # env var it reads for configuration is MAS_CONFIG, naming the file(s) to
+  # # load. Generate a starting point with:
+  # #
+  # #   docker run --rm ghcr.io/element-hq/matrix-authentication-service:latest \
+  # #     config generate > mas-config.yaml
+  # #
+  # # then set the database DSN, the public base URL, and matrix.secret, which
+  # # must equal the secret in homeserver.yaml. See docs/synapse.md.
   # synapse-mas:
   #   container_name: synapse-mas
-  #   image: ghcr.io/matrix-org/matrix-authentication-service:latest
+  #   image: ghcr.io/element-hq/matrix-authentication-service:latest
   #   security_opt:
   #     - no-new-privileges:true
   #   environment:
-  #     # MAS Server Settings
-  #     MAS_BASE_URL: "https://mas.${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}"
-  #     MAS_LOG_LEVEL: "info"
-  #     MAS_SERVER_NAME: "${DOMAIN}"
-
-  #     # synapse Connectivity
-  #     MAS_MATRIX_HOMESERVER: "http://synapse-app:8008"
-  #     MAS_MATRIX_SERVER: "https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}"
-  #     MAS_MATRIX_SECRET: "${MAS_MATRIX_SECRET}"
-
-  #     # Database Connection
-  #     MAS_DATABASE__ENGINE: "postgresql"
-  #     MAS_DATABASE__HOST: "synapse-db"
-  #     MAS_DATABASE__NAME: "synapse-mas"
-  #     MAS_DATABASE__USER: "synapse-mas"
-  #     MAS_DATABASE__PASSWORD: "${MAS_DB_USER_PASS}"
-  #     MAS_DATABASE__PORT: "5432"
-
-  #     # Encryption Settings
-  #     MAS_SECRETS_ENCRYPTION: "${MAS_SECRETS}"
-
-  #     # Rate Limits
-  #     MAS_CLIENT_REGISTRATION_LIFETIME: "2h"
-  #     MAS_TOKEN__ACCESS_LIFETIME: "15m"
-  #     MAS_TOKEN__REFRESH_LIFETIME: "24h"
+  #     - MAS_CONFIG=/config/mas-config.yaml
+  #   volumes:
+  #     - ./mas-config.yaml:/config/mas-config.yaml:ro
+  #     - /etc/localtime:/etc/localtime:ro
   #   depends_on:
-  #     synapse-app:
-  #       condition: service_started
   #     synapse-db:
   #       condition: service_healthy
   #   networks:
@@ -318,5 +318,7 @@ services:
   #     - traefik.http.routers.synapse-mas-secure.tls.certresolver=${CERT_RESOLVER}
   #     - traefik.http.routers.synapse-mas-secure.service=synapse-mas
   #     - traefik.http.routers.synapse-mas-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
-  #     - traefik.http.services.synapse-mas.loadbalancer.server.port=9000
+  #     # MAS listens on 8080 by default; match whatever http.listeners says in
+  #     # mas-config.yaml.
+  #     - traefik.http.services.synapse-mas.loadbalancer.server.port=8080
   #   restart: unless-stopped
