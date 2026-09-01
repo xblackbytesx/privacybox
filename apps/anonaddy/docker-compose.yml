@@ -20,13 +20,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/anonaddy/database/
-  # Uncomment together with the anonaddy-valkey service below.
-  # anonaddy-valkey:
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     o: bind
-  #     device: ${DOCKER_ROOT}/anonaddy/valkey
+  anonaddy-valkey:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/anonaddy/valkey
 
 services:
   anonaddy-db:
@@ -52,34 +51,25 @@ services:
       - "traefik.enable=false"
     restart: unless-stopped
 
-  # Optional: Redis-compatible store for rspamd. Only worth running if you
-  # also set RSPAMD_ENABLE=true in anonaddy.env, because nothing else ever
-  # connects to it. The Laravel app hardcodes CACHE_DRIVER=file,
-  # QUEUE_CONNECTION=sync and SESSION_DRIVER=file, so REDIS_HOST is read by
-  # rspamd and by nothing else.
-  #
-  # Enabling rspamd is what makes replying from an alias work, plus
-  # quarantine, DKIM and ARC signing, bayes and greylisting. It also needs
-  # DKIM keys and DNS records. Read docs/anonaddy.md first.
-  # anonaddy-valkey:
-  #   container_name: anonaddy-valkey
-  #   image: valkey/valkey:9-alpine
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   command: valkey-server --save 60 1 --loglevel warning
-  #   networks:
-  #     - internal
-  #   volumes:
-  #     - anonaddy-valkey:/data
-  #     - /etc/localtime:/etc/localtime:ro
-  #   healthcheck:
-  #     test: ["CMD", "valkey-cli", "ping"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 5
-  #   labels:
-  #     - "traefik.enable=false"
-  #   restart: unless-stopped
+  anonaddy-valkey:
+    container_name: anonaddy-valkey
+    image: valkey/valkey:9-alpine
+    security_opt:
+      - no-new-privileges:true
+    command: valkey-server --save 60 1 --loglevel warning
+    networks:
+      - internal
+    volumes:
+      - anonaddy-valkey:/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      - "traefik.enable=false"
+    restart: unless-stopped
 
   anonaddy-app:
     container_name: anonaddy-app
@@ -93,8 +83,7 @@ services:
       - DB_DATABASE=anonaddy
       - DB_USERNAME=anonaddy
       - DB_PASSWORD=${DB_USER_PASS}
-      # Uncomment with the anonaddy-valkey service above.
-      # - REDIS_HOST=anonaddy-valkey
+      - REDIS_HOST=anonaddy-valkey
     volumes:
       - anonaddy-data:/data
     labels:
@@ -109,9 +98,9 @@ services:
     depends_on:
       anonaddy-db:
         condition: service_started
-      # anonaddy-valkey:
-      #   condition: service_healthy
-    networks: 
+      anonaddy-valkey:
+        condition: service_healthy
+    networks:
       - internal
       - proxy
     ports:
