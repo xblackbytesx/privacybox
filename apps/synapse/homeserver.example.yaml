@@ -112,11 +112,6 @@ rc_delayed_event_mgmt:
   per_second: 1
   burst_count: 20
 
-extra_well_known_client_content:
-  org.matrix.msc4143.rtc_foci:
-    - type: livekit
-      livekit_service_url: "https://matrix.privacy.box/livekit/jwt"
-
 # Other recommended settings
 allow_guest_access: false
 url_preview_enabled: true

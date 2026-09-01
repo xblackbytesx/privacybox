@@ -185,7 +185,12 @@ services:
       - LIVEKIT_URL=wss://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}/livekit/sfu
       - LIVEKIT_KEY=${LIVEKIT_API_KEY}
       - LIVEKIT_SECRET=${LIVEKIT_API_SECRET}
-      - LIVEKIT_JWT_BIND=0.0.0.0:8080
+      # Deliberately unset. The service defaults to binding :8080, and the
+      # image healthcheck reads LIVEKIT_JWT_BIND as a bare PORT and builds
+      # http://localhost:$BIND/healthz from it. Setting it to a host:port pair
+      # yields http://localhost:0.0.0.0:8080/healthz, which never resolves, so
+      # the container reports unhealthy while serving traffic perfectly well.
+      # Upstream bug in v0.6.0 healthcheck/main.go, not a config error.
       - LIVEKIT_FULL_ACCESS_HOMESERVERS=${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}
     volumes:
       - /etc/localtime:/etc/localtime:ro
