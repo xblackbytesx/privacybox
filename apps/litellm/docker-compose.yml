@@ -69,16 +69,6 @@ services:
       - internal
     restart: unless-stopped
 
-  # Valkey is a drop-in for the Redis the proxy asks for. LiteLLM talks RESP
-  # through redis-py and uses only core commands here, so no Redis modules are
-  # involved. The one thing that would need them is semantic caching, which
-  # wants the valkey-search module and a different image.
-  #
-  # maxmemory is set because a response cache is otherwise unbounded and valkey
-  # ships with no limit. Everything litellm writes carries a TTL, so allkeys-lru
-  # only ever drops entries that were going to expire anyway. The volume is kept
-  # so the cache survives an --update restart, which is the point of caching a
-  # metered API in the first place.
   litellm-valkey:
     container_name: litellm-valkey
     image: valkey/valkey:9-alpine
@@ -101,14 +91,6 @@ services:
 
   litellm-app:
     container_name: litellm-app
-    # Tracking upstream deliberately. There is no floating major or minor tag
-    # to sit on (no :1, no :1.99), so the only choice is :latest or an exact
-    # vX.Y.Z. MINOR is the weekly scheduled stable and PATCH is a hotfix, so
-    # this pulls a new feature release every week, not just fixes.
-    #
-    # main-stable is what this used to track. It is legacy and was slated to
-    # stop being published on 2026-09-01, so :latest replaces it. If a release
-    # ever breaks something, pin the vX.Y.Z that was working. See docs/litellm.md.
     image: ghcr.io/berriai/litellm:latest
     security_opt:
       - no-new-privileges:true
@@ -117,9 +99,6 @@ services:
     # two: the file is read first, then database rows overlay litellm_settings,
     # router_settings and general_settings. Editing cache settings in the admin
     # UI therefore wins over this file until those rows are deleted.
-    #
-    # The image CMD is ["--port", "4000"], and setting command replaces it, so
-    # the port has to be repeated here.
     command: ["--port", "4000", "--config", "/app/config.yaml"]
     environment:
         DATABASE_URL: "postgresql://litellm:${DB_USER_PASS}@litellm-db:5432/litellm"
