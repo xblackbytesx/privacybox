@@ -1,0 +1,32 @@
+# LiteLLM proxy settings for privacybox.
+#
+# Models are deliberately absent. STORE_MODEL_IN_DB is on, so providers are
+# added in the admin UI and stored in Postgres. This file only carries the two
+# blocks that point litellm at Valkey, and both are needed: cache_params drives
+# the response cache plus everything coordinated proxy wide (rate limits,
+# budgets, key invalidation), while router_settings drives cooldowns and
+# routing state. Setting one does not imply the other.
+#
+# REDIS_HOST and REDIS_PORT are defined on litellm-app in docker-compose.yml.
+# No password is set because litellm-valkey listens only on the internal
+# network and is never published or proxied.
+
+litellm_settings:
+  cache: true
+  cache_params:
+    type: redis
+    host: os.environ/REDIS_HOST
+    port: os.environ/REDIS_PORT
+    namespace: litellm.cache
+    # Hits require an exact request match: same model, same messages, same
+    # parameters. 600s absorbs client retries and duplicate tool calls without
+    # a regenerate in a chat UI handing back a stale answer. Worth raising a
+    # lot if this proxy mostly serves embeddings, which are deterministic and
+    # the one call type where a long TTL is free money.
+    ttl: 600
+    # Add "mode: default_off" to flip caching to opt in, after which callers
+    # have to pass "cache": {"use-cache": true} on each request.
+
+router_settings:
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
