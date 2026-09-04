@@ -14,12 +14,12 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/mastodon/database
-  mastodon-redis:
+  mastodon-valkey:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/mastodon/redis
+      device: ${DOCKER_ROOT}/mastodon/valkey
   # mastodon-elasticsearch:
   #   driver: local
   #   driver_opts:
@@ -42,6 +42,9 @@ services:
     shm_size: 256mb
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', 'postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - mastodon-database:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
@@ -54,15 +57,19 @@ services:
       - internal
     restart: unless-stopped
 
-  mastodon-redis:
-    container_name: mastodon-redis
-    image: redis:7-alpine
+  mastodon-valkey:
+    container_name: mastodon-valkey
+    image: valkey/valkey:9-alpine
     security_opt:
       - no-new-privileges:true
+    command: valkey-server --save 60 1 --loglevel warning
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     volumes:
-      - mastodon-redis:/data
+      - mastodon-valkey:/data
       - /etc/localtime:/etc/localtime:ro
     networks:
       - internal
@@ -112,7 +119,7 @@ services:
       - PGID=${PGID}
       - TZ=${TIMEZONE}
       - LOCAL_DOMAIN=${DOMAIN}
-      - REDIS_HOST=mastodon-redis
+      - REDIS_HOST=mastodon-valkey
       - REDIS_PORT=6379
       - DB_HOST=mastodon-db
       - DB_USER=mastodon
@@ -150,8 +157,10 @@ services:
       # - DB_POOL=10 #optional
       # - NO_CHOWN= #optional
     depends_on:
-      - mastodon-db
-      - mastodon-redis
+      mastodon-db:
+        condition: service_healthy
+      mastodon-valkey:
+        condition: service_healthy
     volumes:
       - mastodon-config:/config
       - /etc/localtime:/etc/localtime:ro
