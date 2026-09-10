@@ -1,0 +1,45 @@
+# NetBird combined server: Management + Signal + Relay + STUN in one process.
+# Copy to config.yaml, replace privacy.box with your domain, and fill the three
+# secrets below. Mounted read-only at /etc/netbird/config.yaml.
+
+server:
+  # Traefik reaches the container on this port and splits paths to it.
+  listenAddress: ":80"
+  # What clients are told to connect back to. Must be the public URL.
+  exposedAddress: "https://netbird.privacy.box:443"
+  # Must match STUN_PORT in .env; 3478 and 3479 are taken elsewhere on this host.
+  stunPorts:
+    - 3480
+  metricsPort: 9090
+  healthcheckAddress: ":9000"
+  logLevel: "info"
+  logFile: "console"
+
+  # openssl rand -base64 32 | tr -d '='
+  authSecret: "secret"
+  dataDir: "/var/lib/netbird"
+
+  auth:
+    # Embedded Dex IdP, served under /oauth2 on the same hostname.
+    issuer: "https://netbird.privacy.box/oauth2"
+    signKeyRefreshEnabled: true
+    # openssl rand -base64 32
+    sessionCookieEncryptionKey: "secret"
+    dashboardRedirectURIs:
+      - "https://netbird.privacy.box/nb-auth"
+      - "https://netbird.privacy.box/nb-silent-auth"
+    # Loopback callback for `netbird up` on a desktop; leave as is.
+    cliRedirectURIs:
+      - "http://localhost:53000/"
+
+  reverseProxy:
+    # Docker's private range, which covers Traefik on the proxy network. Only
+    # requests from here are allowed to set X-Forwarded-For, so peer IPs in the
+    # dashboard are real rather than the proxy's.
+    trustedHTTPProxies:
+      - "172.16.0.0/12"
+
+  store:
+    engine: "sqlite"
+    # openssl rand -base64 32.
+    encryptionKey: "secret"

@@ -1,0 +1,71 @@
+name: netbird
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  netbird-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/netbird/data
+
+services:
+  netbird-dashboard:
+    container_name: netbird-dashboard
+    image: netbirdio/dashboard:latest
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - ./dashboard.env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.netbird-dashboard-secure.entrypoints=websecure
+      - traefik.http.routers.netbird-dashboard-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.netbird-dashboard-secure.priority=1
+      - traefik.http.routers.netbird-dashboard-secure.tls=true
+      - traefik.http.routers.netbird-dashboard-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.netbird-dashboard-secure.service=netbird-dashboard
+      - traefik.http.routers.netbird-dashboard-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.netbird-dashboard.loadbalancer.server.port=80
+    restart: unless-stopped
+
+  netbird-server:
+    container_name: netbird-server
+    image: netbirdio/netbird-server:latest
+    security_opt:
+      - no-new-privileges:true
+    command: ["--config", "/etc/netbird/config.yaml"]
+    volumes:
+      - netbird-data:/var/lib/netbird
+      - ./config.yaml:/etc/netbird/config.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy
+    ports:
+      - "${STUN_PORT}:${STUN_PORT}/udp"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.netbird-grpc-secure.entrypoints=websecure
+      - traefik.http.routers.netbird-grpc-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (PathPrefix(`/signalexchange.SignalExchange/`) || PathPrefix(`/management.ManagementService/`))
+      - traefik.http.routers.netbird-grpc-secure.tls=true
+      - traefik.http.routers.netbird-grpc-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.netbird-grpc-secure.service=netbird-grpc
+      - traefik.http.routers.netbird-grpc-secure.middlewares=https-redirect@file
+      - traefik.http.services.netbird-grpc.loadbalancer.server.port=80
+      - traefik.http.services.netbird-grpc.loadbalancer.server.scheme=h2c
+      - traefik.http.routers.netbird-api-secure.entrypoints=websecure
+      - traefik.http.routers.netbird-api-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/relay`) || PathPrefix(`/ws-proxy/`) || PathPrefix(`/oauth2`))
+      - traefik.http.routers.netbird-api-secure.tls=true
+      - traefik.http.routers.netbird-api-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.netbird-api-secure.service=netbird-api
+      - traefik.http.routers.netbird-api-secure.middlewares=https-redirect@file,secure-headers@file
+      - traefik.http.services.netbird-api.loadbalancer.server.port=80
+    restart: unless-stopped

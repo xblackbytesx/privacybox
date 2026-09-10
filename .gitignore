@@ -15,8 +15,9 @@ apps/matrix-synapse/well-known
 apps/synapse/well-known
 apps/bluesky-pds/admin-tools
 apps/lemmy/lemmy.hjson
-apps/synapse/element-call-config.json
+apps/synapse/mas-config.yaml
 apps/synapse/livekit.yaml
+apps/netbird/config.yaml
 apps/gitea/daemon.json
 apps/gluetun/nginx-custom-proxy.conf
 **/update-jellyfin.sh
@@ -27,3 +28,4 @@ vpnlog.txt
 privacybox.config
 .vscode
 .zed
+apps/turnstone/docker-compose.override.yml
