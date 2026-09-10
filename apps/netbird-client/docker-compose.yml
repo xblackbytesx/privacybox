@@ -1,0 +1,29 @@
+name: netbird-client
+
+volumes:
+  netbird-client-state:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/netbird-client/state
+
+services:
+  netbird-client:
+    container_name: "netbird-client"
+    image: "netbirdio/netbird:latest"
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - netbird-client-state:/var/lib/netbird
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - NB_HOSTNAME=${NB_HOSTNAME}
+      - NB_MANAGEMENT_URL=${NB_MANAGEMENT_URL}
+      - NB_SETUP_KEY=${NB_SETUP_KEY}
+    restart: unless-stopped
