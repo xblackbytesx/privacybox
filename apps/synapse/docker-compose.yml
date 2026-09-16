@@ -115,7 +115,6 @@ services:
         "--static-auth-secret=${TURN_SECRET}",
         "--no-tcp",
         "--no-tls",
-        "--no-dtls",
       ]
     restart: unless-stopped
 
