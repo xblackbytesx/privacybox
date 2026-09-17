@@ -20,6 +20,8 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
+      - UID=${PUID}
+      - GID=${PGID}
       - TZ=${TIMEZONE}
     volumes:
       - mautrix-whatsapp-data:/data
