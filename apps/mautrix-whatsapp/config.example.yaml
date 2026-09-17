@@ -1,0 +1,105 @@
+# Reference overlay for mautrix-whatsapp. NOT a drop-in config file.
+#
+# Unlike most examples in this repo (ntfy, headscale, romm) you do NOT copy this
+# anywhere. Nothing reads this file. It exists to tell you which keys to change
+# in the config the bridge generates for itself. This is the same arrangement as
+# apps/synapse/homeserver.example.yaml, see docs/synapse.md.
+#
+#
+# WHERE THE LIVE CONFIG LIVES
+#
+#   host       ${DOCKER_ROOT}/mautrix-whatsapp/data/config.yaml
+#   container  /data/config.yaml
+#
+# The compose file bind-mounts ${DOCKER_ROOT}/mautrix-whatsapp/data to /data, and
+# the bridge auto-loads /data/config.yaml at startup. There is no flag, env var
+# or include directive to set. Nothing "calls" this config, the bridge just
+# reads that one path. Editing it means editing the host path above.
+#
+#
+# WHY YOU MERGE INSTEAD OF COPYING
+#
+# The bridge writes a complete config.yaml on its first run, then writes
+# registration.yaml on its second. Those two files share generated `as_token`
+# and `hs_token` values and must keep matching. Overwriting config.yaml with
+# this partial file would wipe the tokens and break the appservice handshake.
+#
+# So: let the bridge generate config.yaml, then hand-edit it and set the keys
+# below. Anything not listed here stays at its generated default.
+#
+#
+# NOTHING HERE BELONGS IN THE SYNAPSE FOLDER
+#
+# Only one file crosses over, and it is generated rather than written by hand:
+# copy the bridge's registration.yaml to
+# ${DOCKER_ROOT}/synapse/data/registration-whatsapp.yaml and list it under
+# `app_service_config_files` in Synapse's homeserver.yaml.
+#
+#
+# Replace privacy.box with your own domain throughout.
+
+# The bridge reaches Synapse over the public FQDN, not a container name.
+homeserver:
+    address: https://matrix.privacy.box
+    domain: matrix.privacy.box
+
+appservice:
+    # Where Synapse reaches the bridge. This value is copied into
+    # registration.yaml as `url`, so it must be the Traefik hostname.
+    address: https://whatsapp.privacy.box
+    public_address: https://whatsapp.privacy.box
+
+    # Bind on all interfaces so Traefik can reach the container.
+    # The generated default is 127.0.0.1, which does not work in Docker.
+    hostname: 0.0.0.0
+    port: 29318
+
+# SQLite rather than Postgres: single user, and `manage.sh --backup` archives
+# ${DOCKER_ROOT}/mautrix-whatsapp wholesale, so one file is simpler to snapshot.
+# This file holds the WhatsApp session keys. Keep it out of EXCLUDE_PATH.
+# Upstream recommends Postgres once more than one person uses the bridge.
+database:
+    type: sqlite3-fk-wal
+    uri: file:/data/mautrix-whatsapp.db?_txlock=immediate
+
+# Note the server_name is matrix.privacy.box, so MXIDs are @user:matrix.privacy.box.
+# Drop the "*": relay line if you do not want a relay mode at all.
+bridge:
+    permissions:
+        "matrix.privacy.box": user
+        "@johndoe666:matrix.privacy.box": admin
+
+# Off by default upstream. Without this you get rooms but no message history.
+backfill:
+    enabled: true
+    max_initial_messages: 50
+    max_catchup_messages: 500
+
+# End-to-bridge encryption. Decide this BEFORE the first `login`: there is no
+# proper way to enable encryption in rooms that already exist, so turning it on
+# later means the existing rooms stay unencrypted.
+#
+# This keeps message content out of Synapse and its database. It does NOT hide
+# anything from the bridge itself, which has to decrypt in order to talk to
+# WhatsApp. Whoever runs this host can read every bridged message.
+#
+# `require: true` is deliberately left off, it drops unencrypted messages.
+encryption:
+    allow: true
+    default: true
+
+network:
+    # Bridge polls as MSC3381 poll events rather than plain text. Upstream
+    # default is false, and with it off poll VOTES are not bridged at all in
+    # either direction. Both Element X and FluffyChat render MSC3381 polls.
+    extev_polls: true
+
+    # WhatsApp only shares a limited window of history with a new companion.
+    # request_full_sync widens it, but only takes effect on the initial link,
+    # so set it before running `login` or not at all.
+    history_sync:
+        request_full_sync: true
+        full_sync_config:
+            days_limit: 900
+            size_mb_limit: 500
+            storage_quota_mb: 1024
