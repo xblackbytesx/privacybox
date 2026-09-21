@@ -26,4 +26,5 @@ services:
       - NB_HOSTNAME=${NB_HOSTNAME}
       - NB_MANAGEMENT_URL=${NB_MANAGEMENT_URL}
       - NB_SETUP_KEY=${NB_SETUP_KEY}
+      - NB_DISABLE_DNS=true
     restart: unless-stopped

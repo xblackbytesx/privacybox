@@ -10,9 +10,10 @@ name: llama-swap
 # Clients point at ONE endpoint and pick the model by name (see llama-swap-config.yaml):
 #   fast       -> Qwen3-4B-Instruct-2507 (no-think; quick chats + Deep Research orchestration)
 #   smart      -> Qwen3.6-35B-A3B        (deep chat; MoE experts in RAM)
+#   ornith     -> Ornith-1.5-35B-A3B     (trial vs smart; MoE experts in RAM)
 #   uncensored -> GLM-4.7-Flash NEO-CODE (abliterated reasoning coder; MoE experts in RAM)
 #   coder      -> Qwen3-Coder-Next 80B-A3B (no-think agentic code; MoE experts in RAM)
-#   fast_mm    -> Gemma-4-E4B            (vision; fully-GPU)
+#   fast_mm    -> Gemma-4-12B QAT        (vision; fully-GPU)
 #   smart_mm   -> Gemma-4-26B-A4B QAT    (vision; MoE experts in RAM)
 #
 # Two ways to reach it:
@@ -26,7 +27,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DOCKER_ROOT}/llamacpp/models
+      device: ${DOCKER_ROOT}/llama-swap/models
 
 services:
   llama-swap:

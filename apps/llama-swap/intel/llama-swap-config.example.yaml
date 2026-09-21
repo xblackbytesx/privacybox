@@ -21,15 +21,21 @@
 # The <source> segment is new: models come from more than HuggingFace now. An
 # older tree is /models/<owner>/<repo>/ and needs a one-time re-shape (the dot
 # name keeps the new directory out of the glob; safe to re-run):
-#   cd $DOCKER_ROOT/llamacpp/models
+#   cd $DOCKER_ROOT/llama-swap/models
 #   [ -d huggingface ] || { mkdir .hf && mv */ .hf/ && mv .hf huggingface; }
 #
 # --jinja on every model: without it llama.cpp ignores the GGUF's own chat
 # template and uses a legacy matcher with no concept of tools, leaving `tools`
 # inert. Check with: docker logs llama-swap | grep -i "chat format"
 # A named format is good; "Generic" means the template was not recognised.
+#
+# --load-mode none on every model: read the whole file into memory rather than
+# memory-map it. It replaced --no-mmap, which llama.cpp removed in Sep 2026 along
+# with --mmap/--mlock/--direct-io. The old flag on a new image makes llama-server
+# exit on argument parsing, so every model fails at once, ~250ms in, with the
+# opaque "upstream command exited prematurely". Older images need --no-mmap back.
 
-# 10 min ceiling to become ready: `coder` reads ~36GiB (--no-mmap) before serving,
+# 10 min ceiling to become ready: `coder` reads ~36GiB (--load-mode none) before serving,
 # ~1.6x what `smart` does. Raise again if a cold load ever trips the health check.
 healthCheckTimeout: 600
 logLevel: info
@@ -58,7 +64,7 @@ models:
       -ngl 99
       -c 32768
       -b 2048
-      --no-mmap
+      --load-mode none
       -fa on
       --jinja
 
@@ -77,8 +83,48 @@ models:
       -t 6
       -c 32768
       -b 2048
-      --no-mmap
+      --load-mode none
       -fa on
+      --jinja
+
+  # TRIAL, A/B against `smart`. Ornith 1.5 (DeepReinforce, MIT, Aug 2026) is the
+  # same Qwen3.5-MoE architecture and size as `smart` (40 layers, 256 experts, 8
+  # routed + 1 shared, ~3B active), RL-tuned for agentic coding. Its self-reported
+  # table beats Qwen3.6-35B-A3B (SWE-bench Verified 79 vs 73.4, Terminal-Bench 2.1
+  # 67.8 vs 52.5, GPQA-D 89.2 vs 86), but nobody outside the lab has reproduced it
+  # and it publishes no general chat or knowledge scores. If it wins, move this
+  # cmd under `smart` and delete the entry, so clients never change model name.
+  #
+  # Official Q4_K_M (21.7GB); the repo ships standard K-quants only. Text-only
+  # like `smart`, so its 903MB mmproj is skipped. --n-cpu-moe 32 is `smart`'s
+  # tuned value and should carry over, but Q4_K_M keeps some ffn_down at Q6_K, so
+  # per-layer expert size differs from UD-Q4_K_XL. If it dies with "upstream
+  # command exited prematurely", raise it to 33 or 34.
+  #
+  # --temp 0.6 --top-p 0.95 --top-k 20 are the author's general-task defaults,
+  # set server-side because sampling matters here: one independent 12GB-card
+  # test saw the stock model refuse at a 0.8 temperature. Clients can override.
+  #
+  # No MTP: the release ships an untrained MTP head (~13% draft acceptance,
+  # ornith-ai discussion #10). Those tensors are in the GGUF but only read with
+  # --spec-type draft-mtp, so normal generation is unaffected.
+  "ornith":
+    name: "Ornith-1.5-35B-A3B (smart trial)"
+    ttl: 300
+    cmd: >
+      /app/llama-server
+      -m /models/huggingface/ornith-ai/Ornith-1.5-35B-A3B-GGUF/Ornith-1.5-35B-Q4_K_M.gguf
+      --host 127.0.0.1 --port ${PORT}
+      -ngl 99
+      --n-cpu-moe 32
+      -t 6
+      -c 32768
+      -b 2048
+      --load-mode none
+      -fa on
+      --temp 0.6
+      --top-p 0.95
+      --top-k 20
       --jinja
 
   # DavidAU abliterated + NEO-CODE code-imatrix build of GLM-4.7-Flash. 30B-A3B
@@ -113,7 +159,7 @@ models:
       -t 6
       -c 32768
       -b 2048
-      --no-mmap
+      --load-mode none
       -fa off
       --min-p 0.01
       --repeat-penalty 1.0
@@ -181,7 +227,7 @@ models:
       -t 6
       -c 32768
       -b 2048
-      --no-mmap
+      --load-mode none
       -fa on
       --min-p 0.01
       --repeat-penalty 1.0
@@ -189,40 +235,57 @@ models:
 
   # ── Gemma 4 vision pair (fast_mm / smart_mm) ──────────────────────────────────
   # Vision needs TWO files per model: weights plus that repo's own mmproj (vision
-  # encoder + projector). mmprojs are per-model with different embedding dims, so
-  # never mix them. Every repo names its projector mmproj-F16.gguf; the taxonomy
-  # keeps them apart. F16 not BF16: same size and quality, but F16 is the fast
-  # native path on Vulkan and BF16 is spottier on Arc.
+  # encoder + projector; the 12B is encoder-free, so its mmproj is just a small
+  # projector). mmprojs are per-model with different embedding dims, so never mix
+  # them. Every repo names its projector mmproj-F16.gguf; the taxonomy keeps them
+  # apart. F16 not BF16: same size and quality, but F16 is the fast native path
+  # on Vulkan and BF16 is spottier on Arc.
   #
-  # Files (unsloth):
-  #   gemma-4-E4B-it-GGUF          -> gemma-4-E4B-it-Q5_K_M.gguf (5.5GB) + mmproj-F16.gguf (1.0GB)
+  # Files (unsloth), both QAT: quantization-aware trained, so the single
+  # UD-Q4_K_XL each repo ships holds near-bf16 quality:
+  #   gemma-4-12B-it-qat-GGUF      -> gemma-4-12B-it-qat-UD-Q4_K_XL.gguf (6.7GB) + mmproj-F16.gguf (175MB)
   #   gemma-4-26B-A4B-it-qat-GGUF  -> gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf (14.2GB) + mmproj-F16.gguf (1.2GB)
   #
   # Images consume context tokens and add a one-off encode cost to TTFT, which is
   # why `fast` stays text-only. Needs a llama.cpp with Gemma 4 mmproj support.
   #
-  # Thinking stays ON for both. enable_thinking:false disables reasoning outright
-  # rather than relocating it, and is deprecated in favour of --reasoning off.
-  # Gemma 4 emits thought and tool call in one stream; llama-server's PEG parser
-  # (PR #21326) separates them, so both work. Only disable if tool calls start
+  # Thinking: the 12B's template defaults it OFF, right for a fast tier; send
+  # chat_template_kwargs {"enable_thinking": true} per request for hard questions.
+  # The 26B keeps it ON. enable_thinking:false disables reasoning outright rather
+  # than relocating it, and is deprecated in favour of --reasoning off. Gemma 4
+  # emits thought and tool call in one stream; llama-server's PEG parser (PR
+  # #21326) separates them, so both work. Only disable if tool calls start
   # landing in reasoning_content.
 
-  # E4B: Gemma analog of `fast`, fully on GPU. Q5_K_M (5.5GB) plus the ~1GB
-  # mmproj plus FA compute and KV at -c 32768 lands ~9GB on a 12GB card. Step up
-  # to UD-Q5_K_XL (6.7GB) if VRAM stays calm; Q8_0 (8.2GB) needs the mmproj
-  # dropped. -fa on for the same reason as `fast`.
+  # 12B QAT: dense, fully on GPU, the everyday go-to. Replaced E4B (MMLU-Pro 77.2
+  # vs 69.4, GPQA-D 78.8 vs 58.6, MMMU-Pro 69.1 vs 52.6 on Google's table). Dense
+  # is fine here because nothing spills: 6.7GB of weights plus the 175MB mmproj
+  # plus FA compute and KV at -c 32768 should land ~9-10GB. Expect ~35 t/s (Gemma
+  # 3 12B's figure on a B580 under Vulkan): slower than E4B, faster than both MoE
+  # tiers, whose experts run from RAM. -fa on for the same reason as `fast`.
+  # Repo and file spell it 12B with a capital B, unlike the non-QAT repo.
+  #
+  # Long prompts: llama.cpp #26206 saw this 12B turn to mixed-script garbage past
+  # ~5.8k prompt tokens on an Arc Pro B70 (Xe2, SYCL), sticky until reload; the
+  # 26B passed. Unreproduced and closed unfixed. If it shows up here, revert to
+  # E4B: unsloth/gemma-4-E4B-it-GGUF, gemma-4-E4B-it-Q5_K_M.gguf + its own mmproj.
+  #
+  # MTP left off: the repo ships mtp-gemma-4-12B-it.gguf (--model-draft ...
+  # --spec-type draft-mtp --spec-draft-n-max 2, claimed 1.4-2.2x), but #24560
+  # reported MTP making Gemma 4 output worse on a B580. Try it once the model has
+  # proven itself.
   "fast_mm":
-    name: "Gemma-4-E4B (fast, vision)"
+    name: "Gemma-4-12B QAT (fast, vision)"
     ttl: 300
     cmd: >
       /app/llama-server
-      -m /models/huggingface/unsloth/gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q5_K_M.gguf
-      --mmproj /models/huggingface/unsloth/gemma-4-E4B-it-GGUF/mmproj-F16.gguf
+      -m /models/huggingface/unsloth/gemma-4-12B-it-qat-GGUF/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf
+      --mmproj /models/huggingface/unsloth/gemma-4-12B-it-qat-GGUF/mmproj-F16.gguf
       --host 127.0.0.1 --port ${PORT}
       -ngl 99
       -c 32768
       -b 2048
-      --no-mmap
+      --load-mode none
       -fa on
       --jinja
 
@@ -248,6 +311,6 @@ models:
       -t 6
       -c 32768
       -b 2048
-      --no-mmap
+      --load-mode none
       -fa on
       --jinja
