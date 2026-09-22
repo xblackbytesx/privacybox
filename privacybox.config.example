@@ -5,7 +5,9 @@
 ####################
 # Root of all per-app container data. Backups depend on it: full mode
 # archives the whole tree, rolling mode archives $DOCKER_ROOT/<app> per app,
-# and EXCLUDE_PATHS entries are resolved relative to it.
+# and EXCLUDE_PATHS entries are resolved relative to it. manage.sh and
+# scripts/backup.sh export it (like every key here), so it wins over
+# DOCKER_ROOT in an app's .env; both warn when the two differ.
 DOCKER_ROOT=/media/storage/docker
 
 # Where backups are written (see docs/backups.md)
@@ -27,13 +29,16 @@ EXCLUDE_PATH=ollama
 EXCLUDE_PATH=spotweb
 EXCLUDE_PATH=filebrowser/data
 
-# Optional: keep only the newest N backups (full archives and rolling run
-# folders are counted separately). Old backups are pruned only after a new
-# one has been created AND verified. Leave unset to keep everything.
+# Optional: keep only the newest N backups. Full archives, rolling runs and
+# each app's --app runs are counted separately, and only runs that finished
+# without a failure count (see docs/backups.md). Old backups are pruned only
+# after a new one has been created AND verified. Leave unset to keep all.
 # BACKUP_KEEP=2
 
 ##################################
 ## APPS DEPLOYED ON THIS SYSTEM ##
 ##################################
-# List of all apps running on this system
+# List of all apps running on this system. Rolling backups also cover every
+# other directory in DOCKER_ROOT, listed here or not; this list only decides
+# which go first.
 DEPLOYED_APPS=traefik, portainer-agent, headscale, qbittorrent, nzbget, sonarr, radarr, lidarr, readarr, spotweb, prowlarr, jellyfin, syncthing, baikal, immich

@@ -10,12 +10,21 @@ deleted, loudly.
 | Command | What happens | Downtime |
 |---|---|---|
 | `./manage.sh --backup` | One archive of the repo dir + `DOCKER_ROOT`. Refuses to run while any container is running. | Everything down for the whole backup |
-| `./manage.sh --backup --rolling` | Per app (from `DEPLOYED_APPS`): stop → archive `DOCKER_ROOT/<app>` → verify → restart. The repo dir is archived once alongside. | Each app down only while its own archive is written |
+| `./manage.sh --backup --rolling` | Per data tree, every `DOCKER_ROOT/<app>`: stop → archive → verify → restart. The repo dir is archived once alongside. | Each app down only while its own archive is written |
 | `./manage.sh --backup --app <name>` | The rolling treatment for a single app. | One app, briefly |
 
 Extra flags: `--yes` skips the confirmation prompt (for cron), `--force`
 overrides the running-containers guard and the free-space preflight — the
 point of this tooling is that you never need it.
+
+**What rolling covers.** Every directory directly under `DOCKER_ROOT`, not
+just `DEPLOYED_APPS`, which only decides the order (listed apps go first) and
+which compose projects a listed entry means. An app you have switched off is
+backed up cold and stays stopped; one running without being listed is stopped
+and restarted like any other. A directory with no compose project under
+`apps/` (a removed or renamed app) is archived data-only. A tree excluded as a
+whole by `EXCLUDE_PATH` is skipped without stopping its app. The repo archive
+always holds every app's compose file and `.env`, deployed or not.
 
 **Multi-deployment / variant apps.** A `DEPLOYED_APPS` entry names something
 under `apps/`: a compose project directly (`baikal`,
@@ -46,8 +55,11 @@ sources in `scripts/backup.sh` rather than moving data under `DOCKER_ROOT`.
   containers if anything is running. Rolling mode verifies each app's
   containers are actually gone after `down` before touching its data.
 - **Moving-target detection.** GNU tar exit code 1 means a file changed while
-  being read — something was still writing. The archive is discarded and the
-  run fails; it is never left lying around.
+  being read: something was still writing. The archive is discarded; it is
+  never left lying around.
+- **One failure does not end the run.** A tree that can not be archived, or an
+  app whose containers survive `down`, is restarted and reported `FAILED`; the
+  remaining apps are still backed up and the run exits non-zero.
 - **Atomic archives.** tar writes to `<name>.tar.gz.partial`; only after
   verification is it renamed. A crash, Ctrl-C or full disk never leaves a
   plausible-looking but broken archive.
@@ -75,10 +87,12 @@ BACKUP_ROOT/
 ├── hoth/                              # one subtree per server — sync or
 │   ├── 20260713-142530-full.tar.gz    # ignore a whole host in syncthing
 │   ├── 20260713-142530-full.tar.gz.sha256
-│   └── 20260714-041200/               # rolling / --app mode
-│       ├── privacybox-repo.tar.gz (+ .sha256)
-│       ├── nextcloud.tar.gz       (+ .sha256)
-│       └── ...
+│   ├── 20260714-041200/               # rolling mode
+│   │   ├── .complete                  # only when nothing failed
+│   │   ├── privacybox-repo.tar.gz (+ .sha256)
+│   │   ├── nextcloud.tar.gz       (+ .sha256)
+│   │   └── ...
+│   └── 20260715-093000-app-ghost/     # --app mode
 └── endor/
     └── ...
 ```
@@ -87,7 +101,10 @@ Each host writes only inside `BACKUP_ROOT/<its-hostname>/`, so several
 servers can share one synced `BACKUP_ROOT` without touching each other.
 
 Retention: set `BACKUP_KEEP=N` in `privacybox.config` to keep only the newest
-N full archives and the newest N rolling run folders (counted separately).
+N full archives, N rolling runs, and N `--app` runs per app, each counted
+separately so a few `--app` runs can never push out a full backup. Only runs
+marked `.complete` count: a failed run is kept until it is older than the
+Nth complete one, and nothing is pruned before N complete runs exist.
 Pruning only happens after a new backup has been created **and verified**,
 and only ever inside the local host's own folder — archives synced in from
 other servers are never pruned.

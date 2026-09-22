@@ -7,6 +7,11 @@
 #                  Refuses to run while ANY container is running (--force overrides).
 #   --rolling      Per-app backup: stop -> archive -> verify -> restart, one app
 #                  at a time, so only one service is down at any moment.
+#                  Covers every directory in DOCKER_ROOT: DEPLOYED_APPS first,
+#                  then the rest. Switched-off apps are backed up cold and stay
+#                  stopped; a directory with no compose project is archived
+#                  data-only; a tree excluded whole by EXCLUDE_PATH is skipped
+#                  without stopping anything.
 #                  Deployments sharing a top-level dir (apps/<app>/deployments/*)
 #                  are stopped together and DOCKER_ROOT/<app> is archived once.
 #   --app <name>   The rolling treatment for a single app. Accepts a top-level
@@ -29,8 +34,13 @@
 #     trusted, and it is discarded.
 #   - Existing archives are never overwritten.
 #   - A .sha256 sidecar is written next to every verified archive.
-#   - With BACKUP_KEEP=N in privacybox.config, old backups are pruned — but
-#     only after the new one has been created AND verified.
+#   - A failed app does not end a rolling run: it is restarted, reported
+#     FAILED, the remaining apps are still backed up, and the run exits
+#     non-zero.
+#   - With BACKUP_KEEP=N in privacybox.config, old backups are pruned, but
+#     only after the new one has been created AND verified. Full archives,
+#     rolling runs and each app's --app runs are counted separately, and only
+#     runs that finished without a failure count towards N.
 
 set -euo pipefail
 
@@ -77,6 +87,10 @@ while IFS= read -r line; do
     DEPLOYED_APPS) DEPLOYED_APPS=$val ;;
     BACKUP_KEEP)   BACKUP_KEEP=$val ;;
   esac
+  # Exported exactly like manage.sh does, so the apps this script stops and
+  # restarts get the same environment on a direct run: config values, above
+  # all DOCKER_ROOT, win over the same variable in an app's .env.
+  export "$key=$val"
 done < <(grep -E '^[A-Z_]+=' "$CONFIG_FILE" || true)
 
 [[ -n $DOCKER_ROOT ]] || die "DOCKER_ROOT is not set in $CONFIG_FILE"
@@ -150,6 +164,7 @@ mkdir -p "$BACKUP_ROOT"
 CURRENT_PARTIAL=""        # partial archive to delete if we die mid-write
 RESTART_PENDING_APPS=()   # compose projects we stopped and have not yet restarted
 RESULTS=()
+FAILED_ITEMS=()           # data trees not backed up, apps not restarted
 
 cleanup() {
   local rc=$? a
@@ -202,6 +217,20 @@ app_running() {
 }
 
 start_app() { compose_app "$1" up -d; }
+
+check_docker_root() {
+  # The exported config DOCKER_ROOT wins over the app's .env. If the two
+  # differ, a plain `docker compose up` in the app folder mounts another data
+  # tree than the one archived here, so say so.
+  local env_file="$PRIVACYBOX_DIR/apps/$1/.env" val
+  [[ -f $env_file ]] || return 0
+  val=$(grep -m1 -E '^[[:space:]]*DOCKER_ROOT=' "$env_file" | cut -d= -f2-) || return 0
+  val=$(trim "$val")
+  val=${val#\"}; val=${val%\"}; val=${val#\'}; val=${val%\'}
+  [[ -n $val && ${val%/} != "${DOCKER_ROOT%/}" ]] || return 0
+  err "[$1] its .env sets DOCKER_ROOT=$val, but privacybox.config says $DOCKER_ROOT."
+  err "[$1] Backups archive $DOCKER_ROOT/$(top_of "$1"); a plain 'docker compose' in apps/$1 would use $val."
+}
 stop_app()  { compose_app "$1" down; }
 
 # ------------------------------------------------------------- trust core ----
@@ -233,6 +262,13 @@ write_checksum() {
       && as_root sha256sum "$(basename "$f")" > "$(basename "$f").sha256" )
 }
 
+discard_partial() {
+  if [[ -n $CURRENT_PARTIAL && -e $CURRENT_PARTIAL ]]; then
+    as_root rm -f -- "$CURRENT_PARTIAL"
+  fi
+  CURRENT_PARTIAL=""
+}
+
 create_archive() {
   # create_archive <final-path> <source-path>...
   local final=$1
@@ -247,16 +283,20 @@ create_archive() {
   if [[ $rc -eq 1 ]]; then
     err "tar exit 1: files changed while being read — something was still writing."
     err "This archive can NOT be trusted; discarding it."
+    discard_partial
     return 1
   elif [[ $rc -ne 0 ]]; then
     err "tar failed (exit $rc)."
+    discard_partial
     return 1
   fi
   if ! verify_archive "$partial"; then
+    discard_partial
     return 1
   fi
   if ! as_root mv -- "$partial" "$final"; then
     err "Could not move verified archive into place: $final"
+    discard_partial
     return 1
   fi
   CURRENT_PARTIAL=""
@@ -280,7 +320,12 @@ newest_backup_size() {
     echo 0
     return 0
   fi
-  as_root du -sk -- "$newest" 2>/dev/null | awk '{print $1 * 1024}' || echo 0
+  # Byte math in bash, not awk: mawk prints values past 2^31 in scientific
+  # notation (1.15e+10), which [[ -gt ]] rejects, silently skipping the check.
+  local kib
+  kib=$(as_root du -sk -- "$newest" 2>/dev/null | cut -f1) || kib=0
+  [[ $kib =~ ^[0-9]+$ ]] || kib=0
+  echo $(( kib * 1024 ))
 }
 
 preflight_space() {
@@ -288,7 +333,8 @@ preflight_space() {
   local need=$1 avail
   [[ $need -gt 0 ]] || return 0
   need=$(( need + need / 10 ))
-  avail=$(df -Pk "$BACKUP_ROOT" | awk 'NR==2 {print $4 * 1024}')
+  avail=$(df -Pk "$BACKUP_ROOT" | awk 'NR==2 {print $4}')
+  avail=$(( avail * 1024 ))
   if [[ $avail -lt $need ]]; then
     if [[ $FORCE -eq 1 ]]; then
       err "Low space on $BACKUP_ROOT: $(mib "$avail") free, ~$(mib "$need") expected — continuing due to --force."
@@ -316,26 +362,84 @@ print_excludes() {
 
 # -------------------------------------------------------------- retention ----
 
+# Run folders: rolling runs are named <timestamp>, --app runs
+# <timestamp>-app-<top>, so the two kinds never compete for BACKUP_KEEP slots.
+# A run that finished without a failure gets RUN_OK_MARKER; only those count.
+TS_GLOB='[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]'
+RUN_OK_MARKER=".complete"
+
+prune_runs() {
+  # prune_runs <run-dir>... (newest first). Keep everything down to the
+  # BACKUP_KEEP-th complete run and delete what is older. Failed or cut-short
+  # runs never count, so they can not push a good backup out, and nothing is
+  # pruned until BACKUP_KEEP complete runs exist (history from before the
+  # marker existed is only removed once it is older than those).
+  local complete=0 dir
+  for dir in "$@"; do
+    dir=${dir%/}
+    if [[ $complete -ge $BACKUP_KEEP ]]; then
+      log "Retention (BACKUP_KEEP=$BACKUP_KEEP): removing old backup $dir"
+      as_root rm -rf -- "$dir"
+      continue
+    fi
+    if [[ -e $dir/$RUN_OK_MARKER ]]; then complete=$(( complete + 1 )); fi
+  done
+}
+
 apply_retention() {
   [[ -n $BACKUP_KEEP ]] || return 0
-  if ! [[ $BACKUP_KEEP =~ ^[0-9]+$ ]]; then
-    err "BACKUP_KEEP must be a number (got '$BACKUP_KEEP') — skipping pruning."
+  if ! [[ $BACKUP_KEEP =~ ^[1-9][0-9]*$ ]]; then
+    err "BACKUP_KEEP must be a whole number of at least 1 (got '$BACKUP_KEEP'): skipping pruning."
     return 0
   fi
   local items=() item
-  if [[ $MODE == "full" ]]; then
-    while IFS= read -r item; do items+=("$item"); done \
-      < <(ls -1dt "$HOST_DIR"/*-full.tar.gz 2>/dev/null || true)
-  else
-    while IFS= read -r item; do items+=("$item"); done \
-      < <(ls -1dt "$HOST_DIR"/*/ 2>/dev/null || true)
+  case $MODE in
+    full)
+      while IFS= read -r item; do items+=("$item"); done \
+        < <(ls -1dt "$HOST_DIR"/*-full.tar.gz 2>/dev/null || true)
+      [[ ${#items[@]} -gt $BACKUP_KEEP ]] || return 0
+      for item in "${items[@]:$BACKUP_KEEP}"; do
+        log "Retention (BACKUP_KEEP=$BACKUP_KEEP): removing old backup $item"
+        as_root rm -rf -- "$item" "$item.sha256"
+      done
+      ;;
+    rolling)
+      while IFS= read -r item; do items+=("$item"); done \
+        < <(ls -1dt "$HOST_DIR"/$TS_GLOB/ 2>/dev/null || true)
+      prune_runs ${items[@]+"${items[@]}"}
+      ;;
+    single)
+      while IFS= read -r item; do items+=("$item"); done \
+        < <(ls -1dt "$HOST_DIR"/$TS_GLOB-app-"$(top_of "$APP_NAME")"/ 2>/dev/null || true)
+      prune_runs ${items[@]+"${items[@]}"}
+      ;;
+  esac
+}
+
+rolling_estimate() {
+  # Space estimate for a rolling run: the newest complete rolling run, or,
+  # before one exists, the newest rolling run folder of any kind.
+  local dir
+  while IFS= read -r dir; do
+    if [[ -e ${dir%/}/$RUN_OK_MARKER ]]; then
+      newest_backup_size "$dir"
+      return 0
+    fi
+  done < <(ls -1dt "$HOST_DIR"/$TS_GLOB/ 2>/dev/null || true)
+  newest_backup_size "$HOST_DIR"/$TS_GLOB/
+}
+
+finish_run() {
+  # finish_run <outdir>: mark a clean run complete, prune, and fail the run
+  # (non-zero exit, summary via the exit trap) if anything was not backed up.
+  if [[ ${#FAILED_ITEMS[@]} -eq 0 ]]; then
+    touch "$1/$RUN_OK_MARKER"
   fi
-  [[ ${#items[@]} -gt $BACKUP_KEEP ]] || return 0
-  for item in "${items[@]:$BACKUP_KEEP}"; do
-    item=${item%/}
-    log "Retention (BACKUP_KEEP=$BACKUP_KEEP): removing old backup $item"
-    as_root rm -rf -- "$item" "$item.sha256"
-  done
+  apply_retention
+  if [[ ${#FAILED_ITEMS[@]} -gt 0 ]]; then
+    err "Not backed up or not restarted: ${FAILED_ITEMS[*]}"
+    exit 1
+  fi
 }
 
 # ------------------------------------------------------------------ modes ----
@@ -404,10 +508,10 @@ add_project() {
   PROJECTS+=("$1")
 }
 
-resolve_entry() {
-  # Append the compose project(s) a DEPLOYED_APPS/--app entry stands for to
-  # PROJECTS. Non-running variants cost nothing: they are queried, found
-  # stopped, and left alone.
+collect_projects() {
+  # Append the compose project(s) an entry stands for to PROJECTS; return 1
+  # when there are none. Non-running variants cost nothing: they are queried,
+  # found stopped, and left alone.
   local entry=$1 dir="$PRIVACYBOX_DIR/apps/$1" found=0 f
   if has_compose "$dir"; then
     add_project "$entry"
@@ -421,9 +525,41 @@ resolve_entry() {
                \( -name docker-compose.yml -o -name docker-compose.yaml \
                   -o -name compose.yml -o -name compose.yaml \) | sort)
   fi
-  if [[ $found -eq 0 ]]; then
-    die "Unknown app: $entry — no compose project at apps/$entry or below. Fix DEPLOYED_APPS or the --app argument."
+  [[ $found -eq 1 ]]
+}
+
+resolve_entry() {
+  # A DEPLOYED_APPS/--app entry must name a compose project: a typo fails
+  # before anything is stopped or archived.
+  if ! collect_projects "$1"; then
+    die "Unknown app '$1': no compose project at apps/$1 or below. Fix DEPLOYED_APPS or the --app argument."
   fi
+}
+
+docker_root_tops() {
+  # Every directory directly under DOCKER_ROOT, sorted. lost+found is a
+  # filesystem artefact, not app data.
+  as_root find "$DOCKER_ROOT" -mindepth 1 -maxdepth 1 -type d ! -name lost+found -printf '%f\n' | sort
+}
+
+fully_excluded() {
+  # True when DOCKER_ROOT/<top> as a whole is an exclude (an EXCLUDE_PATH
+  # entry, or BACKUP_ROOT itself): there is nothing to archive, so its app is
+  # not stopped either. Paths are compared without doubled or trailing slashes.
+  local target="$DOCKER_ROOT/$1" a p
+  target=${target//\/\//\/}
+  target=${target%/}
+  for a in "${EXCLUDE_ARGS[@]}"; do
+    p=${a#--exclude=}
+    p=${p//\/\//\/}
+    p=${p%/}
+    if [[ $p == "$target" ]]; then return 0; fi
+  done
+  return 1
+}
+
+list_or_none() {
+  if [[ $# -gt 0 ]]; then printf '%s' "$*"; else printf '(none)'; fi
 }
 
 backup_group() {
@@ -436,34 +572,64 @@ backup_group() {
   local entry to_restart=()
   local data_dir="$DOCKER_ROOT/$top"
 
+  if fully_excluded "$top"; then
+    log "[$top] whole tree is in EXCLUDE_PATH: skipped, nothing stopped."
+    RESULTS+=("$top: SKIPPED (whole tree excluded)")
+    return 0
+  fi
+  if [[ $# -eq 0 ]]; then
+    log "[$top] no compose project under apps/: archiving data only."
+  fi
+
+  # Failures are recorded, never fatal: the stopped apps are restarted and
+  # the run moves on to the next data tree.
+  local ok=1
   for entry in "$@"; do
+    check_docker_root "$entry"
     if app_running "$entry"; then
       log "[$entry] stopping..."
       to_restart+=("$entry")
       RESTART_PENDING_APPS+=("$entry")
-      stop_app "$entry"
+      if ! stop_app "$entry"; then
+        err "[$entry] 'down' reported an error."
+      fi
       if app_running "$entry"; then
-        err "[$entry] containers still present after 'down' — aborting."
-        return 1
+        err "[$entry] containers still present after 'down': not archiving $top."
+        ok=0
+        break
       fi
     else
       log "[$entry] not running — cold backup, will stay stopped."
     fi
   done
 
-  if [[ -d $data_dir ]]; then
-    create_archive "$outdir/$top.tar.gz" "$data_dir"
-    RESULTS+=("$top: OK -> $outdir/$top.tar.gz")
-  else
-    err "[$top] no data directory at $data_dir — nothing archived."
-    RESULTS+=("$top: NO DATA DIR ($data_dir) — nothing archived")
+  if [[ $ok -eq 1 ]]; then
+    if [[ -d $data_dir ]]; then
+      if create_archive "$outdir/$top.tar.gz" "$data_dir"; then
+        RESULTS+=("$top: OK -> $outdir/$top.tar.gz")
+      else
+        ok=0
+      fi
+    else
+      log "[$top] no data directory at $data_dir: nothing to archive (stateless, or its state lives in the repo archive)."
+      RESULTS+=("$top: NO DATA DIR ($data_dir) — nothing archived")
+    fi
+  fi
+  if [[ $ok -eq 0 ]]; then
+    RESULTS+=("$top: FAILED, not backed up (see the errors above)")
+    FAILED_ITEMS+=("$top")
   fi
 
   for entry in ${to_restart[@]+"${to_restart[@]}"}; do
     log "[$entry] starting..."
-    start_app "$entry"
+    if ! start_app "$entry"; then
+      err "[$entry] COULD NOT RESTART: start it manually: ./manage.sh --start --app $entry"
+      RESULTS+=("$entry: RESTART FAILED, start it manually")
+      FAILED_ITEMS+=("$entry")
+    fi
   done
   RESTART_PENDING_APPS=()
+  return 0
 }
 
 group_for_top() {
@@ -479,17 +645,17 @@ group_for_top() {
 }
 
 do_rolling() {
-  [[ -n $DEPLOYED_APPS ]] || die "DEPLOYED_APPS is not set in $CONFIG_FILE"
-  local entries=() entry tops=() top seen t p
+  local entries=() entry tops=() listed_tops=() extra_tops=() skipped=()
+  local listing top seen t p
   IFS=', ' read -r -a entries <<< "$DEPLOYED_APPS"
 
-  # Resolve everything up front — a typo must fail before anything is
-  # stopped or archived. Then derive the ordered, unique top-level list.
+  # Resolve DEPLOYED_APPS up front (a typo must fail before anything is
+  # stopped or archived), then derive the ordered, unique top-level list.
   PROJECTS=()
-  for entry in "${entries[@]}"; do
+  for entry in ${entries[@]+"${entries[@]}"}; do
     resolve_entry "$entry"
   done
-  for p in "${PROJECTS[@]}"; do
+  for p in ${PROJECTS[@]+"${PROJECTS[@]}"}; do
     top=$(top_of "$p")
     seen=0
     for t in ${tops[@]+"${tops[@]}"}; do
@@ -498,24 +664,48 @@ do_rolling() {
     if [[ $seen -eq 0 ]]; then tops+=("$top"); fi
   done
 
+  listed_tops=(${tops[@]+"${tops[@]}"})
+
+  # Then everything else in DOCKER_ROOT, so switched-off apps are covered too.
+  # A tree with compose projects under apps/<top> gets the same treatment as a
+  # listed one (running: stop/archive/restart, stopped: cold, stays stopped);
+  # a tree without is archived data-only.
+  listing=$(docker_root_tops) || die "Could not list the directories in $DOCKER_ROOT"
+  while IFS= read -r top; do
+    [[ -n $top ]] || continue
+    seen=0
+    for t in ${tops[@]+"${tops[@]}"}; do
+      if [[ $t == "$top" ]]; then seen=1; fi
+    done
+    if [[ $seen -eq 1 ]]; then continue; fi
+    collect_projects "$top" || true
+    tops+=("$top")
+    extra_tops+=("$top")
+  done <<< "$listing"
+  for top in ${tops[@]+"${tops[@]}"}; do
+    if fully_excluded "$top"; then skipped+=("$top"); fi
+  done
+
   local outdir="$HOST_DIR/$TIMESTAMP"
   log "Backup task summary (rolling — each app is only down while its own archive is written):"
-  log "  Compose projects: ${PROJECTS[*]}"
-  log "  Data trees: ${tops[*]}"
+  log "  Compose projects: $(list_or_none ${PROJECTS[@]+"${PROJECTS[@]}"})"
+  log "  Data trees (DEPLOYED_APPS): $(list_or_none ${listed_tops[@]+"${listed_tops[@]}"})"
+  log "  Data trees (rest of DOCKER_ROOT): $(list_or_none ${extra_tops[@]+"${extra_tops[@]}"})"
+  log "  Skipped (whole tree excluded): $(list_or_none ${skipped[@]+"${skipped[@]}"})"
   log "  Excludes:"
   print_excludes
   log "  Target: $outdir/"
   confirm
-  preflight_space "$(newest_backup_size "$HOST_DIR"/*/)"
+  preflight_space "$(rolling_estimate)"
 
   mkdir -p "$outdir"
   create_archive "$outdir/privacybox-repo.tar.gz" "$PRIVACYBOX_DIR"
   RESULTS+=("privacybox-repo: OK -> $outdir/privacybox-repo.tar.gz")
-  for top in "${tops[@]}"; do
+  for top in ${tops[@]+"${tops[@]}"}; do
     group_for_top "$top"
-    backup_group "$outdir" "$top" "${GROUP[@]}"
+    backup_group "$outdir" "$top" ${GROUP[@]+"${GROUP[@]}"}
   done
-  apply_retention
+  finish_run "$outdir"
 }
 
 do_single() {
@@ -540,7 +730,7 @@ do_single() {
   fi
   group_for_top "$top"
 
-  local outdir="$HOST_DIR/$TIMESTAMP"
+  local outdir="$HOST_DIR/$TIMESTAMP-app-$top"
   log "Backup task summary (single app):"
   log "  App: $top (compose projects: ${GROUP[*]})"
   log "  Excludes:"
@@ -555,7 +745,7 @@ do_single() {
   create_archive "$outdir/privacybox-repo.tar.gz" "$PRIVACYBOX_DIR"
   RESULTS+=("privacybox-repo: OK -> $outdir/privacybox-repo.tar.gz")
   backup_group "$outdir" "$top" "${GROUP[@]}"
-  apply_retention
+  finish_run "$outdir"
 }
 
 # ------------------------------------------------------------------- main ----
