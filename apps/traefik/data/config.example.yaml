@@ -32,7 +32,7 @@ http:
 
   routers:
     http-catchall:
-      rule: "HostRegexp(`.+`)"
+      rule: "HostRegexp(`^.+$`)"
       entrypoints:
         - web
       middlewares:

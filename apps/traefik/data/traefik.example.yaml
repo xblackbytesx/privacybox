@@ -6,9 +6,9 @@ global:
   sendAnonymousUsage: false
 
 api:
-  insecure: true
+  insecure: false
   dashboard: true
-  debug: true
+  debug: false
 
 entryPoints:
   web:
