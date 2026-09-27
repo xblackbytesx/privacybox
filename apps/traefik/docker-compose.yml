@@ -4,6 +4,11 @@ networks:
   proxy:
     name: proxy
     external: true
+  # Per-app ingress networks for containers that are deliberately kept off the
+  # shared `proxy` network. Traefik has to join each one to reach the backend.
+  paperclip-edge:
+    name: paperclip-edge
+    external: true
 
 services:
   traefik:
@@ -14,6 +19,7 @@ services:
       - no-new-privileges:true
     networks:
       - proxy
+      - paperclip-edge
     ports:
       - "80:80"
       - "443:443"

@@ -1,0 +1,129 @@
+name: paperclip
+
+networks:
+  # docker network create paperclip-edge
+  paperclip-edge:
+    name: paperclip-edge
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  paperclip-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/paperclip/database
+  # Keep dedicated. The agent CLIs reach anything mounted here.
+  paperclip-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/paperclip/data
+
+services:
+  paperclip-db:
+    container_name: paperclip-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_DB: paperclip
+      POSTGRES_USER: paperclip
+      POSTGRES_PASSWORD: ${DB_USER_PASS}
+    volumes:
+      - paperclip-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=false
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d paperclip -U paperclip"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    restart: unless-stopped
+
+  paperclip:
+    container_name: paperclip
+    image: ghcr.io/paperclipai/paperclip:${PAPERCLIP_IMAGE_TAG:-latest}
+    # Non-root takes the entrypoint's unprivileged path, which cap_drop needs.
+    # Never 0.
+    user: "${PUID:-1000}:${PGID:-1000}"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:mode=1777,size=1g
+    # read_only: true   # see docs/paperclip.md
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      # Match `user:` or the entrypoint warns on every boot.
+      USER_UID: ${PUID:-1000}
+      USER_GID: ${PGID:-1000}
+      SERVE_UI: "true"
+      PAPERCLIP_HOME: /paperclip
+      DATABASE_URL: "postgres://paperclip:${DB_USER_PASS}@paperclip-db:5432/paperclip"
+      PAPERCLIP_DEPLOYMENT_MODE: ${PAPERCLIP_DEPLOYMENT_MODE:-authenticated}
+      PAPERCLIP_DEPLOYMENT_EXPOSURE: ${PAPERCLIP_DEPLOYMENT_EXPOSURE:-public}
+      PAPERCLIP_PUBLIC_URL: "https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}"
+      PAPERCLIP_API_URL: "https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}"
+      PAPERCLIP_ALLOWED_HOSTNAMES: ${PAPERCLIP_ALLOWED_HOSTNAMES:-}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET must be set}
+      PAPERCLIP_TOOL_ACTION_SIGNING_SECRET: ${PAPERCLIP_TOOL_ACTION_SIGNING_SECRET:?PAPERCLIP_TOOL_ACTION_SIGNING_SECRET must be set}
+      PAPERCLIP_HTTP_ADAPTER_PRIVATE_ENDPOINT_ALLOWLIST: ${PAPERCLIP_HTTP_ADAPTER_PRIVATE_ENDPOINT_ALLOWLIST:-}
+      # CLI variables, inherited-env fallback only. See docs/paperclip.md.
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    volumes:
+      - paperclip-data:/paperclip
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.paperclip-secure.entrypoints=websecure
+      - traefik.http.routers.paperclip-secure.rule=Host(`${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}`)
+      - traefik.http.routers.paperclip-secure.tls=true
+      - traefik.http.routers.paperclip-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.paperclip-secure.service=paperclip
+      # Not gzip-compress@file: Traefik v3 compresses SSE and stalls run output.
+      - traefik.http.middlewares.paperclip-sse.compress.excludedContentTypes=text/event-stream
+      # basic-auth covers the unclaimed-board window. See docs/paperclip.md.
+      - traefik.http.routers.paperclip-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,paperclip-sse@docker,basic-auth@file
+      - traefik.http.services.paperclip.loadbalancer.server.port=3100
+      # Required: the provider defaults to `proxy`, which this is not on.
+      - traefik.docker.network=paperclip-edge
+    networks:
+      - internal
+      - paperclip-edge
+    depends_on:
+      paperclip-db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3100/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 2048
+    restart: unless-stopped
