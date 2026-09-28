@@ -62,8 +62,10 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    # `exec` is required. Docker defaults tmpfs to noexec, which breaks the ACP
+    # terminal provider. nosuid and nodev still apply.
     tmpfs:
-      - /tmp:mode=1777,size=1g
+      - /tmp:mode=1777,size=1g,exec
     # read_only: true   # see docs/paperclip.md
     environment:
       HOST: "0.0.0.0"
