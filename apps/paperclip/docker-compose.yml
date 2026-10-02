@@ -15,7 +15,6 @@ volumes:
       type: none
       o: bind
       device: ${DOCKER_ROOT}/paperclip/database
-  # Keep dedicated. The agent CLIs reach anything mounted here.
   paperclip-data:
     driver: local
     driver_opts:
@@ -55,8 +54,6 @@ services:
   paperclip:
     container_name: paperclip
     image: ghcr.io/paperclipai/paperclip:${PAPERCLIP_IMAGE_TAG:-latest}
-    # Non-root takes the entrypoint's unprivileged path, which cap_drop needs.
-    # Never 0.
     user: "${PUID:-1000}:${PGID:-1000}"
     cap_drop:
       - ALL
@@ -70,18 +67,20 @@ services:
     environment:
       HOST: "0.0.0.0"
       PORT: "3100"
-      # Match `user:` or the entrypoint warns on every boot.
       USER_UID: ${PUID:-1000}
       USER_GID: ${PGID:-1000}
       SERVE_UI: "true"
       PAPERCLIP_HOME: /paperclip
+      PAPERCLIP_TELEMETRY_DISABLED: "1"
+      DO_NOT_TRACK: "1"
+      PAPERCLIP_UPDATE_CHECK: "0"
       DATABASE_URL: "postgres://paperclip:${DB_USER_PASS}@paperclip-db:5432/paperclip"
       PAPERCLIP_DEPLOYMENT_MODE: ${PAPERCLIP_DEPLOYMENT_MODE:-authenticated}
       PAPERCLIP_DEPLOYMENT_EXPOSURE: ${PAPERCLIP_DEPLOYMENT_EXPOSURE:-public}
       PAPERCLIP_PUBLIC_URL: "https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}"
       PAPERCLIP_API_URL: "https://${SUBDOMAIN:+${SUBDOMAIN}.}${DOMAIN}"
-      # `public` exposure refuses to start unless this is explicit. Onboarding
-      # otherwise infers it and can write `auto`.
+      # Pins auth.baseUrlMode in the instance config: with exposure=public the
+      # server refuses to boot if that value is "auto". See docs/paperclip.md.
       PAPERCLIP_AUTH_BASE_URL_MODE: ${PAPERCLIP_AUTH_BASE_URL_MODE:-explicit}
       PAPERCLIP_ALLOWED_HOSTNAMES: ${PAPERCLIP_ALLOWED_HOSTNAMES:-}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET must be set}
@@ -103,12 +102,9 @@ services:
       - traefik.http.routers.paperclip-secure.tls=true
       - traefik.http.routers.paperclip-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.paperclip-secure.service=paperclip
-      # Not gzip-compress@file: Traefik v3 compresses SSE and stalls run output.
       - traefik.http.middlewares.paperclip-sse.compress.excludedContentTypes=text/event-stream
-      # basic-auth covers the unclaimed-board window. See docs/paperclip.md.
-      - traefik.http.routers.paperclip-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,paperclip-sse@docker,basic-auth@file
+      - traefik.http.routers.paperclip-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,paperclip-sse@docker${PAPERCLIP_BASIC_AUTH:+,basic-auth@file}
       - traefik.http.services.paperclip.loadbalancer.server.port=3100
-      # Required: the provider defaults to `proxy`, which this is not on.
       - traefik.docker.network=paperclip-edge
     networks:
       - internal
