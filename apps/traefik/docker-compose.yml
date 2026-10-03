@@ -39,7 +39,9 @@ services:
       - traefik.enable=true
       - traefik.http.routers.traefik-secure.entrypoints=websecure
       - traefik.http.routers.traefik-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.traefik-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      # basic-auth is appended only while TRAEFIK_BASIC_AUTH is non-empty. The
+      # dashboard has no login of its own, so this is its only gate.
+      - traefik.http.routers.traefik-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file${TRAEFIK_BASIC_AUTH:+,basic-auth@file}
       - traefik.http.routers.traefik-secure.tls=true
       - traefik.http.routers.traefik-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.traefik-secure.service=api@internal

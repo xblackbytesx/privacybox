@@ -87,13 +87,9 @@ services:
       # stream leaves the dashboard panes hanging. Everything else is still
       # compressed.
       - traefik.http.middlewares.turnstone-sse.compress.excludedContentTypes=text/event-stream
-      # basic-auth@file sits in front of Turnstone's own login on purpose. Until
-      # you create the first user, POST /v1/api/auth/setup is a public endpoint
-      # that hands out the admin account, so an exposed dashboard is claimable by
-      # whoever reaches it first. Keep it, or drop it only after the admin user
-      # exists and you need API tokens against this hostname (basic auth and
-      # bearer tokens both use the Authorization header, so they cannot share it).
-      - traefik.http.routers.turnstone-console-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,turnstone-sse@docker,basic-auth@file
+      # basic-auth is appended only while TURNSTONE_BASIC_AUTH is non-empty. It
+      # covers the claimable-admin window. See docs/turnstone.md.
+      - traefik.http.routers.turnstone-console-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,turnstone-sse@docker${TURNSTONE_BASIC_AUTH:+,basic-auth@file}
       - traefik.http.services.turnstone-console.loadbalancer.server.port=8090
     networks:
       - internal

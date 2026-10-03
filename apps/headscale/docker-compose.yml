@@ -79,7 +79,10 @@ services:
       - traefik.http.routers.headplane.rule=Host(`${HEADPLANE_SUBDOMAIN}.${DOMAIN}`)
       - traefik.http.routers.headplane-secure.entrypoints=websecure
       - traefik.http.routers.headplane-secure.rule=Host(`${HEADPLANE_SUBDOMAIN}.${DOMAIN}`)
-      - traefik.http.routers.headplane-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      # basic-auth is appended only while HEADPLANE_BASIC_AUTH is non-empty.
+      # Headplane's own auth lives in its host config.yaml, so leave this on
+      # unless you have confirmed it requires a login. See docs/headscale.md.
+      - traefik.http.routers.headplane-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file${HEADPLANE_BASIC_AUTH:+,basic-auth@file}
       - traefik.http.routers.headplane-secure.tls=true
       - traefik.http.routers.headplane-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.services.headplane.loadbalancer.server.port=3000

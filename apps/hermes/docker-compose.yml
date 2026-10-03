@@ -51,7 +51,8 @@ services:
       - traefik.http.routers.hermes-secure.tls=true
       - traefik.http.routers.hermes-secure.tls.certresolver=${CERT_RESOLVER}
       - traefik.http.routers.hermes-secure.service=hermes
-      - traefik.http.routers.hermes-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file,basic-auth@file
+      # basic-auth is appended only while HERMES_BASIC_AUTH is non-empty.
+      - traefik.http.routers.hermes-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file${HERMES_BASIC_AUTH:+,basic-auth@file}
       - traefik.http.services.hermes.loadbalancer.server.port=9119
     deploy:
       resources:
