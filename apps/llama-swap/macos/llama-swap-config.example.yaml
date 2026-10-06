@@ -1,0 +1,122 @@
+# llama-swap model definitions for an Apple Silicon Mac, run natively.
+#
+# Copy to ~/.config/llama-swap/config.yaml. Not a compose app: Docker on macOS
+# has no Metal passthrough, so llama.cpp in a container would run CPU-only.
+# llama-swap and llama-server both come from Homebrew instead; setup, launchd
+# and the OpenCode wiring are in docs/llama-swap-macos.md.
+#
+# Sized for a MacBook Pro M4 Max with 36GB unified memory, llama.cpp Metal
+# backend. `smart` and `ornith` match apps/llama-swap/intel/ so clients keep the
+# same model ids on either machine; only the base URL differs. `dense` is
+# Mac-only: a dense model has no experts to offload, so it cannot run on the
+# 12GB B580, but here all of it sits in ~410GB/s unified memory.
+#
+# MEMORY BUDGET: unified memory means there is no VRAM/RAM split and no
+# --n-cpu-moe. The ceiling is macOS's GPU wired limit, about 27GB by default on
+# 36GB. Every model below lands at ~24-25GiB of weights, KV and compute (each
+# entry has its own sum): inside the default limit, with ~11GB left for macOS,
+# the editor and a browser. One model at a time; never add a second group that
+# keeps two loaded.
+#
+# No --load-mode here, unlike intel: the default (mmap) is the right mode on
+# Apple Silicon, where Metal maps the file in place instead of copying it.
+#
+# --jinja on every model, for the same reason as intel: without it the GGUF's
+# chat template is ignored and tool calls never parse, which in OpenCode looks
+# like an agent that narrates edits and then stops.
+
+macros:
+  # launchd and llama-swap do not expand ~, so this has to be absolute.
+  "models": "/Users/CHANGEME/llama-swap/models"
+  "server": "/opt/homebrew/bin/llama-server --host 127.0.0.1 --port ${PORT}"
+
+# Cold loads read ~21GiB from the internal SSD, well under a minute.
+healthCheckTimeout: 180
+logLevel: info
+
+models:
+  # Agentic coding default. Qwen3.6-27B, dense. Beats `smart` on Qwen's own
+  # coding table (SWE-bench Verified 77.2 vs 73.4, SWE-bench Pro 53.5 vs 49.5,
+  # Terminal-Bench 2.0 59.3 vs 51.5), self-reported, not reproduced.
+  #
+  # The cost is speed. All 27B params are read per token instead of ~3B, so
+  # expect ~15-20 t/s generation against `smart`'s 60+, and ~9x the compute per
+  # prompt token: OpenCode's first large prompt of a session can take tens of
+  # seconds. llama-server caches the shared prefix, so later turns only process
+  # what is new. Switch to `smart` for quick questions and fast iteration.
+  #
+  # Same hybrid layout as `smart` but bigger: 64 layers, 16 with full attention,
+  # 4 KV heads x 256 dims, so ~64KiB/token at f16, ~3x `smart`. That is why this
+  # one runs -c 65536 (~4GiB KV): UD-Q5_K_XL (18.7GiB) + 4GiB + ~1GiB = ~24GiB.
+  # For 128k instead, drop to UD-Q4_K_XL (16.4GiB, ~8GiB KV at 131072, ~25.5GiB).
+  # Code suffers from quantization more than chat, hence Q5 over more context.
+  #
+  # Same sampling as `smart`: Qwen's thinking-mode set for precise coding.
+  "dense":
+    name: "Qwen3.6-27B (dense, agentic coding)"
+    ttl: 900
+    cmd: >
+      ${server}
+      -m ${models}/huggingface/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-UD-Q5_K_XL.gguf
+      -ngl 99
+      -c 65536
+      -b 2048
+      -fa on
+      --temp 0.6
+      --top-p 0.95
+      --top-k 20
+      --min-p 0.0
+      --jinja
+
+  # Fast coding and chat. Qwen3.6-35B-A3B: 40 layers, 3:1 Gated DeltaNet to
+  # full attention, so only 10 layers carry a KV cache (2 KV heads x 256 dims,
+  # ~20KiB/token at f16). That is what makes -c 131072 cost ~2.5GiB instead of
+  # ~10. OpenCode's system prompt and tool schemas alone take >10k tokens, and
+  # tool output grows fast, so the cheap KV is spent on a 128k window.
+  #
+  # UD-Q4_K_XL (20.8GiB), same file as intel, so modelarr resolves one path for
+  # both. UD-Q5_K_XL (24.8GiB) only after raising iogpu.wired_limit_mb, and it
+  # leaves macOS ~7GB: not worth it on 36GB.
+  #
+  # Sampling is Qwen's "thinking mode for precise coding" set, server-side so
+  # every client gets it. Clients can still override per request.
+  #
+  # ttl 900: a coding session has pauses longer than intel's 300s, and a reload
+  # costs a few seconds of wait on every idle return. Lower it if 21GiB held
+  # for 15 minutes gets in the way of other work.
+  "smart":
+    name: "Qwen3.6-35B-A3B (smart, fast coding)"
+    ttl: 900
+    cmd: >
+      ${server}
+      -m ${models}/huggingface/unsloth/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+      -ngl 99
+      -c 131072
+      -b 2048
+      -fa on
+      --temp 0.6
+      --top-p 0.95
+      --top-k 20
+      --min-p 0.0
+      --jinja
+
+  # TRIAL, mirroring intel's `ornith`: same architecture and size as `smart`,
+  # RL-tuned for agentic coding, benchmarks self-reported only. Whichever wins
+  # the A/B on intel should win here too; then move its cmd under `smart` and
+  # delete this entry so clients never change model id.
+  #
+  # Official Q4_K_M (20.2GiB), same memory budget as `smart`. Author sampling.
+  "ornith":
+    name: "Ornith-1.5-35B-A3B (smart trial)"
+    ttl: 900
+    cmd: >
+      ${server}
+      -m ${models}/huggingface/ornith-ai/Ornith-1.5-35B-A3B-GGUF/Ornith-1.5-35B-Q4_K_M.gguf
+      -ngl 99
+      -c 131072
+      -b 2048
+      -fa on
+      --temp 0.6
+      --top-p 0.95
+      --top-k 20
+      --jinja

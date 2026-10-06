@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Per-user LaunchAgent: starts llama-swap at login and restarts it if it dies.
+  Copy to ~/Library/LaunchAgents/llama-swap.plist and replace CHANGEME.
+  launchd does not expand ~ or $HOME, so every path must be absolute.
+  Idle costs nothing: models unload after their ttl, only the proxy stays up.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>llama-swap</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/llama-swap</string>
+    <string>--config</string>
+    <string>/Users/CHANGEME/.config/llama-swap/config.yaml</string>
+    <string>--listen</string>
+    <string>127.0.0.1:11430</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/CHANGEME/Library/Logs/llama-swap.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/CHANGEME/Library/Logs/llama-swap.log</string>
+</dict>
+</plist>
