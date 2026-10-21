@@ -12,11 +12,48 @@ auth-default-access: "deny-all"
 # require-login: true
 attachment-cache-dir: "/var/cache/ntfy/attachments"
 
-# UnifiedPush (Element-X via Matrix push gateway, plus any other UP apps).
-# Allows the gateway — an unauthenticated external publisher — to POST to
-# topics whose name starts with `up`. Subscribers still need an account
+# USERS, ACCESS AND TOKENS are declared below rather than created with the CLI.
+# ntfy re-applies all three lists on every start, and anything removed from them
+# is deleted from auth.db on the next restart. The CLI cannot change or delete
+# what is declared here. auth-access and auth-tokens may only name users from
+# auth-users (or `everyone`). Setup and migration: docs/ntfy.md.
+#
+# The PASTE_BCRYPT_HASH_HERE and tk_PASTE_TOKEN_HERE placeholders are invalid
+# on purpose: ntfy refuses to start until every one is replaced, so a copied
+# example never runs with a known secret.
+# This file now holds secrets: keep it chmod 600.
+
+# <name>:<bcrypt-hash>:<role>, role is admin or user.
+# Hash: docker run --rm -it binwiederhier/ntfy user hash
+# App users only ever authenticate with a token. Give them a long random
+# password, hash it and discard it.
+auth-users:
+  - "admin:PASTE_BCRYPT_HASH_HERE:admin"
+  - "phone:PASTE_BCRYPT_HASH_HERE:user"
+  - "odysseus:PASTE_BCRYPT_HASH_HERE:user"
+  - "cleanuparr:PASTE_BCRYPT_HASH_HERE:user"
+
+# <user>:<topic-pattern>:<rw|ro|wo|deny>. Admins already have full access and
+# must not appear here, or ntfy refuses to start. Pattern per app: the app may
+# only publish to its own topic, the phone may only subscribe to it.
 auth-access:
+  # UnifiedPush (Element-X via Matrix push gateway, plus any other UP apps).
+  # Allows the gateway, an unauthenticated external publisher, to POST to
+  # topics whose name starts with `up`. Never name an app topic `up...`.
   - "everyone:up*:wo"
+  - "phone:up*:ro"
+  - "odysseus:odysseus:wo"
+  - "phone:odysseus:ro"
+  - "cleanuparr:cleanuparr-alerts:wo"
+  - "phone:cleanuparr-alerts:ro"
+
+# <user>:<token>[:<label>], the label may not contain a colon.
+# New token: docker run --rm binwiederhier/ntfy token generate
+# A tk_ token already issued with the CLI can be pasted here unchanged and keeps
+# working, so the app holding it needs no change.
+auth-tokens:
+  - "odysseus:tk_PASTE_TOKEN_HERE:Odysseus reminders"
+  - "cleanuparr:tk_PASTE_TOKEN_HERE:Cleanuparr"
 
 # Per-visitor (per-IP) rate limits. The Matrix push gateway is a single IP
 # that publishes all your Matrix pushes, so the burst/daily caps must fit
