@@ -1,0 +1,83 @@
+name: comfyui
+
+# Prebuilt image from /workspace/comfy-arc (github.com/xblackbytesx/comfy-arc):
+# ComfyUI, PyTorch and every custom node are pinned into the image, so this
+# stack has no build step and nothing drifts at runtime. Tunables are the
+# COMFY_* variables in .env; see docs/comfyui.md.
+
+volumes:
+  comfyui-models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/model-storage/models
+  comfyui-input:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/user-storage/input
+  comfyui-output:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/user-storage/output
+  comfyui-user:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/user-storage/user
+  comfyui-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/comfyui/model-storage/cache
+
+services:
+  comfyui:
+    container_name: comfyui
+    image: ghcr.io/xblackbytesx/comfy-arc:${COMFYUI_IMAGE_TAG}
+    security_opt:
+      - no-new-privileges:true
+      - label:disable
+    ipc: host
+    ports:
+      - "8188:8188"
+    environment:
+      PUID: ${PUID:-}
+      PGID: ${PGID:-}
+      COMFY_SMART_MEMORY: ${COMFY_SMART_MEMORY:-on}
+      COMFY_IDLE_UNLOAD: ${COMFY_IDLE_UNLOAD:-300}
+      COMFY_CACHE: ${COMFY_CACHE:-classic}
+      COMFY_RESERVE_VRAM: ${COMFY_RESERVE_VRAM:-}
+      COMFY_VRAM_HEADROOM: ${COMFY_VRAM_HEADROOM:-}
+      COMFY_EXTRA_ARGS: ${COMFY_EXTRA_ARGS:-}
+    volumes:
+      - comfyui-models:/data/models
+      - comfyui-input:/data/input
+      - comfyui-output:/data/output
+      - comfyui-user:/data/user
+      - comfyui-cache:/data/cache
+      - /etc/localtime:/etc/localtime:ro
+    devices:
+      - /dev/dri:/dev/dri
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8188/system_stats"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          # leave at least 2 threads to ensure your OS processes keep operating normally while generating.
+          cpus: "10.0"
+
+          # 32GB is plenty for almost any current model.
+          # Be sure to leave enough for your OS and potentially your ZFS ARC cache.
+          memory: 32G
+    restart: unless-stopped

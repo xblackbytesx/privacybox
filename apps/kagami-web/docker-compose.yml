@@ -1,0 +1,92 @@
+name: kagami-web
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  kagami-web-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/kagami-web/database
+  kagami-web-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/kagami-web/data
+
+services:
+  kagami-web-db:
+    container_name: kagami-web-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - FOWNER
+      - SETGID
+      - SETUID
+    networks:
+      - internal
+    environment:
+      POSTGRES_USER: kagami
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: kagami
+    volumes:
+      - kagami-web-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kagami"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  kagami-web-app:
+    container_name: kagami-web-app
+    image: code.dropdoos.nl/xblackbytesx/kagami-web:${KAGAMI_VERSION:-latest}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - internal
+      - proxy
+    environment:
+      DATABASE_URL: postgres://kagami:${DB_PASSWORD}@kagami-web-db:5432/kagami
+      KAGAMI_SECRET_KEY: ${KAGAMI_SECRET_KEY:?set KAGAMI_SECRET_KEY in .env}
+      KAGAMI_BIND: 0.0.0.0:8080
+      KAGAMI_DATA_DIR: /data
+      KAGAMI_COOKIE_SECURE: ${KAGAMI_COOKIE_SECURE:-true}
+      RUST_LOG: ${RUST_LOG:-info}
+    volumes:
+      - kagami-web-data:/data
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.kagami-web-app-secure.entrypoints=websecure
+      - traefik.http.routers.kagami-web-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.kagami-web-app-secure.tls=true
+      - traefik.http.routers.kagami-web-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.kagami-web-app-secure.service=kagami-web-app
+      - traefik.http.routers.kagami-web-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.kagami-web-app.loadbalancer.server.port=8080
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      kagami-web-db:
+        condition: service_healthy
+    restart: unless-stopped

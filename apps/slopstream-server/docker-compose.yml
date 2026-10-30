@@ -1,0 +1,86 @@
+name: slopstream-server
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  slopstream-server-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/slopstream-server/database
+
+services:
+  slopstream-server-db:
+    container_name: slopstream-server-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - FOWNER
+      - SETGID
+      - SETUID
+    networks:
+      - internal
+    environment:
+      POSTGRES_USER: slopstream
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: slopstream
+    volumes:
+      - slopstream-server-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U slopstream"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  slopstream-server-app:
+    container_name: slopstream-server-app
+    image: code.dropdoos.nl/xblackbytesx/slopstream-server:${SLOPSTREAM_VERSION:-latest}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - internal
+      - proxy
+    environment:
+      DATABASE_URL: postgres://slopstream:${DB_PASSWORD}@slopstream-server-db:5432/slopstream
+      SLOPSTREAM_SECRET_KEY: ${SLOPSTREAM_SECRET_KEY:?set SLOPSTREAM_SECRET_KEY in .env}
+      SLOPSTREAM_PUBLIC_URL: ${SLOPSTREAM_PUBLIC_URL:-https://${SUBDOMAIN}.${DOMAIN}}
+      SLOPSTREAM_BIND: 0.0.0.0:8080
+      SLOPSTREAM_COOKIE_SECURE: ${SLOPSTREAM_COOKIE_SECURE:-true}
+      SLOPSTREAM_FEEDS: ${SLOPSTREAM_FEEDS:-true}
+      RUST_LOG: ${RUST_LOG:-info}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.slopstream-server-app-secure.entrypoints=websecure
+      - traefik.http.routers.slopstream-server-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.slopstream-server-app-secure.tls=true
+      - traefik.http.routers.slopstream-server-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.slopstream-server-app-secure.service=slopstream-server-app
+      - traefik.http.routers.slopstream-server-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.slopstream-server-app.loadbalancer.server.port=8080
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      slopstream-server-db:
+        condition: service_healthy
+    restart: unless-stopped

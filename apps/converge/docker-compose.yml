@@ -1,0 +1,88 @@
+name: converge
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal:
+    internal: true
+
+volumes:
+  converge-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/converge/database
+
+services:
+  converge-db:
+    container_name: converge-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - FOWNER
+      - SETGID
+      - SETUID
+    networks:
+      - internal
+    environment:
+      POSTGRES_USER: converge
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: converge
+    volumes:
+      - converge-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U converge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  converge-app:
+    container_name: converge-app
+    image: ghcr.io/xblackbytesx/converge:${CONVERGE_VERSION:-latest}
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    cap_drop:
+      - ALL
+    networks:
+      - internal
+      - proxy
+    environment:
+      DATABASE_URL: postgres://converge:${DB_PASSWORD}@converge-db:5432/converge
+      CONVERGE_SECRET_KEY: ${CONVERGE_SECRET_KEY:?set CONVERGE_SECRET_KEY in .env}
+      CONVERGE_PUBLIC_URL: ${CONVERGE_PUBLIC_URL:-https://${SUBDOMAIN}.${DOMAIN}}
+      CONVERGE_BEHIND_PROXY: "true"
+      CONVERGE_BIND: 0.0.0.0:8080
+      CONVERGE_METRICS_BIND: ${CONVERGE_METRICS_BIND:-0.0.0.0:9090}
+      CONVERGE_METRICS_TOKEN: ${CONVERGE_METRICS_TOKEN:-}
+      RUST_LOG: ${RUST_LOG:-info}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.converge-app-secure.entrypoints=websecure
+      - traefik.http.routers.converge-app-secure.rule=Host(`${SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.converge-app-secure.tls=true
+      - traefik.http.routers.converge-app-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.converge-app-secure.service=converge-app
+      - traefik.http.routers.converge-app-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.converge-app.loadbalancer.server.port=8080
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      converge-db:
+        condition: service_healthy
+    restart: unless-stopped
