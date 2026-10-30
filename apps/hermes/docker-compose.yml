@@ -36,6 +36,9 @@ services:
       - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=${HERMES_DASHBOARD_USER}
       - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=${HERMES_DASHBOARD_PASS}
       - HERMES_DASHBOARD_BASIC_AUTH_SECRET=${HERMES_DASHBOARD_SECRET}
+      - API_SERVER_ENABLED=true
+      - API_SERVER_HOST=0.0.0.0
+      - API_SERVER_KEY=${HERMES_API_KEY}
       - HERMES_WRITE_SAFE_ROOT=/vault
       - OBSIDIAN_VAULT_PATH=/vault
     volumes:
@@ -54,6 +57,13 @@ services:
       # basic-auth is appended only while HERMES_BASIC_AUTH is non-empty.
       - traefik.http.routers.hermes-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file${HERMES_BASIC_AUTH:+,basic-auth@file}
       - traefik.http.services.hermes.loadbalancer.server.port=9119
+      - traefik.http.routers.hermes-api-secure.entrypoints=websecure
+      - traefik.http.routers.hermes-api-secure.rule=Host(`${HERMES_API_SUBDOMAIN}.${DOMAIN}`)
+      - traefik.http.routers.hermes-api-secure.tls=true
+      - traefik.http.routers.hermes-api-secure.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.hermes-api-secure.service=hermes-api
+      - traefik.http.routers.hermes-api-secure.middlewares=https-redirect@file,non-www@file,secure-headers@file,gzip-compress@file
+      - traefik.http.services.hermes-api.loadbalancer.server.port=8642
     deploy:
       resources:
         limits:
