@@ -1,10 +1,21 @@
-server:
+http:
   port: 80
-  baseURL:  "/"
+  baseURL: "/"
+  # Traefik is the only way in, so its X-Forwarded-* headers can be trusted.
+  trustProxyHeaders: true
+server:
+  database:
+    path: "/home/filebrowser/data/database.sqlite"
+    # First v2 start after a v1 upgrade only, see docs/filebrowser.md.
+    # migrateFrom: "/home/filebrowser/data/database.db.old"
   logging:
     - levels: "info|warning|error"
   sources:
     - path: "/data"
+      config:
+        defaultEnabled: true
+        defaultPermissions:
+          modify: false
 userDefaults:
   preview:
     image: true
@@ -12,13 +23,15 @@ userDefaults:
     video: false
     office: false
     highQuality: false
-  darkMode: true
-  disableSettings: false
-  singleClick: false
-  permissions:
-    admin: false
-    modify: false
-    share: false
-    api: false
+  ui:
+    darkMode: true
+  listing:
+    singleClick: false
+  account:
+    disableSettings: false
+    permissions:
+      admin: false
+      share: false
+      api: false
 auth:
   adminUsername: admin

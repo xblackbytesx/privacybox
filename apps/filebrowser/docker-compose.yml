@@ -23,7 +23,7 @@ volumes:
 services:
   filebrowser:
     container_name: filebrowser
-    image: ghcr.io/gtsteffaniak/filebrowser:latest
+    image: ghcr.io/gtsteffaniak/filebrowser:2.0-stable
     security_opt:
       - no-new-privileges:true
     volumes:
