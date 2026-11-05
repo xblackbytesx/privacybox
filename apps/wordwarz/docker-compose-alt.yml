@@ -1,0 +1,67 @@
+name: wordwarz
+
+volumes:
+  wordwarz-database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DOCKER_ROOT}/wordwarz/database
+
+services:
+  wordwarz-db:
+    container_name: wordwarz-db
+    image: postgres:17-alpine
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - FOWNER
+      - SETGID
+      - SETUID
+    environment:
+      POSTGRES_USER: wordwarz
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: wordwarz
+    volumes:
+      - wordwarz-database:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wordwarz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  wordwarz-app:
+    container_name: wordwarz-app
+    image: ghcr.io/xblackbytesx/wordwarz-server:${WORDWARZ_VERSION:-latest}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      DATABASE_URL: postgres://wordwarz:${DB_PASSWORD}@wordwarz-db:5432/wordwarz
+      WORDWARZ_PUBLIC_URL: ${WORDWARZ_PUBLIC_URL:-}
+      WORDWARZ_PUSH_HOSTS: ${WORDWARZ_PUSH_HOSTS:-}
+      WORDWARZ_COOKIE_SECURE: ${WORDWARZ_COOKIE_SECURE:-true}
+      RUST_LOG: ${RUST_LOG:-info}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    # Behind Nginx Proxy Manager, keep the Host header as sent (NPM's default):
+    # writes are refused when the browser's Origin does not match it.
+    ports:
+      - 8199:8080
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      wordwarz-db:
+        condition: service_healthy
+    restart: unless-stopped

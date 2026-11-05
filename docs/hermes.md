@@ -11,9 +11,10 @@ docs](https://hermes-agent.nousresearch.com/docs/user-guide/docker/), not the
 
 What ships is deliberately narrow. **Only the dashboard and the OpenAI-compatible
 API server are reachable, and only through Traefik.** No host port is published, the
-Docker socket is not mounted, no messaging gateway is configured, and the agent may
-only write inside the vault mount. Each of those is a one-line change
+Docker socket is not mounted, no messaging gateway is configured out of the box, and
+the agent may only write inside the vault mount. Each of those is a one-line change
 when you actually want it as outlined in [Widening it later](#widening-it-later).
+The optional Matrix gateway is covered in [Matrix](#matrix).
 
 ## Initial setup
 
@@ -199,8 +200,104 @@ record for `HERMES_API_SUBDOMAIN` if your domain has no wildcard.
   break them. `API_SERVER_KEY` is the only gate.
 - **The key grants the full toolset, terminal commands included.** Upstream names
   exposed API servers alongside dashboards in the June 2026 campaign quoted above.
+- **`API_SERVER_KEY` in `/opt/data/.env` overrides `HERMES_API_KEY`.** Hermes logs a
+  stage2 warning when both are set. Keep it in `apps/hermes/.env` only.
+- **An unset `HERMES_API_SUBDOMAIN` gives the rule ``Host(`.<domain>`)``.** Let's
+  Encrypt rejects that name, and `sniStrict` then fails the handshake with
+  `unrecognized name`.
 - **`API_SERVER_CORS_ORIGINS` is unset.** Server-to-server clients do not need CORS.
   For a browser client, add an explicit origin instead of `*`.
+
+## Matrix
+
+Hermes joins our own Synapse (`apps/synapse`, see [synapse.md](synapse.md)) as a
+dedicated bot user. The gateway connects outbound, so no port or Traefik router is
+involved. Run the steps below on the host, where Synapse binds `127.0.0.1:8008`.
+
+**1. Create the bot user.** It prompts for a password and uses the registration
+shared secret, so no registration token is needed:
+
+```
+docker exec -it synapse-app register_new_matrix_user \
+  -c /data/homeserver.yaml -u hermes --no-admin http://localhost:8008
+```
+
+**2. Log in once to get an access token.** `jq` builds the body, so quotes and
+backslashes in the password survive, and `read -s` keeps it out of shell history:
+
+```
+read -rs -p 'Password: ' MXPASS; echo
+
+jq -n --arg pw "$MXPASS" '{
+  type: "m.login.password",
+  identifier: {type: "m.id.user", user: "hermes"},
+  password: $pw,
+  initial_device_display_name: "Hermes Agent"
+}' | curl -s -XPOST http://127.0.0.1:8008/_matrix/client/v3/login \
+       -H 'Content-Type: application/json' -d @- | jq
+
+unset MXPASS
+```
+
+Copy `access_token`. Check it with:
+
+```
+curl -s -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:8008/_matrix/client/v3/account/whoami
+```
+
+The token is bound to the device this login created. Logging that device out in
+Element revokes it. Synapse does not expire it otherwise.
+
+**3. Configure Hermes** in `/media/storage/docker/hermes/data/.env`:
+
+```
+MATRIX_HOMESERVER=https://matrix.privacy.box
+MATRIX_ACCESS_TOKEN=<token>
+MATRIX_USER_ID=@hermes:matrix.privacy.box
+MATRIX_ALLOWED_USERS=@you:matrix.privacy.box
+MATRIX_E2EE_MODE=required
+```
+
+- **`MATRIX_ALLOWED_USERS` is mandatory in practice.** Anyone allowed to message the
+  bot drives the full toolset, terminal included.
+- **`MATRIX_HOMESERVER` takes no trailing slash.**
+- **E2EE is required because Element encrypts DMs and new private rooms by
+  default.** With E2EE off, Hermes logs `this process has no E2EE decryptor` and
+  drops every message in those rooms. The image already ships `libolm`,
+  `mautrix[encryption]`, `asyncpg` and `aiosqlite`; nothing needs installing.
+  `required` fails closed instead of silently falling back to a plain client.
+
+**4. Restart and watch the startup:**
+
+```
+docker restart hermes
+docker logs -f hermes 2>&1 | grep -i matrix
+```
+
+**5. Keep the recovery key.** Store it in your password manager, then move it into
+`.env` and delete the file:
+
+```
+cat /media/storage/docker/hermes/data/matrix-recovery-key.txt
+```
+
+```
+MATRIX_RECOVERY_KEY=<key>
+```
+
+Without it, other clients stop sharing room keys with the bot after a device key
+rotation.
+
+Then send a **new** message: anything sent before E2EE was active stays undecryptable.
+
+- **`platforms/matrix/store/` under the data dir is the bot's encryption identity.**
+  Do not delete it. It is included in the backup, as is the token in `.env`.
+- **To rotate the token, log in again** (step 2) for a fresh device. Reusing the old
+  device ID with new keys makes other clients distrust the bot.
+- **A blocked-URL or SSRF error on connect** is the same `allow_private_urls` guard
+  as check 5 above, since `matrix.privacy.box` resolves to an RFC1918 address
+  in-house. Only change it after seeing that error.
 
 ## Obsidian
 
