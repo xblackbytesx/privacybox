@@ -12,7 +12,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      o: bindcalzone
+      o: bind
       device: ${DOCKER_ROOT}/calzone/database
 
 services:
