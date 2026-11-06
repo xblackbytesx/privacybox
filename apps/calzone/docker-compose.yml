@@ -47,7 +47,7 @@ services:
 
   calzone-app:
     container_name: calzone-app
-    image: ghcr.io/xblackbytesx/calzone:${CALZONE_VERSION:-latest}
+    image: ghcr.io/xblackbytesx/calzone-server:${CALZONE_VERSION:-latest}
     security_opt:
       - no-new-privileges:true
     read_only: true
