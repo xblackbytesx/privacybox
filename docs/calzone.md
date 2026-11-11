@@ -49,6 +49,11 @@ curl -si https://calzone.DOMAIN.TLD/.well-known/caldav | head -3
 Expect `ok`, then a `301` to `/dav/`. The log line `CalDAV/CardDAV door on`
 confirms `CALZONE_DAV` was read.
 
+Push for the CalZone phone app: set `CALZONE_PUSH_HOSTS` to the ntfy host
+name. `docker logs calzone-app 2>&1 | grep -i push` must not say "push
+off". ntfy needs anonymous write access to `up*` topics (with
+`auth-default-access: deny-all`, add `auth-access: "*:up*:write-only"`).
+
 ## Devices
 
 Each person makes one password per phone or app under Devices, shown once.
